@@ -24,6 +24,7 @@ export interface VideoPlayerProps {
     currentTime: number;
   }) => void;
   onTimeUpdate: (currentTime: number) => void;
+  onSnapshot?: (imageData: string) => void;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   videoLoaded: boolean;
   videoInfo: {
@@ -39,6 +40,7 @@ export interface VideoPlayerProps {
 export function VideoPlayer({
   onMetadataLoaded,
   onTimeUpdate,
+  onSnapshot,
   videoRef,
   videoLoaded,
   videoInfo,
@@ -98,6 +100,23 @@ export function VideoPlayer({
     } else {
       video.pause();
       setIsPlaying(false);
+    }
+  };
+
+  const takeSnapshot = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/png');
+      if (onSnapshot) {
+        onSnapshot(imageData);
+      }
     }
   };
 
@@ -277,6 +296,14 @@ export function VideoPlayer({
                   onClick={() => goToTime(videoInfo?.duration || 0)}
                 >
                   <SkipForward className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={takeSnapshot}
+                  className="ml-auto"
+                >
+                  Take Snapshot
                 </Button>
               </div>
             </div>

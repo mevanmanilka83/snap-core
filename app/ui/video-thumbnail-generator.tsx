@@ -2,9 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { VideoPlayer } from "@/app/ui/video-player";
-import { SnapshotControls } from "@/app/ui/snapshot-controls";
+import { BackgroundRemovalProcessor } from "@/app/ui/snapshot-controls";
 import DropZone from "@/app/ui/drop-zone";
 import { toast } from "sonner";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 export default function VideoThumbnailGenerator() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -16,6 +20,8 @@ export default function VideoThumbnailGenerator() {
   } | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentFrame, setCurrentFrame] = useState<string | null>(null);
+  const [snapshots, setSnapshots] = useState<string[]>([]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -68,6 +74,18 @@ export default function VideoThumbnailGenerator() {
       ...prev!,
       currentTime,
     }));
+
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        setCurrentFrame(canvas.toDataURL('image/png'));
+      }
+    }
   };
 
   const goToTime = (time: number) => {
@@ -75,6 +93,42 @@ export default function VideoThumbnailGenerator() {
     if (!video || !videoInfo) return;
 
     video.currentTime = Math.min(videoInfo.duration, Math.max(0, time));
+  };
+
+  const handleProcessedImage = (imageSrc: string) => {
+    setCurrentFrame(imageSrc);
+  };
+
+  const handleSnapshot = (imageData: string) => {
+    setSnapshots(prev => [...prev, imageData]);
+    toast.success("Snapshot taken");
+  };
+
+  const handleSaveSnapshot = (index: number) => {
+    const snapshot = snapshots[index];
+    if (!snapshot) return;
+
+    const link = document.createElement('a');
+    link.href = snapshot;
+    link.download = `snapshot-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Snapshot saved");
+  };
+
+  const handleSaveAllSnapshots = () => {
+    snapshots.forEach((snapshot, index) => {
+      const link = document.createElement('a');
+      link.href = snapshot;
+      link.download = `snapshot-${index + 1}-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    
+    toast.success("All snapshots saved");
   };
 
   return (
@@ -89,13 +143,69 @@ export default function VideoThumbnailGenerator() {
             setIsPlaying={setIsPlaying}
             onMetadataLoaded={handleMetadataLoaded}
             onTimeUpdate={handleTimeUpdate}
+            onSnapshot={handleSnapshot}
           />
-          <SnapshotControls
-            videoRef={videoRef}
-            videoLoaded={videoLoaded}
-            videoInfo={videoInfo}
-            goToTime={goToTime}
-          />
+          {snapshots.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Snapshots</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {snapshots.map((snapshot, index) => (
+                    <div 
+                      key={index} 
+                      className="relative aspect-video cursor-move"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', snapshot);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                    >
+                      <Image
+                        src={snapshot}
+                        alt={`Snapshot ${index + 1}`}
+                        fill
+                        className="object-contain rounded-md"
+                        unoptimized={true}
+                      />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute bottom-2 right-2"
+                        onClick={() => handleSaveSnapshot(index)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-4">
+                  {snapshots.length > 1 && (
+                    <Button
+                      variant="default"
+                      className="flex-1"
+                      onClick={handleSaveAllSnapshots}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Save All Snapshots
+                    </Button>
+                  )}
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      setSnapshots([]);
+                      toast.success("All snapshots cleared");
+                    }}
+                  >
+                    Cancel All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="space-y-6">
           <DropZone />
