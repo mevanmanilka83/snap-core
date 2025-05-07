@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"
@@ -38,12 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col">
-            <SiteHeader />
-            <Dot className="flex-1">
+          <Dot className="min-h-screen">
+            <div className="relative flex min-h-screen flex-col">
+              <SiteHeader />
               <main className="flex-1">{children}</main>
-            </Dot>
-          </div>
+            </div>
+          </Dot>
           <Toaster position="top-right" />
         </ThemeProvider>
       </body>

@@ -271,9 +271,14 @@ export function SnapshotControls({
             <Image
               src={snapshots[selectedSnapshot].src || "/placeholder.svg"}
               alt="Selected snapshot"
-              className="max-h-64 mx-auto object-contain border rounded"
+              className="max-h-64 mx-auto object-contain border rounded cursor-move"
               width={snapshots[selectedSnapshot].width}
               height={snapshots[selectedSnapshot].height}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', snapshots[selectedSnapshot].src);
+                e.dataTransfer.effectAllowed = 'copy';
+              }}
             />
           </div>
         )}

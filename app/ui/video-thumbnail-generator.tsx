@@ -80,23 +80,24 @@ export default function VideoThumbnailGenerator() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <VideoPlayer
-          videoRef={videoRef}
-          videoLoaded={videoLoaded}
-          videoInfo={videoInfo}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          onMetadataLoaded={handleMetadataLoaded}
-          onTimeUpdate={handleTimeUpdate}
-        />
-
         <div className="space-y-6">
+          <VideoPlayer
+            videoRef={videoRef}
+            videoLoaded={videoLoaded}
+            videoInfo={videoInfo}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            onMetadataLoaded={handleMetadataLoaded}
+            onTimeUpdate={handleTimeUpdate}
+          />
           <SnapshotControls
             videoRef={videoRef}
             videoLoaded={videoLoaded}
             videoInfo={videoInfo}
             goToTime={goToTime}
           />
+        </div>
+        <div className="space-y-6">
           <DropZone />
         </div>
       </div>

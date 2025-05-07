@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadIcon, Info } from "lucide-react";
+import { UploadIcon, Info, Download } from "lucide-react";
+import * as backgroundRemoval from "@imgly/background-removal";
 
 interface ImageInfo {
   width: number;
@@ -30,14 +31,22 @@ export default function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [imageSrc, setImageSrc] = useState<string>("");
+  const [processedImageSrc, setProcessedImageSrc] = useState<string>("");
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const hiddenImageRef = useRef<HTMLImageElement>(null);
   const previewUrl = useRef<string | null>(null);
+  const processedUrl = useRef<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     return () => {
+      // Clean up blob URLs on unmount
       if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl.current);
+      }
+      if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
+        URL.revokeObjectURL(processedUrl.current);
       }
     };
   }, []);
@@ -48,6 +57,7 @@ export default function ImageUploader() {
 
     setError("");
     setHasAttemptedLoad(true);
+    setIsLoading(true);
 
     if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl.current);
@@ -56,6 +66,7 @@ export default function ImageUploader() {
     previewUrl.current = URL.createObjectURL(file);
 
     setImageSrc(previewUrl.current);
+    setProcessedImageSrc(""); // Clear processed image
 
     const img = hiddenImageRef.current;
     if (img) {
@@ -93,6 +104,7 @@ export default function ImageUploader() {
 
     previewUrl.current = url;
     setImageSrc(url);
+    setProcessedImageSrc(""); // Clear processed image
 
     const img = hiddenImageRef.current;
     if (img) {
@@ -115,7 +127,17 @@ export default function ImageUploader() {
 
     setImageLoaded(true);
     setIsLoading(false);
-    toast.success("Image loaded successfully");
+    
+    // Draw the image to canvas after loading
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
   };
 
   const handleImageError = () => {
@@ -127,18 +149,25 @@ export default function ImageUploader() {
     setImageLoaded(false);
     setIsLoading(false);
     setImageSrc("");
+    setProcessedImageSrc("");
   };
 
   const handleCancel = () => {
     if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl.current);
     }
+    if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
+      URL.revokeObjectURL(processedUrl.current);
+    }
 
     previewUrl.current = null;
+    processedUrl.current = null;
     setImageInfo(null);
     setImageLoaded(false);
     setError("");
     setHasAttemptedLoad(false);
+    setImageSrc("");
+    setProcessedImageSrc("");
 
     const img = hiddenImageRef.current;
     if (img) {
@@ -149,14 +178,21 @@ export default function ImageUploader() {
     if (urlInput) {
       urlInput.value = "";
     }
-
-    toast.info("Upload canceled");
+    
+    // Clear canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
   };
 
   const handleUpload = () => {
     if (!imageLoaded || !previewUrl.current) {
-      setError("Please select or load an image first");
-      toast.error("Please select or load an image first");
+      setError("Please select an image first");
+      toast.error("Please select an image first");
       return;
     }
 
@@ -165,8 +201,80 @@ export default function ImageUploader() {
     });
   };
 
+  const handleSaveProcessedImage = () => {
+    if (!processedImageSrc) {
+      toast.error("No processed image to save");
+      return;
+    }
+
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = processedImageSrc;
+    link.download = `processed-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Image saved successfully");
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!imageLoaded || !previewUrl.current) {
+      setError("Please select an image first");
+      toast.error("Please select an image first");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      // Use the current image source as input
+      const image_src = previewUrl.current;
+
+      // Process the image with imgly background removal
+      const blob = await backgroundRemoval.removeBackground(image_src);
+      
+      // Create a URL from the resulting blob
+      const url = URL.createObjectURL(blob);
+      
+      // Revoke the old processed URL if it was a blob
+      if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
+        URL.revokeObjectURL(processedUrl.current);
+      }
+      
+      // Update the processed image with the new image
+      processedUrl.current = url;
+      setProcessedImageSrc(url);
+      
+      // Draw the processed image to canvas
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const tempImg = new Image();
+        tempImg.crossOrigin = "anonymous";
+        tempImg.onload = () => {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            canvas.width = tempImg.naturalWidth;
+            canvas.height = tempImg.naturalHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(tempImg, 0, 0);
+          }
+        };
+        tempImg.src = url;
+      }
+      
+      toast.success("Background removed successfully");
+    } catch (err) {
+      console.error("Error removing background:", err);
+      toast.error("Failed to remove background");
+      setError("Failed to remove background. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-3xl mx-auto p-4">
+    <div className="space-y-6 w-full">
       <img
         ref={hiddenImageRef}
         src="/placeholder.svg"
@@ -177,7 +285,7 @@ export default function ImageUploader() {
         crossOrigin="anonymous"
       />
 
-      <Tabs defaultValue="file">
+      <Tabs defaultValue="file" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="file">Image from File</TabsTrigger>
           <TabsTrigger value="url">Image from URL</TabsTrigger>
@@ -193,7 +301,45 @@ export default function ImageUploader() {
             </CardHeader>
             <CardContent className="pt-2">
               <label htmlFor="file-upload">
-                <div className="flex flex-col items-center justify-center space-y-4 py-12 px-6 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer">
+                <div className="flex flex-col items-center justify-center space-y-4 py-12 px-6 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.add('border-primary');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('border-primary');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('border-primary');
+                    
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (data && data.startsWith('data:image')) {
+                      setError("");
+                      setHasAttemptedLoad(true);
+                      setIsLoading(true);
+
+                      if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
+                        URL.revokeObjectURL(previewUrl.current);
+                      }
+
+                      previewUrl.current = data;
+                      setImageSrc(data);
+                      setProcessedImageSrc(""); // Clear processed image
+
+                      const img = hiddenImageRef.current;
+                      if (img) {
+                        img.src = data;
+                      }
+
+                      setImageLoaded(false);
+                    }
+                  }}
+                >
                   <UploadIcon className="h-12 w-12 text-gray-400" />
                   <div className="font-medium text-gray-900 dark:text-gray-50">
                     Click to select an image
@@ -213,7 +359,7 @@ export default function ImageUploader() {
             </CardContent>
           </Card>
         </TabsContent>
-
+        
         <TabsContent value="url" className="space-y-4">
           <Card>
             <CardHeader>
@@ -249,7 +395,7 @@ export default function ImageUploader() {
         </TabsContent>
       </Tabs>
 
-      <Card>
+      <Card className="w-full">
         <CardHeader className="pb-2">
           <CardTitle>Image Preview</CardTitle>
           {error && hasAttemptedLoad && (
@@ -300,6 +446,35 @@ export default function ImageUploader() {
               </>
             )}
           </div>
+          
+          {imageLoaded && processedImageSrc && (
+            <div className="mt-4">
+         <CardTitle className="mb-2">Removed Background </CardTitle>
+              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                <div className="relative w-full h-full">
+                  <Image
+                    src={processedImageSrc}
+                    alt="Background Removed"
+                    fill
+                    className="object-contain"
+                    unoptimized={true}
+                  />
+                </div>
+              </div>
+              <canvas ref={canvasRef} className="hidden"></canvas>
+              <div className="mt-2">
+                <Button
+                  onClick={handleSaveProcessedImage}
+                  disabled={processedImageSrc === ""}
+                  variant="default"
+                  className="w-full sm:w-auto"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Save Image
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <div className="grid grid-cols-2 gap-2 w-full">
@@ -310,8 +485,19 @@ export default function ImageUploader() {
             >
               Cancel
             </Button>
-            <Button onClick={handleUpload} disabled={!imageLoaded || isLoading}>
-              Upload
+            <Button 
+              variant="secondary"
+              onClick={handleRemoveBackground} 
+              disabled={!imageLoaded || isLoading || isProcessing}
+            >
+              {isProcessing ? (
+                <span className="flex items-center">
+                  <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-primary rounded-full"></span>
+                  Processing
+                </span>
+              ) : (
+                "Remove Background"
+              )}
             </Button>
           </div>
         </CardFooter>

@@ -34,23 +34,23 @@ interface DotProps {
   function Placeholder() {
     return (
       <div className="flex h-full min-h-64 w-full min-w-72 items-center justify-center">
-        <div className="rounded bg-white px-4 py-2 dark:bg-gray-800">This has dot background</div>
+        <div className="rounded bg-background px-4 py-2 text-foreground">This has dot background</div>
       </div>
     );
   }
   
   export default function Dot({
     color,
-    size = 1,
-    spacing = 10,
+    size = 1.5,
+    spacing = 18,
     children,
     className,
     style = {},
   }: DotProps) {
     const { theme } = useTheme();
     
-    const dotColor = color ?? (theme === "dark" ? "#374151" : "#cacaca");
-    const backgroundColor = theme === "dark" ? "#0A0A0A" : "white";
+    const dotColor = color ?? (theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)");
+    const backgroundColor = theme === "dark" ? "hsl(var(--background))" : "hsl(var(--background))";
 
     return (
       <div
@@ -58,12 +58,12 @@ interface DotProps {
           ...style,
           backgroundColor,
           backgroundImage: `radial-gradient(${dotColor} ${size}px, transparent ${size}px)`,
-          backgroundSize: `calc(${spacing} * ${size}px) calc(${spacing} * ${size}px)`,
+          backgroundSize: `${spacing}px ${spacing}px`,
+          backgroundPosition: "0 0",
         }}
-        className={className}
+        className={`w-full h-full ${className ?? ""}`}
       >
         {children ?? <Placeholder />}
       </div>
     );
   }
-  
