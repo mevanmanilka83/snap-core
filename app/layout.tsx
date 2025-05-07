@@ -37,6 +37,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="snap-core-theme"
         >
           <Dot className="min-h-screen">
             <div className="relative flex min-h-screen flex-col">

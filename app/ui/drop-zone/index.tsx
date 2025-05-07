@@ -32,12 +32,16 @@ export default function ImageUploader() {
   const [error, setError] = useState("");
   const [imageSrc, setImageSrc] = useState<string>("");
   const [processedImageSrc, setProcessedImageSrc] = useState<string>("");
+  const [thumbnailSrc, setThumbnailSrc] = useState<string>("");
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false);
   const hiddenImageRef = useRef<HTMLImageElement>(null);
   const previewUrl = useRef<string | null>(null);
   const processedUrl = useRef<string | null>(null);
+  const thumbnailUrl = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
 
   useEffect(() => {
     return () => {
@@ -47,6 +51,9 @@ export default function ImageUploader() {
       }
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current);
+      }
+      if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+        URL.revokeObjectURL(thumbnailUrl.current);
       }
     };
   }, []);
@@ -159,9 +166,13 @@ export default function ImageUploader() {
     if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
       URL.revokeObjectURL(processedUrl.current);
     }
+    if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+      URL.revokeObjectURL(thumbnailUrl.current);
+    }
 
     previewUrl.current = null;
     processedUrl.current = null;
+    thumbnailUrl.current = null;
     setImageInfo(null);
     setImageLoaded(false);
     setError("");
@@ -227,6 +238,7 @@ export default function ImageUploader() {
 
     try {
       setIsProcessing(true);
+      setThumbnailSrc(""); // Clear any existing thumbnail
 
       // Use the current image source as input
       const image_src = previewUrl.current;
@@ -235,35 +247,19 @@ export default function ImageUploader() {
       const blob = await backgroundRemoval.removeBackground(image_src);
       
       // Create a URL from the resulting blob
-      const url = URL.createObjectURL(blob);
+      const processedImageUrl = URL.createObjectURL(blob);
       
       // Revoke the old processed URL if it was a blob
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current);
       }
       
-      // Update the processed image with the new image
-      processedUrl.current = url;
-      setProcessedImageSrc(url);
-      
-      // Draw the processed image to canvas
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const tempImg = new Image();
-        tempImg.crossOrigin = "anonymous";
-        tempImg.onload = () => {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            canvas.width = tempImg.naturalWidth;
-            canvas.height = tempImg.naturalHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(tempImg, 0, 0);
-          }
-        };
-        tempImg.src = url;
-      }
+      // Save the transparent background image URL
+      processedUrl.current = processedImageUrl;
+      setProcessedImageSrc(processedImageUrl);
       
       toast.success("Background removed successfully");
+      
     } catch (err) {
       console.error("Error removing background:", err);
       toast.error("Failed to remove background");
@@ -271,6 +267,143 @@ export default function ImageUploader() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleCreateThumbnail = () => {
+    if (!processedImageSrc) {
+      toast.error("Please remove background first");
+      return;
+    }
+    setIsCreatingThumbnail(true);
+    createThumbnail(processedImageSrc);
+  };
+
+  const handleSaveBackgroundRemoved = () => {
+    if (!processedImageSrc) return;
+    
+    const link = document.createElement('a');
+    link.href = processedImageSrc;
+    link.download = `background-removed-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Image saved successfully");
+  };
+
+  // Separate function to create thumbnail with background and text
+  const createThumbnail = (transparentImageUrl: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Create a new image for the background
+    const bgImg = new window.Image();
+    bgImg.crossOrigin = "anonymous";
+    
+    bgImg.onload = () => {
+      // Set canvas dimensions based on the original image size
+      const img = hiddenImageRef.current;
+      if (!img) return;
+      
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      
+      // Step 1: Draw the background image (tiled or stretched)
+      ctx.fillStyle = "#f0f0f0"; // Fallback background color
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw background image (stretched to fit)
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      
+      // Step 2: Draw text in the center
+      const fontSize = Math.min(canvas.width, canvas.height) * 0.2; // Adjust size based on canvas
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      
+      // Add shadow to text for better visibility
+      ctx.shadowColor = "rgba(0,0,0,0.5)";
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      // Draw text
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("TTV", canvas.width / 2, canvas.height / 2);
+      
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Step 3: Draw the processed image with transparent background on top
+      const fgImg = new window.Image();
+      fgImg.crossOrigin = "anonymous";
+      
+      fgImg.onload = () => {
+        // Draw the transparent background image on top
+        ctx.drawImage(fgImg, 0, 0, canvas.width, canvas.height);
+        
+        // Convert canvas to data URL and update thumbnail
+        const finalImageUrl = canvas.toDataURL('image/png');
+        
+        // Revoke old thumbnail URL if it exists
+        if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+          URL.revokeObjectURL(thumbnailUrl.current);
+        }
+        
+        // Update the thumbnail
+        thumbnailUrl.current = finalImageUrl;
+        setThumbnailSrc(finalImageUrl);
+      };
+      
+      // Load the transparent image
+      fgImg.src = transparentImageUrl;
+    };
+    
+    // Load the background image
+    bgImg.src = "/placeholder.svg"; // Replace with your actual background image path
+    
+    // Handle background image loading error
+    bgImg.onerror = () => {
+      // If background image fails to load, create a gradient background instead
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#3498db");
+      gradient.addColorStop(1, "#8e44ad");
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Continue with text and foreground image
+      const fontSize = Math.min(canvas.width, canvas.height) * 0.2;
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("TTV", canvas.width / 2, canvas.height / 2);
+      
+      // Load the transparent foreground image
+      const fgImg = new window.Image();
+      fgImg.crossOrigin = "anonymous";
+      fgImg.onload = () => {
+        ctx.drawImage(fgImg, 0, 0, canvas.width, canvas.height);
+        const finalImageUrl = canvas.toDataURL('image/png');
+        
+        // Revoke old thumbnail URL if it exists
+        if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+          URL.revokeObjectURL(thumbnailUrl.current);
+        }
+        
+        // Update the thumbnail
+        thumbnailUrl.current = finalImageUrl;
+        setThumbnailSrc(finalImageUrl);
+      };
+      fgImg.src = transparentImageUrl;
+    };
   };
 
   return (
@@ -449,7 +582,7 @@ export default function ImageUploader() {
           
           {imageLoaded && processedImageSrc && (
             <div className="mt-4">
-         <CardTitle className="mb-2">Removed Background </CardTitle>
+              <CardTitle className="mb-2">Background Removed</CardTitle>
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                 <div className="relative w-full h-full">
                   <Image
@@ -461,11 +594,9 @@ export default function ImageUploader() {
                   />
                 </div>
               </div>
-              <canvas ref={canvasRef} className="hidden"></canvas>
               <div className="mt-2">
                 <Button
-                  onClick={handleSaveProcessedImage}
-                  disabled={processedImageSrc === ""}
+                  onClick={handleSaveBackgroundRemoved}
                   variant="default"
                   className="w-full sm:w-auto"
                 >
@@ -475,6 +606,75 @@ export default function ImageUploader() {
               </div>
             </div>
           )}
+
+          <Card className="mt-4">
+            <CardHeader className="pb-2">
+              <CardTitle>Create Thumbnail</CardTitle>
+              <CardDescription>
+                Add background and text to create a thumbnail
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!processedImageSrc ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Remove background first to create a thumbnail
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {thumbnailSrc ? (
+                    <>
+                      <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={thumbnailSrc}
+                            alt="Thumbnail Preview"
+                            fill
+                            className="object-contain"
+                            unoptimized={true}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSaveProcessedImage}
+                          variant="default"
+                          className="w-full sm:w-auto"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Save Thumbnail
+                        </Button>
+                        <Button
+                          onClick={handleCreateThumbnail}
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                        >
+                          Recreate Thumbnail
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Button
+                        onClick={handleCreateThumbnail}
+                        variant="default"
+                        disabled={isCreatingThumbnail}
+                        className="w-full sm:w-auto"
+                      >
+                        {isCreatingThumbnail ? (
+                          <span className="flex items-center">
+                            <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-primary rounded-full"></span>
+                            Creating...
+                          </span>
+                        ) : (
+                          "Create Thumbnail"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </CardContent>
         <CardFooter>
           <div className="grid grid-cols-2 gap-2 w-full">
@@ -488,7 +688,7 @@ export default function ImageUploader() {
             <Button 
               variant="secondary"
               onClick={handleRemoveBackground} 
-              disabled={!imageLoaded || isLoading || isProcessing}
+              disabled={!imageLoaded || isLoading || isProcessing || isCreatingThumbnail}
             >
               {isProcessing ? (
                 <span className="flex items-center">

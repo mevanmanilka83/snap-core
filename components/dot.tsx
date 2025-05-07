@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 interface DotProps {
     /**
@@ -47,10 +48,19 @@ interface DotProps {
     className,
     style = {},
   }: DotProps) {
-    const { theme } = useTheme();
-    
-    const dotColor = color ?? (theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)");
-    const backgroundColor = theme === "dark" ? "hsl(var(--background))" : "hsl(var(--background))";
+    const { theme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const dotColor = color ?? (resolvedTheme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)");
+    const backgroundColor = resolvedTheme === "dark" ? "hsl(var(--background))" : "hsl(var(--background))";
+
+    if (!mounted) {
+        return <div className={className}>{children}</div>;
+    }
 
     return (
       <div
