@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import TextEditor from "./text-editor"
+import * as backgroundRemoval from "@imgly/background-removal"
 
 interface VideoInfo {
   width: number
@@ -161,6 +162,14 @@ export default function VideoThumbnailGenerator() {
     }
   }, [])
 
+  // Set up video element with CORS attributes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.setAttribute('crossOrigin', 'anonymous');
+    }
+  }, []);
+
   // Set up video event listeners
   useEffect(() => {
     const video = videoRef.current
@@ -220,8 +229,6 @@ export default function VideoThumbnailGenerator() {
     if (!videoRef.current) return;
     
     const video = videoRef.current;
-    video.crossOrigin = "anonymous";
-    
     setVideoInfo({
       duration: video.duration,
       currentTime: video.currentTime,
@@ -241,40 +248,35 @@ export default function VideoThumbnailGenerator() {
   }
 
   const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !isPlaying) return;
 
-    const video = videoRef.current;
-    
-    // Update video info with current time
-    if (videoInfo) {
-      setVideoInfo({
-        ...videoInfo,
-        currentTime: video.currentTime
-      });
-    }
+    try {
+      const video = videoRef.current;
+      
+      // Check if video is ready
+      if (video.readyState < 2) return;
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    // Only update current frame if video is ready
-    if (video.readyState >= 2) {
+      // Draw the current video frame
+      ctx.drawImage(video, 0, 0);
+      
       try {
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-
-        // Clear canvas and set background
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the current video frame
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
         const imageData = canvas.toDataURL('image/png', 1.0);
-        setCurrentFrame(imageData);
+        if (imageData && imageData !== 'data:,') {
+          setCurrentFrame(imageData);
+        }
       } catch (error) {
-        console.error("Error updating frame:", error);
+        // Silently handle errors during time update
+        console.debug("Frame update skipped");
       }
+    } catch (error) {
+      console.debug("Time update skipped");
     }
   };
 
@@ -302,19 +304,25 @@ export default function VideoThumbnailGenerator() {
     }
 
     try {
-      // Save current state to undo stack if we have a processed frame
+      // Add the snapshot directly to the collection
+      setSnapshots((prev) => [...prev, imageData]);
+      setProcessedFrame(imageData);
+      setCurrentFrame(imageData);
+      setSelectedSnapshotIndex(snapshots.length);
+      setProcessedImageSrc(imageData);
+      
+      // Save to undo stack if needed
       if (processedFrame) {
         setUndoStack((prev) => [...prev, processedFrame]);
-        setRedoStack([]); // Clear redo stack on new action
+        setRedoStack([]);
       }
 
-      // Update both current frame and snapshots
-      setCurrentFrame(imageData);
-      setSnapshots((prev) => [...prev, imageData]);
-      setProcessedFrame(imageData); // Ensure the frame is processed
-      setSelectedSnapshotIndex(snapshots.length); // Select the newly added snapshot
-      setActiveTab("snapshots"); // Switch to snapshots tab
-      toast.success("Snapshot captured");
+      // Update final preview
+      updateFinalPreview();
+
+      toast.success("Snapshot captured successfully", {
+        description: `View in Snapshots tab (${snapshots.length + 1} total)`
+      });
     } catch (error) {
       console.error("Error handling snapshot:", error);
       toast.error("Failed to capture snapshot");
@@ -328,61 +336,96 @@ export default function VideoThumbnailGenerator() {
       return;
     }
 
+    // Check if video is ready
+    if (video.readyState < 2) {
+      toast.error("Video is not ready yet. Please wait a moment.");
+      return;
+    }
+
     try {
-      // Create canvas with video dimensions
+      // Create an offscreen canvas
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      const ctx = canvas.getContext('2d', {
+        willReadFrequently: true,
+        alpha: false
+      });
+
       if (!ctx) {
         toast.error("Failed to create canvas context");
         return;
       }
 
-      // Wait for video to be ready
-      if (video.readyState < 2) {
-        toast.error("Video not ready. Please try again.");
-        return;
+      // Pause video for consistent capture
+      const wasPlaying = !video.paused;
+      if (wasPlaying) {
+        video.pause();
       }
 
-      // Clear canvas and set background
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      try {
+        // Draw the video frame
+        ctx.drawImage(video, 0, 0);
 
-      // Draw the current video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Get the image data
-      const imageData = canvas.toDataURL('image/png', 1.0);
+        // Create a new canvas for the snapshot
+        const snapshotCanvas = document.createElement('canvas');
+        snapshotCanvas.width = video.videoWidth;
+        snapshotCanvas.height = video.videoHeight;
+        const snapshotCtx = snapshotCanvas.getContext('2d');
 
-      // Add the current frame to snapshots
-      setSnapshots((prev) => [...prev, imageData]);
-      setProcessedFrame(imageData);
-      setCurrentFrame(imageData);
-      toast.success("Snapshot captured");
-    } catch (error) {
-      console.error("Error capturing snapshot:", error);
-      toast.error("Failed to capture snapshot");
-    }
-  };
+        if (!snapshotCtx) {
+          throw new Error('Failed to create snapshot context');
+        }
 
-  // Add effect to maintain video state when switching tabs
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+        // Copy the frame to the snapshot canvas
+        snapshotCtx.drawImage(canvas, 0, 0);
 
-    // When switching back to video tab
-    if (activeTab === "video") {
-      // Restore video state
-      if (videoInfo) {
-        video.currentTime = videoInfo.currentTime;
-        if (isPlaying) {
+        // Get the image data
+        const imageData = snapshotCanvas.toDataURL('image/png', 1.0);
+
+        if (!imageData || imageData === 'data:,') {
+          throw new Error('Invalid image data generated');
+        }
+
+        // Update states
+        setSnapshots((prev) => [...prev, imageData]);
+        setProcessedFrame(imageData);
+        setCurrentFrame(imageData);
+        setSelectedSnapshotIndex(snapshots.length);
+        setProcessedImageSrc(imageData);
+
+        // Save to undo stack if needed
+        if (processedFrame) {
+          setUndoStack((prev) => [...prev, processedFrame]);
+          setRedoStack([]);
+        }
+
+        // Update final preview
+        updateFinalPreview();
+
+        // Resume video if it was playing
+        if (wasPlaying) {
+          video.play();
+        }
+
+        toast.success("Snapshot captured successfully", {
+          description: `View in Snapshots tab (${snapshots.length + 1} total)`
+        });
+      } catch (error) {
+        console.error("Error in snapshot capture:", error);
+        toast.error("Failed to capture snapshot. Please try again.");
+
+        // Resume video if it was playing
+        if (wasPlaying) {
           video.play();
         }
       }
+    } catch (error) {
+      console.error("Error in canvas setup:", error);
+      toast.error("Failed to set up snapshot capture");
     }
-  }, [activeTab, videoInfo, isPlaying]);
+  };
 
   const handleAutoCaptureKeyFrames = () => {
     if (!videoRef.current || !videoInfo) {
@@ -461,15 +504,40 @@ export default function VideoThumbnailGenerator() {
     }
     
     const selectedSnapshot = snapshots[index];
-    if (!selectedSnapshot || selectedSnapshot === 'data:,') {
-      toast.error("Selected snapshot is empty or invalid");
+    if (!selectedSnapshot) {
+      toast.error("Selected snapshot is invalid");
       return;
     }
-    
-    setSelectedSnapshotIndex(index);
-    setProcessedFrame(selectedSnapshot);
-    setCurrentFrame(selectedSnapshot);
-    setActiveTab("edit");
+
+    // Create a new Image to verify the snapshot data
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      // Create a canvas to ensure we have valid image data
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        try {
+          const verifiedImageData = canvas.toDataURL('image/png');
+          setSelectedSnapshotIndex(index);
+          setProcessedFrame(verifiedImageData);
+          setCurrentFrame(verifiedImageData);
+          setProcessedImageSrc(verifiedImageData);
+          setActiveTab("edit");
+        } catch (error) {
+          console.error("Error verifying snapshot:", error);
+          toast.error("Failed to load snapshot. The image data may be invalid.");
+        }
+      }
+    };
+    img.onerror = () => {
+      console.error("Error loading snapshot image");
+      toast.error("Failed to load snapshot image");
+    };
+    img.src = selectedSnapshot;
   };
 
   // Add useEffect to handle snapshot updates
@@ -548,47 +616,62 @@ export default function VideoThumbnailGenerator() {
       return;
     }
 
-    setIsProcessing(true);
-    setProcessingProgress(0);
-
     try {
-      // This would be handled by your BackgroundRemovalProcessor component
-      // For now, we'll just simulate the process
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        setProcessingProgress(i);
-      }
+      setIsProcessing(true);
+      setProcessingProgress(0);
 
-      // Simulate background removal by adding a placeholder
-      // In a real implementation, you would use the actual processed image
+      // Create a new image to process
       const img = new window.Image();
-      img.src = processedFrame;
+      img.crossOrigin = 'anonymous';
+
       img.onload = async () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
+        try {
+          // Process the image with imgly background removal
+          const response = await backgroundRemoval.removeBackground(img.src, {
+            progress: (_message: string, progress: number) => {
+              setProcessingProgress(Math.round(progress * 100));
+            },
+          });
+
+          // Convert blob to URL
+          const processedImageUrl = URL.createObjectURL(response);
+
           // Save current state to undo stack
-          setUndoStack((prev) => [...prev, processedFrame!]);
-          setRedoStack([]); // Clear redo stack on new action
+          if (processedFrame) {
+            setUndoStack((prev) => [...prev, processedFrame]);
+            setRedoStack([]); // Clear redo stack on new action
+          }
 
-          // Apply the current filters to the image
-          applyFilters(ctx);
-          ctx.drawImage(img, 0, 0);
-
-          // In a real implementation, this would be the result of background removal
-          const processedImageUrl = canvas.toDataURL("image/png");
-          setProcessedImageSrc(processedImageUrl);
+          // Update states
           setProcessedFrame(processedImageUrl);
+          setProcessedImageSrc(processedImageUrl);
+
+          // Update final preview
+          updateFinalPreview();
+
           toast.success("Background removed successfully");
+        } catch (error) {
+          console.error("Error removing background:", error);
+          toast.error("Failed to remove background. Please try again.");
+        } finally {
+          setIsProcessing(false);
+          setProcessingProgress(0);
         }
       };
+
+      img.onerror = () => {
+        setIsProcessing(false);
+        setProcessingProgress(0);
+        console.error("Error loading image for background removal");
+        toast.error("Failed to load image for background removal");
+      };
+
+      img.src = processedFrame;
     } catch (error) {
-      console.error("Error removing background:", error);
-      toast.error("Failed to remove background");
-    } finally {
       setIsProcessing(false);
+      setProcessingProgress(0);
+      console.error("Error in background removal:", error);
+      toast.error("Failed to remove background");
     }
   };
 
@@ -683,7 +766,7 @@ export default function VideoThumbnailGenerator() {
     setRedoStack([]); // Clear redo stack on new action
 
     const img = new window.Image();
-    img.src = processedFrame;
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
@@ -692,24 +775,29 @@ export default function VideoThumbnailGenerator() {
       if (ctx) {
         applyFilters(ctx);
         ctx.drawImage(img, 0, 0);
-        const filteredImageUrl = canvas.toDataURL("image/png");
+        const filteredImageUrl = canvas.toDataURL("image/png", 1.0);
         setProcessedFrame(filteredImageUrl);
+        setProcessedImageSrc(filteredImageUrl);
+        
+        // Update final preview after applying filters
+        updateFinalPreview();
         toast.success("Filters applied");
       }
     };
+    img.src = processedFrame;
   };
 
   const handleCreateThumbnail = () => {
     if (!processedFrame) {
-      toast.error("No frame selected")
-      return
+      toast.error("No frame selected");
+      return;
     }
 
-    setShowTextEditor(true)
-    setActiveTab("text")
-    updateFinalPreview()
-    toast.success("Ready to add text")
-  }
+    setShowTextEditor(true);
+    setActiveTab("text");
+    updateFinalPreview();
+    toast.success("Ready to add text");
+  };
 
   // Calculate position based on the position property
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
@@ -770,150 +858,157 @@ export default function VideoThumbnailGenerator() {
 
   // Update the final preview with text elements
   const updateFinalPreview = () => {
-    if (!processedFrame || !finalCanvasRef.current) return;
+    if (!processedFrame) {
+      console.debug("No processed frame available for preview");
+      return;
+    }
 
-    const canvas = finalCanvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Load the processed image
+    // Create a new canvas for the final preview
+    const previewCanvas = document.createElement('canvas');
     const img = new window.Image();
     img.crossOrigin = "anonymous";
-    img.src = processedFrame;
+
     img.onload = () => {
       // Set canvas dimensions based on the image
-      canvas.width = img.width;
-      canvas.height = img.height;
+      previewCanvas.width = img.width;
+      previewCanvas.height = img.height;
+      const ctx = previewCanvas.getContext("2d");
+      
+      if (!ctx) {
+        console.error("Failed to get canvas context");
+        return;
+      }
 
       // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-      // Draw the processed image
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Draw the processed image with filters
+      ctx.filter = `
+        brightness(${imageFilters.brightness}%) 
+        contrast(${imageFilters.contrast}%) 
+        saturate(${imageFilters.saturation}%) 
+        blur(${imageFilters.blur}px) 
+        hue-rotate(${imageFilters.hueRotate}deg)
+        grayscale(${imageFilters.grayscale}%)
+        sepia(${imageFilters.sepia}%)
+      `;
+      ctx.drawImage(img, 0, 0);
+      ctx.filter = "none"; // Reset filters for text
 
       // Draw all text elements
       textElements.forEach((element) => {
         if (!element.visible) return;
-
-        // Save context state
-        ctx.save();
-
-        // Calculate position
-        const position = calculatePosition(element, canvas.width, canvas.height);
-        ctx.translate(position.x, position.y);
-
-        // Apply rotation
-        if (element.rotation !== 0) {
-          ctx.rotate((element.rotation * Math.PI) / 180);
-        }
-
-        // Set font properties
-        let fontStyle = "";
-        if (element.bold) fontStyle += "bold ";
-        if (element.italic) fontStyle += "italic ";
-        const scaleFactor = Math.min(canvas.width, canvas.height) / 1000;
-        const scaledFontSize = element.fontSize * scaleFactor * 2;
-        fontStyle += `${scaledFontSize}px ${element.fontFamily}`;
-        ctx.font = fontStyle;
-
-        // Set text alignment
-        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center";
-        ctx.textBaseline = "middle";
-
-        // Set opacity
-        ctx.globalAlpha = (element.opacity || 100) / 100;
-
-        // Draw background rectangle if enabled
-        if (element.backgroundEnabled && element.backgroundColor) {
-          const metrics = ctx.measureText(element.text);
-          const textHeight = scaledFontSize * 1.2;
-          const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width);
-          let rectX = 0;
-          if (ctx.textAlign === "center") rectX = -rectWidth / 2;
-          if (ctx.textAlign === "right") rectX = -rectWidth;
-          let rectY = 0;
-          const textBaseline = ctx.textBaseline as CanvasTextBaseline;
-          if (textBaseline === "middle") rectY = -textHeight / 2;
-          if (textBaseline === "top") rectY = 0;
-          ctx.save();
-          ctx.shadowColor = "transparent";
-          ctx.fillStyle = element.backgroundColor;
-          ctx.fillRect(rectX, rectY, rectWidth, textHeight);
-          ctx.restore();
-        }
-
-        // Set shadow if enabled
-        if (element.shadow) {
-          ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)";
-          ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor;
-          ctx.shadowOffsetX = 2 * scaleFactor;
-          ctx.shadowOffsetY = 2 * scaleFactor;
-        } else {
-          ctx.shadowColor = "transparent";
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-        }
-
-        // Set text color
-        ctx.fillStyle = element.color;
-
-        // Draw curved text if enabled
-        if (element.curve) {
-          const text = element.text;
-          const radius = Math.max(80, scaledFontSize * 2);
-          const angleStep = Math.PI / (text.length + 1);
-          const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2;
-          for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            ctx.save();
-            ctx.rotate(startAngle + i * angleStep);
-            ctx.translate(0, -radius);
-            ctx.fillText(char, 0, 0);
-            ctx.restore();
-          }
-        } else {
-          // Draw regular text
-          const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width;
-          ctx.fillText(element.text, 0, 0, maxWidth);
-
-          // Draw underline if enabled
-          if (element.underline) {
-            const textMetrics = ctx.measureText(element.text);
-            const underlineY = element.fontSize * 0.15 * scaleFactor;
-            ctx.lineWidth = element.fontSize * 0.05 * scaleFactor;
-            ctx.beginPath();
-            ctx.moveTo(-textMetrics.width / 2, underlineY);
-            ctx.lineTo(textMetrics.width / 2, underlineY);
-            ctx.stroke();
-          }
-        }
-
-        // Restore context state
-        ctx.restore();
+        drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
       });
 
       // Update the final thumbnail
-      const finalImageUrl = canvas.toDataURL("image/png");
-      setFinalThumbnail(finalImageUrl);
+      try {
+        const finalImageUrl = previewCanvas.toDataURL("image/png", 1.0);
+        setFinalThumbnail(finalImageUrl);
+        console.debug("Final preview updated");
+      } catch (error) {
+        console.error("Error creating final thumbnail:", error);
+        toast.error("Failed to create final preview");
+      }
     };
+
+    img.onerror = () => {
+      console.error("Error loading image for final preview");
+      toast.error("Failed to create final preview");
+    };
+
+    img.src = processedFrame;
+  };
+
+  // Add useEffect to handle preview updates
+  useEffect(() => {
+    if (processedFrame) {
+      console.debug("Updating final preview due to state change");
+      updateFinalPreview();
+    }
+  }, [processedFrame, textElements, imageFilters, processedImageSrc]);
+
+  // Add helper function for drawing text elements
+  const drawTextElement = (
+    ctx: CanvasRenderingContext2D,
+    element: TextElement,
+    canvasWidth: number,
+    canvasHeight: number
+  ) => {
+    ctx.save();
+
+    // Calculate position
+    const position = calculatePosition(element, canvasWidth, canvasHeight);
+    ctx.translate(position.x, position.y);
+
+    // Apply rotation
+    if (element.rotation !== 0) {
+      ctx.rotate((element.rotation * Math.PI) / 180);
+    }
+
+    // Set font properties
+    let fontStyle = "";
+    if (element.bold) fontStyle += "bold ";
+    if (element.italic) fontStyle += "italic ";
+    const scaleFactor = Math.min(canvasWidth, canvasHeight) / 1000;
+    const scaledFontSize = element.fontSize * scaleFactor * 2;
+    fontStyle += `${scaledFontSize}px ${element.fontFamily}`;
+    ctx.font = fontStyle;
+
+    // Set text alignment
+    ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center";
+    ctx.textBaseline = "middle";
+
+    // Set opacity
+    ctx.globalAlpha = (element.opacity || 100) / 100;
+
+    // Draw background if enabled
+    if (element.backgroundEnabled && element.backgroundColor) {
+      const metrics = ctx.measureText(element.text);
+      const padding = scaledFontSize * 0.2;
+      ctx.fillStyle = element.backgroundColor;
+      ctx.fillRect(
+        -metrics.width / 2 - padding,
+        -scaledFontSize / 2 - padding,
+        metrics.width + padding * 2,
+        scaledFontSize + padding * 2
+      );
+    }
+
+    // Set shadow if enabled
+    if (element.shadow) {
+      ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)";
+      ctx.shadowBlur = (element.shadowBlur || 10) * scaleFactor;
+      ctx.shadowOffsetX = 2 * scaleFactor;
+      ctx.shadowOffsetY = 2 * scaleFactor;
+    }
+
+    // Set text color
+    ctx.fillStyle = element.color;
+
+    // Draw text
+    const maxWidth = ((element.maxWidth || 80) / 100) * canvasWidth;
+    ctx.fillText(element.text, 0, 0, maxWidth);
+
+    ctx.restore();
   };
 
   const handleSaveFinalThumbnail = () => {
     if (!finalThumbnail) {
-      toast.error("No thumbnail to save")
-      return
+      toast.error("No thumbnail to save");
+      return;
     }
 
-    const link = document.createElement("a")
-    link.href = finalThumbnail
-    link.download = `thumbnail-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const link = document.createElement("a");
+    link.href = finalThumbnail;
+    link.download = `thumbnail-${timestamp}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    toast.success("Thumbnail saved")
-  }
+    toast.success("Thumbnail saved successfully");
+  };
 
   const handleApplyText = () => {
     updateFinalPreview()
@@ -957,10 +1052,52 @@ export default function VideoThumbnailGenerator() {
     toast.success("Image saved successfully")
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Clean up old URL if exists
+    if (video.src && video.src.startsWith('blob:')) {
+      URL.revokeObjectURL(video.src);
+    }
+
+    // For local files, we can use blob URLs
+    const blobUrl = URL.createObjectURL(file);
+    video.src = blobUrl;
+    video.setAttribute('crossOrigin', 'anonymous');
+    video.load();
+  };
+
+  const handleURLLoad = () => {
+    const urlInput = document.getElementById("imageUrl") as HTMLInputElement;
+    const url = urlInput.value.trim();
+
+    if (!url) {
+      toast.error("Please enter a video URL");
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Clean up old URL if exists
+    if (video.src && video.src.startsWith('blob:')) {
+      URL.revokeObjectURL(video.src);
+    }
+
+    // For remote URLs, ensure CORS is set
+    video.setAttribute('crossOrigin', 'anonymous');
+    video.src = url;
+    video.load();
+  };
+
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2">
           <TabsTrigger value="video" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2">
             <Clock className="h-3 w-3 md:h-4 md:w-4" />
             <span>Video</span>
@@ -981,6 +1118,10 @@ export default function VideoThumbnailGenerator() {
             <Type className="h-3 w-3 md:h-4 md:w-4" />
             <span>Text</span>
           </TabsTrigger>
+          <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2" disabled={!processedFrame}>
+            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
+            <span>Final Preview</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
@@ -995,7 +1136,6 @@ export default function VideoThumbnailGenerator() {
                 onMetadataLoaded={handleMetadataLoaded}
                 onTimeUpdate={handleTimeUpdate}
                 onSnapshot={handleSnapshot}
-                crossOrigin="anonymous"
               />
 
               <Card>
@@ -1089,11 +1229,15 @@ export default function VideoThumbnailGenerator() {
                         e.dataTransfer.effectAllowed = "copy";
                       }}
                     >
-                      <img
-                        src={snapshot}
+                      <img 
+                        src={snapshot} 
                         alt={`Snapshot ${index + 1}`}
                         className="absolute inset-0 w-full h-full object-cover"
                         crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error(`Error loading snapshot ${index}:`, e);
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
                       />
                       <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                         <div className="flex gap-2">
@@ -1141,6 +1285,7 @@ export default function VideoThumbnailGenerator() {
                   setSnapshots([]);
                   setSelectedSnapshotIndex(-1);
                   setProcessedFrame(null);
+                  setProcessedImageSrc(null);
                   toast.success("All snapshots cleared");
                 }}
                 disabled={snapshots.length === 0}
@@ -1516,9 +1661,14 @@ export default function VideoThumbnailGenerator() {
               {isProcessing ? (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6">
                   <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 mb-3 sm:mb-4 dark:bg-gray-700">
-                    <div className="bg-primary h-2 sm:h-2.5 rounded-full" style={{ width: `${processingProgress}%` }}></div>
+                    <div 
+                      className="bg-primary h-2 sm:h-2.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${processingProgress}%` }}
+                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">Processing... {processingProgress}%</p>
+                  <p className="text-sm text-muted-foreground">
+                    Removing background... {processingProgress}%
+                  </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6">
@@ -1529,19 +1679,35 @@ export default function VideoThumbnailGenerator() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
                     <Button 
                       onClick={handleRemoveBackground} 
-                      disabled={!processedFrame} 
+                      disabled={!processedFrame || isProcessing} 
                       className="w-full"
                       size="default"
                     >
-                      Remove Background
+                      {isProcessing ? (
+                        <span className="flex items-center">
+                          <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full" />
+                          Processing...
+                        </span>
+                      ) : (
+                        "Remove Background"
+                      )}
                     </Button>
                     <div className="grid grid-cols-2 gap-2 w-full">
                       <Button 
                         onClick={() => {
                           if (processedFrame) {
-                            setProcessedFrame(null)
-                            setSelectedSnapshotIndex(-1)
-                            toast.success("Background removal cancelled")
+                            // Restore previous state if available
+                            if (undoStack.length > 0) {
+                              const previousState = undoStack[undoStack.length - 1];
+                              setProcessedFrame(previousState);
+                              setProcessedImageSrc(previousState);
+                              setUndoStack(prev => prev.slice(0, -1));
+                            } else {
+                              setProcessedFrame(null);
+                              setProcessedImageSrc(null);
+                            }
+                            setSelectedSnapshotIndex(-1);
+                            toast.success("Background removal cancelled");
                           }
                         }}
                         variant="outline"
@@ -1587,6 +1753,57 @@ export default function VideoThumbnailGenerator() {
                 }}
               />
             </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg">Final Preview</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Preview your thumbnail with all effects applied</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                {finalThumbnail ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={finalThumbnail}
+                      alt="Final Thumbnail"
+                      className="w-full h-full object-contain"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        console.error("Error loading final thumbnail");
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                      {videoInfo ? `${videoInfo.width}x${videoInfo.height}` : 'Preview'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-500">No preview available</p>
+                    <p className="text-xs text-gray-400 mt-1">Apply filters and text to see the final preview</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
+                {finalThumbnail && (
+                  <span>Ready to download</span>
+                )}
+              </div>
+              <Button
+                onClick={handleSaveFinalThumbnail}
+                disabled={!finalThumbnail}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Thumbnail
+              </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

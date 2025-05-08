@@ -40,7 +40,6 @@ export interface VideoPlayerProps {
   } | null;
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
-  crossOrigin?: "anonymous" | "use-credentials" | "";
 }
 
 export function VideoPlayer({
@@ -52,7 +51,6 @@ export function VideoPlayer({
   videoInfo,
   isPlaying,
   setIsPlaying,
-  crossOrigin = "anonymous",
 }: VideoPlayerProps) {
   const [isMetadataLoaded, setIsMetadataLoaded] = useState(false);
 
@@ -326,7 +324,6 @@ export function VideoPlayer({
               onEnded={handleVideoEnd}
               controls={false}
               playsInline
-              crossOrigin={crossOrigin}
             />
             {!videoLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/5">
