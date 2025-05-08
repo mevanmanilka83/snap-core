@@ -329,101 +329,112 @@ export default function VideoThumbnailGenerator() {
     }
   };
 
-  const captureSnapshot = () => {
+  // Add this helper function at the top level
+  const createVideoSnapshot = async (video: HTMLVideoElement): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create canvas matching video dimensions
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+
+        // Set canvas size to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw current video frame
+        ctx.drawImage(video, 0, 0);
+
+        // Convert to data URL
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        if (!dataUrl || dataUrl === 'data:,') {
+          reject(new Error('Failed to capture frame'));
+          return;
+        }
+
+        resolve(dataUrl);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  // Replace the existing captureSnapshot function
+  const captureSnapshot = async () => {
     const video = videoRef.current;
+    
     if (!video) {
       toast.error("No video loaded");
       return;
     }
 
-    // Check if video is ready
-    if (video.readyState < 2) {
-      toast.error("Video is not ready yet. Please wait a moment.");
+    // Verify video is ready
+    if (!video.videoWidth || !video.videoHeight) {
+      toast.error("Video dimensions not available. Please wait for video to load.");
       return;
     }
 
+    // Store playing state
+    const wasPlaying = !video.paused;
+    
     try {
-      // Create an offscreen canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Pause video temporarily
+      video.pause();
 
-      const ctx = canvas.getContext('2d', {
-        willReadFrequently: true,
-        alpha: false
+      // Wait a frame to ensure video is actually paused
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // Capture the frame
+      const snapshotUrl = await createVideoSnapshot(video);
+
+      // Verify the captured image
+      await new Promise<void>((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to verify captured image'));
+        img.src = snapshotUrl;
       });
 
-      if (!ctx) {
-        toast.error("Failed to create canvas context");
-        return;
+      // Update all states
+      setSnapshots(prev => [...prev, snapshotUrl]);
+      setProcessedFrame(snapshotUrl);
+      setCurrentFrame(snapshotUrl);
+      setSelectedSnapshotIndex(snapshots.length);
+      setProcessedImageSrc(snapshotUrl);
+
+      // Handle undo stack
+      if (processedFrame) {
+        setUndoStack(prev => [...prev, processedFrame]);
+        setRedoStack([]);
       }
 
-      // Pause video for consistent capture
-      const wasPlaying = !video.paused;
-      if (wasPlaying) {
-        video.pause();
-      }
+      // Update preview
+      updateFinalPreview();
 
-      try {
-        // Draw the video frame
-        ctx.drawImage(video, 0, 0);
+      toast.success("Snapshot captured successfully", {
+        description: `View in Snapshots tab (${snapshots.length + 1} total)`
+      });
 
-        // Create a new canvas for the snapshot
-        const snapshotCanvas = document.createElement('canvas');
-        snapshotCanvas.width = video.videoWidth;
-        snapshotCanvas.height = video.videoHeight;
-        const snapshotCtx = snapshotCanvas.getContext('2d');
-
-        if (!snapshotCtx) {
-          throw new Error('Failed to create snapshot context');
-        }
-
-        // Copy the frame to the snapshot canvas
-        snapshotCtx.drawImage(canvas, 0, 0);
-
-        // Get the image data
-        const imageData = snapshotCanvas.toDataURL('image/png', 1.0);
-
-        if (!imageData || imageData === 'data:,') {
-          throw new Error('Invalid image data generated');
-        }
-
-        // Update states
-        setSnapshots((prev) => [...prev, imageData]);
-        setProcessedFrame(imageData);
-        setCurrentFrame(imageData);
-        setSelectedSnapshotIndex(snapshots.length);
-        setProcessedImageSrc(imageData);
-
-        // Save to undo stack if needed
-        if (processedFrame) {
-          setUndoStack((prev) => [...prev, processedFrame]);
-          setRedoStack([]);
-        }
-
-        // Update final preview
-        updateFinalPreview();
-
-        // Resume video if it was playing
-        if (wasPlaying) {
-          video.play();
-        }
-
-        toast.success("Snapshot captured successfully", {
-          description: `View in Snapshots tab (${snapshots.length + 1} total)`
-        });
-      } catch (error) {
-        console.error("Error in snapshot capture:", error);
-        toast.error("Failed to capture snapshot. Please try again.");
-
-        // Resume video if it was playing
-        if (wasPlaying) {
-          video.play();
-        }
-      }
     } catch (error) {
-      console.error("Error in canvas setup:", error);
-      toast.error("Failed to set up snapshot capture");
+      console.error('Snapshot error:', error);
+      toast.error("Failed to capture snapshot", {
+        description: "Please ensure the video is fully loaded and try again"
+      });
+    } finally {
+      // Restore video state
+      if (wasPlaying) {
+        try {
+          await video.play();
+        } catch (e) {
+          console.error('Failed to resume video:', e);
+        }
+      }
     }
   };
 
@@ -1097,29 +1108,43 @@ export default function VideoThumbnailGenerator() {
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2">
-          <TabsTrigger value="video" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2">
-            <Clock className="h-3 w-3 md:h-4 md:w-4" />
+        <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2">
+          <TabsTrigger 
+            value="video" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+          >
+            <Clock className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
             <span>Video</span>
           </TabsTrigger>
-          <TabsTrigger value="snapshots" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2">
-            <Layers className="h-3 w-3 md:h-4 md:w-4" />
+          <TabsTrigger 
+            value="snapshots"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+          >
+            <Layers className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
             <span>Snapshots ({snapshots.length})</span>
           </TabsTrigger>
           <TabsTrigger
             value="edit"
-            className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
             disabled={selectedSnapshotIndex === -1}
           >
-            <Palette className="h-3 w-3 md:h-4 md:w-4" />
+            <Palette className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
             <span>Edit</span>
           </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2" disabled={!processedFrame}>
-            <Type className="h-3 w-3 md:h-4 md:w-4" />
+          <TabsTrigger 
+            value="text" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            disabled={!processedFrame}
+          >
+            <Type className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
             <span>Text</span>
           </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2" disabled={!processedFrame}>
-            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
+          <TabsTrigger 
+            value="preview" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            disabled={!processedFrame}
+          >
+            <ImageIcon className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
             <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
