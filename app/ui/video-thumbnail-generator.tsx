@@ -48,9 +48,50 @@ interface ImageFilter {
   sepia: number
 }
 
+interface TextElement {
+  id: string
+  text: string
+  x: number
+  y: number
+  fontSize: number
+  color: string
+  rotation: number
+  fontFamily: string
+  position:
+    | "center"
+    | "left"
+    | "right"
+    | "top"
+    | "bottom"
+    | "top-left"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-right"
+    | "top-center"
+    | "center-left"
+    | "center-right"
+    | "bottom-center"
+  maxWidth?: number
+  curve?: boolean
+  backgroundColor?: string
+  backgroundEnabled?: boolean
+  shadow?: boolean
+  shadowBlur?: number
+  shadowColor?: string
+  textAlign?: "left" | "center" | "right" | "justify"
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  letterSpacing?: number
+  lineHeight?: number
+  opacity?: number
+  visible?: boolean
+}
+
 export default function VideoThumbnailGenerator() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const finalCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -77,6 +118,36 @@ export default function VideoThumbnailGenerator() {
     grayscale: 0,
     sepia: 0,
   })
+
+  // Text elements state
+  const [textElements, setTextElements] = useState<TextElement[]>([
+    {
+      id: "default-text",
+      text: "TTV",
+      x: 50,
+      y: 50,
+      fontSize: 72,
+      color: "#ffffff",
+      rotation: 0,
+      fontFamily: "Arial",
+      position: "center",
+      maxWidth: 80,
+      curve: false,
+      backgroundColor: "#000000",
+      backgroundEnabled: false,
+      shadow: true,
+      shadowBlur: 10,
+      shadowColor: "#000000",
+      textAlign: "center",
+      bold: false,
+      italic: false,
+      underline: false,
+      letterSpacing: 0,
+      lineHeight: 1.2,
+      opacity: 100,
+      visible: true,
+    },
+  ])
 
   // Clean up on unmount
   useEffect(() => {
@@ -134,6 +205,13 @@ export default function VideoThumbnailGenerator() {
       }
     }
   }, [autoSnapInterval, videoLoaded, videoInfo])
+
+  // Update final preview when text elements change
+  useEffect(() => {
+    if (processedFrame && finalCanvasRef.current) {
+      updateFinalPreview()
+    }
+  }, [textElements, processedFrame])
 
   const handleMetadataLoaded = (info: VideoInfo) => {
     setVideoInfo(info)
@@ -445,10 +523,197 @@ export default function VideoThumbnailGenerator() {
       return
     }
 
-    setFinalThumbnail(processedFrame)
     setShowTextEditor(true)
     setActiveTab("text")
+    updateFinalPreview()
     toast.success("Ready to add text")
+  }
+
+  // Calculate position based on the position property
+  const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
+    let x = canvasWidth * (element.x / 100)
+    let y = canvasHeight * (element.y / 100)
+
+    // Adjust position based on the position property
+    switch (element.position) {
+      case "left":
+        x = 20
+        break
+      case "right":
+        x = canvasWidth - 20
+        break
+      case "top":
+        y = 20
+        break
+      case "bottom":
+        y = canvasHeight - 20
+        break
+      case "top-left":
+        x = 20
+        y = 20
+        break
+      case "top-right":
+        x = canvasWidth - 20
+        y = 20
+        break
+      case "bottom-left":
+        x = 20
+        y = canvasHeight - 20
+        break
+      case "bottom-right":
+        x = canvasWidth - 20
+        y = canvasHeight - 20
+        break
+      case "top-center":
+        x = canvasWidth / 2
+        y = 20
+        break
+      case "center-left":
+        x = 20
+        y = canvasHeight / 2
+        break
+      case "center-right":
+        x = canvasWidth - 20
+        y = canvasHeight / 2
+        break
+      case "bottom-center":
+        x = canvasWidth / 2
+        y = canvasHeight - 20
+        break
+      // center is the default, already calculated
+    }
+
+    return { x, y }
+  }
+
+  // Update the final preview with text elements
+  const updateFinalPreview = () => {
+    if (!processedFrame || !finalCanvasRef.current) return
+
+    const canvas = finalCanvasRef.current
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    // Load the processed image
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.src = processedFrame
+    img.onload = () => {
+      // Set canvas dimensions based on the image
+      canvas.width = img.width
+      canvas.height = img.height
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Draw the processed image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      // Draw all text elements
+      textElements.forEach((element) => {
+        if (!element.visible) return
+
+        // Save context state
+        ctx.save()
+
+        // Calculate position
+        const position = calculatePosition(element, canvas.width, canvas.height)
+        ctx.translate(position.x, position.y)
+
+        // Apply rotation
+        if (element.rotation !== 0) {
+          ctx.rotate((element.rotation * Math.PI) / 180)
+        }
+
+        // Set font properties
+        let fontStyle = ""
+        if (element.bold) fontStyle += "bold "
+        if (element.italic) fontStyle += "italic "
+        const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+        const scaledFontSize = element.fontSize * scaleFactor * 2
+        fontStyle += `${scaledFontSize}px ${element.fontFamily}`
+        ctx.font = fontStyle
+
+        // Set text alignment
+        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+        ctx.textBaseline = "middle"
+
+        // Set opacity
+        ctx.globalAlpha = (element.opacity || 100) / 100
+
+        // Draw background rectangle if enabled
+        if (element.backgroundEnabled && element.backgroundColor) {
+          const metrics = ctx.measureText(element.text)
+          const textHeight = scaledFontSize * 1.2
+          const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
+          let rectX = 0
+          if (ctx.textAlign === "center") rectX = -rectWidth / 2
+          if (ctx.textAlign === "right") rectX = -rectWidth
+          let rectY = 0
+          if (ctx.textBaseline === "middle") rectY = -textHeight / 2
+          if (ctx.textBaseline === "bottom") rectY = -textHeight
+          ctx.save()
+          ctx.shadowColor = "transparent"
+          ctx.fillStyle = element.backgroundColor
+          ctx.fillRect(rectX, rectY, rectWidth, textHeight)
+          ctx.restore()
+        }
+
+        // Set shadow if enabled
+        if (element.shadow) {
+          ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
+          ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
+          ctx.shadowOffsetX = 2 * scaleFactor
+          ctx.shadowOffsetY = 2 * scaleFactor
+        } else {
+          ctx.shadowColor = "transparent"
+          ctx.shadowBlur = 0
+          ctx.shadowOffsetX = 0
+          ctx.shadowOffsetY = 0
+        }
+
+        // Set text color
+        ctx.fillStyle = element.color
+
+        // Draw curved text if enabled
+        if (element.curve) {
+          const text = element.text
+          const radius = Math.max(80, scaledFontSize * 2)
+          const angleStep = Math.PI / (text.length + 1)
+          const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i]
+            ctx.save()
+            ctx.rotate(startAngle + i * angleStep)
+            ctx.translate(0, -radius)
+            ctx.fillText(char, 0, 0)
+            ctx.restore()
+          }
+        } else {
+          // Draw regular text
+          const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
+          ctx.fillText(element.text, 0, 0, maxWidth)
+
+          // Draw underline if enabled
+          if (element.underline) {
+            const textMetrics = ctx.measureText(element.text)
+            const underlineY = element.fontSize * 0.15 * scaleFactor
+            ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
+            ctx.beginPath()
+            ctx.moveTo(-textMetrics.width / 2, underlineY)
+            ctx.lineTo(textMetrics.width / 2, underlineY)
+            ctx.stroke()
+          }
+        }
+
+        // Restore context state
+        ctx.restore()
+      })
+
+      // Update the final thumbnail
+      const finalImageUrl = canvas.toDataURL("image/png")
+      setFinalThumbnail(finalImageUrl)
+    }
   }
 
   const handleSaveFinalThumbnail = () => {
@@ -468,16 +733,13 @@ export default function VideoThumbnailGenerator() {
   }
 
   const handleApplyText = () => {
-    // This would be handled by your TextEditor component
-    // For now, we'll just simulate the process
-    if (!processedFrame) {
-      toast.error("No frame selected")
-      return
-    }
-
-    // In a real implementation, this would apply the text from TextEditor
-    setFinalThumbnail(processedFrame)
+    updateFinalPreview()
     toast.success("Text applied to thumbnail")
+  }
+
+  const handleUpdateTextElements = (updatedElements: TextElement[]) => {
+    setTextElements(updatedElements)
+    // The useEffect will trigger updateFinalPreview
   }
 
   const toggleAutoSnap = (enabled: boolean) => {
@@ -508,7 +770,11 @@ export default function VideoThumbnailGenerator() {
             <Layers className="h-4 w-4" />
             <span>Snapshots ({snapshots.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="edit" className="flex items-center gap-2" disabled={selectedSnapshotIndex === -1}>
+          <TabsTrigger
+            value="edit"
+            className="flex items-center gap-2"
+            disabled={selectedSnapshotIndex === -1 && !currentFrame}
+          >
             <Palette className="h-4 w-4" />
             <span>Edit</span>
           </TabsTrigger>
@@ -1084,33 +1350,47 @@ export default function VideoThumbnailGenerator() {
         </TabsContent>
 
         <TabsContent value="text" className="space-y-6">
-          <TextEditor onApply={handleApplyText} isCreatingThumbnail={false} processedImageSrc={processedFrame} />
+          <TextEditor
+            onApply={handleApplyText}
+            isCreatingThumbnail={false}
+            processedImageSrc={processedFrame}
+            textElements={textElements}
+            onTextElementsChange={handleUpdateTextElements}
+          />
 
-          {finalThumbnail && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Final Thumbnail</CardTitle>
-                <CardDescription>Your thumbnail is ready to download</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="relative aspect-video">
-                  <Image
-                    src={finalThumbnail || "/placeholder.svg"}
-                    alt="Final thumbnail"
-                    fill
-                    className="object-contain rounded-md"
-                    unoptimized={true}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button onClick={handleSaveFinalThumbnail} className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Download Thumbnail
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Final Preview</CardTitle>
+              <CardDescription>Your thumbnail with text overlay</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                {processedFrame ? (
+                  <>
+                    <canvas ref={finalCanvasRef} className="hidden" />
+                    <Image
+                      src={finalThumbnail || processedFrame}
+                      alt="Final thumbnail"
+                      fill
+                      className="object-contain rounded-md"
+                      unoptimized={true}
+                    />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
+                    <p className="text-gray-500 dark:text-gray-400">No frame selected</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button onClick={handleSaveFinalThumbnail} disabled={!finalThumbnail} className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Thumbnail
+              </Button>
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

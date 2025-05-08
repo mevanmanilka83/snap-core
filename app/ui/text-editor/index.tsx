@@ -74,6 +74,8 @@ interface TextEditorProps {
   onApply: () => void
   isCreatingThumbnail: boolean
   processedImageSrc: string | null
+  textElements?: TextElement[]
+  onTextElementsChange?: (elements: TextElement[]) => void
 }
 
 const POPULAR_FONTS = [
@@ -106,7 +108,13 @@ const PRESET_COLORS = [
   "#00ff80", // Mint
 ]
 
-export default function TextEditor({ onApply, isCreatingThumbnail, processedImageSrc }: TextEditorProps) {
+export default function TextEditor({
+  onApply,
+  isCreatingThumbnail,
+  processedImageSrc,
+  textElements: initialTextElements,
+  onTextElementsChange,
+}: TextEditorProps) {
   const [textElements, setTextElements] = useState<TextElement[]>([
     {
       id: "default-text",
@@ -140,9 +148,23 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
 
+  // Initialize with provided text elements if available
+  useEffect(() => {
+    if (initialTextElements && initialTextElements.length > 0) {
+      setTextElements(initialTextElements)
+    }
+  }, [initialTextElements])
+
   // Update text element properties
   const updateTextElement = (index: number, updates: Partial<TextElement>) => {
-    setTextElements((prev) => prev.map((element, i) => (i === index ? { ...element, ...updates } : element)))
+    setTextElements((prev) => {
+      const updated = prev.map((element, i) => (i === index ? { ...element, ...updates } : element))
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(updated)
+      }
+      return updated
+    })
   }
 
   // Generate unique ID for new text elements
@@ -179,7 +201,15 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
       visible: true,
     }
 
-    setTextElements((prev) => [...prev, newElement])
+    setTextElements((prev) => {
+      const updated = [...prev, newElement]
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(updated)
+      }
+      return updated
+    })
+
     setSelectedTextIndex(textElements.length)
     toast.success("New text element added")
   }
@@ -197,7 +227,15 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
       y: elementToDuplicate.y + 5,
     }
 
-    setTextElements((prev) => [...prev, duplicatedElement])
+    setTextElements((prev) => {
+      const updated = [...prev, duplicatedElement]
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(updated)
+      }
+      return updated
+    })
+
     setSelectedTextIndex(textElements.length)
     toast.success("Text element duplicated")
   }
@@ -241,7 +279,15 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
       return
     }
 
-    setTextElements((prev) => prev.filter((_, i) => i !== index))
+    setTextElements((prev) => {
+      const updated = prev.filter((_, i) => i !== index)
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(updated)
+      }
+      return updated
+    })
+
     setSelectedTextIndex((prev) => (prev >= index ? Math.max(0, prev - 1) : prev))
     toast.success("Text element removed")
   }
@@ -256,8 +302,14 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
     setTextElements((prev) => {
       const newElements = [...prev]
       ;[newElements[index], newElements[index + 1]] = [newElements[index + 1], newElements[index]]
+
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(newElements)
+      }
       return newElements
     })
+
     setSelectedTextIndex(index + 1)
   }
 
@@ -271,8 +323,14 @@ export default function TextEditor({ onApply, isCreatingThumbnail, processedImag
     setTextElements((prev) => {
       const newElements = [...prev]
       ;[newElements[index], newElements[index - 1]] = [newElements[index - 1], newElements[index]]
+
+      // Notify parent component if callback is provided
+      if (onTextElementsChange) {
+        onTextElementsChange(newElements)
+      }
       return newElements
     })
+
     setSelectedTextIndex(index - 1)
   }
 
