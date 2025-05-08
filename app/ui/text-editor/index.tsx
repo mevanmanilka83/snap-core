@@ -488,7 +488,6 @@ export default function TextEditor({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <CardTitle className="text-lg md:text-xl">Text Editor</CardTitle>
-            <CardDescription className="text-sm">Customize text for your thumbnail</CardDescription>
           </div>
           {processedImageSrc && (
             <div className="relative border rounded-md overflow-hidden w-full md:w-auto">

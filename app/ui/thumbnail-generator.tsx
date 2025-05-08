@@ -30,8 +30,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import TextEditor from "./text-editor"
-import { Input } from "@/components/ui/input"
-import { UploadIcon } from "lucide-react"
 
 interface VideoInfo {
   width: number
@@ -110,6 +108,9 @@ export default function VideoThumbnailGenerator() {
   const [showTextEditor, setShowTextEditor] = useState(false)
   const [finalThumbnail, setFinalThumbnail] = useState<string | null>(null)
   const [autoSnapInterval, setAutoSnapInterval] = useState<number | null>(null)
+  const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false)
+  const [showUpdateToast, setShowUpdateToast] = useState(false)
+  const [processedImageSrc, setProcessedImageSrc] = useState<string | null>(null)
   const autoSnapIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [imageFilters, setImageFilters] = useState<ImageFilter>({
     brightness: 100,
@@ -215,12 +216,23 @@ export default function VideoThumbnailGenerator() {
     }
   }, [textElements, processedFrame])
 
-  const handleMetadataLoaded = (info: VideoInfo) => {
-    setVideoInfo(info)
-    setVideoLoaded(true)
+  const handleMetadataLoaded = () => {
+    if (!videoRef.current) return;
+    
+    const video = videoRef.current;
+    // Set crossOrigin attribute
+    video.crossOrigin = "anonymous";
+    
+    setVideoInfo({
+      duration: video.duration,
+      currentTime: video.currentTime,
+      width: video.videoWidth,
+      height: video.videoHeight,
+    });
+    setVideoLoaded(true);
     toast.success("Video loaded", {
-      description: `${info.width}x${info.height}, ${formatDuration(info.duration)}`,
-    })
+      description: `${video.videoWidth}x${video.videoHeight}, ${formatDuration(video.duration)}`,
+    });
   }
 
   const formatDuration = (seconds: number): string => {
@@ -235,25 +247,23 @@ export default function VideoThumbnailGenerator() {
     try {
       const video = videoRef.current;
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return;
 
-      // Set crossOrigin attribute on video if not already set
-      if (!video.crossOrigin) {
-        video.crossOrigin = "anonymous";
-      }
-
-      // Draw the current frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Draw the current video frame
+      ctx.drawImage(video, 0, 0);
       
-      // Get the image data
-      const imageData = canvas.toDataURL('image/png', 1.0);
-      setCurrentFrame(imageData);
+      try {
+        const imageData = canvas.toDataURL('image/png');
+        setCurrentFrame(imageData);
+      } catch (error) {
+        console.error("Error updating frame:", error);
+      }
     } catch (error) {
-      console.error("Error updating frame:", error);
+      console.error("Error in handleTimeUpdate:", error);
     }
   };
 
@@ -310,8 +320,8 @@ export default function VideoThumbnailGenerator() {
     try {
       // Create canvas with video dimensions
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) {
@@ -319,34 +329,55 @@ export default function VideoThumbnailGenerator() {
         return;
       }
 
-      // Set crossOrigin attribute on video if not already set
-      if (!video.crossOrigin) {
-        video.crossOrigin = "anonymous";
-      }
-
       // Draw the current video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0);
       
       // Get the image data
-      const imageData = canvas.toDataURL('image/png', 1.0);
-
-      // Save current state to undo stack if we have a processed frame
-      if (processedFrame) {
-        setUndoStack((prev) => [...prev, processedFrame]);
-        setRedoStack([]); // Clear redo stack on new action
-      }
+      const imageData = canvas.toDataURL('image/png');
 
       // Add the current frame to snapshots
       setSnapshots((prev) => [...prev, imageData]);
-      setProcessedFrame(imageData); // Set as processed frame
-      setCurrentFrame(imageData); // Update current frame
-      setSelectedSnapshotIndex(snapshots.length); // Select the newly added snapshot
-      setActiveTab("snapshots"); // Switch to snapshots tab
+      setProcessedFrame(imageData);
+      setCurrentFrame(imageData);
+      setSelectedSnapshotIndex(snapshots.length);
+      setActiveTab("snapshots");
       toast.success("Snapshot captured");
     } catch (error) {
       console.error("Error capturing snapshot:", error);
-      toast.error("Failed to capture snapshot. Please ensure the video source allows CORS.");
+      toast.error("Failed to capture snapshot");
     }
+  };
+
+  const handleAutoCaptureKeyFrames = () => {
+    if (!videoRef.current || !videoInfo) {
+      toast.error("No video loaded");
+      return;
+    }
+
+    const video = videoRef.current;
+    const duration = video.duration;
+    const times = [0, 0.25, 0.5, 0.75, 1].map((percent) => percent * duration);
+    const wasPlaying = !video.paused;
+    
+    // Pause the video
+    video.pause();
+    
+    let timeIndex = 0;
+    const takeSnapshots = () => {
+      if (timeIndex < times.length) {
+        video.currentTime = times[timeIndex];
+        setTimeout(() => {
+          captureSnapshot();
+          timeIndex++;
+          takeSnapshots();
+        }, 500);
+      } else if (wasPlaying) {
+        video.play();
+      }
+    };
+    
+    takeSnapshots();
+    toast.success("Taking snapshots at key points");
   };
 
   const handleSaveSnapshot = (index: number) => {
@@ -496,7 +527,7 @@ export default function VideoThumbnailGenerator() {
       // In a real implementation, you would use the actual processed image
       const img = new window.Image();
       img.src = processedFrame;
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
@@ -512,8 +543,9 @@ export default function VideoThumbnailGenerator() {
 
           // In a real implementation, this would be the result of background removal
           const processedImageUrl = canvas.toDataURL("image/png");
+          setProcessedImageSrc(processedImageUrl);
           setProcessedFrame(processedImageUrl);
-          toast.success("Background removed");
+          toast.success("Background removed successfully");
         }
       };
     } catch (error) {
@@ -889,58 +921,6 @@ export default function VideoThumbnailGenerator() {
     toast.success("Image saved successfully")
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please select a video file');
-      return;
-    }
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Set up video element
-    video.crossOrigin = "anonymous";
-    video.src = URL.createObjectURL(file);
-    video.load();
-
-    // Reset states
-    setSnapshots([]);
-    setSelectedSnapshotIndex(-1);
-    setProcessedFrame(null);
-    setCurrentFrame(null);
-    setVideoLoaded(false);
-    setVideoInfo(null);
-  };
-
-  const handleURLLoad = () => {
-    const urlInput = document.getElementById('videoUrl') as HTMLInputElement;
-    const url = urlInput.value.trim();
-
-    if (!url) {
-      toast.error('Please enter a video URL');
-      return;
-    }
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Set up video element
-    video.crossOrigin = "anonymous";
-    video.src = url;
-    video.load();
-
-    // Reset states
-    setSnapshots([]);
-    setSelectedSnapshotIndex(-1);
-    setProcessedFrame(null);
-    setCurrentFrame(null);
-    setVideoLoaded(false);
-    setVideoInfo(null);
-  };
-
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -979,6 +959,7 @@ export default function VideoThumbnailGenerator() {
                 onMetadataLoaded={handleMetadataLoaded}
                 onTimeUpdate={handleTimeUpdate}
                 onSnapshot={handleSnapshot}
+                crossOrigin="anonymous"
               />
 
               <Card>
@@ -990,7 +971,7 @@ export default function VideoThumbnailGenerator() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
                     <Button 
                       onClick={captureSnapshot} 
-                      disabled={!currentFrame} 
+                      disabled={!videoLoaded} 
                       className="w-full"
                       size="default"
                     >
@@ -998,30 +979,7 @@ export default function VideoThumbnailGenerator() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        if (videoRef.current) {
-                          const video = videoRef.current;
-                          const duration = video.duration;
-                          const times = [0, 0.25, 0.5, 0.75, 1].map((percent) => percent * duration);
-                          const wasPlaying = !video.paused;
-                          video.pause();
-                          let timeIndex = 0;
-                          const takeSnapshots = () => {
-                            if (timeIndex < times.length) {
-                              video.currentTime = times[timeIndex];
-                              setTimeout(() => {
-                                captureSnapshot();
-                                timeIndex++;
-                                takeSnapshots();
-                              }, 500);
-                            } else if (wasPlaying) {
-                              video.play();
-                            }
-                          }
-                          takeSnapshots();
-                          toast.success("Taking snapshots at key points");
-                        }
-                      }}
+                      onClick={handleAutoCaptureKeyFrames}
                       disabled={!videoLoaded}
                       className="w-full"
                       size="default"
@@ -1568,53 +1526,25 @@ export default function VideoThumbnailGenerator() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="text" className="space-y-4 sm:space-y-6 mt-4">
-          <TextEditor
-            onApply={handleApplyText}
-            isCreatingThumbnail={false}
-            processedImageSrc={processedFrame}
-            textElements={textElements}
-            onTextElementsChange={handleUpdateTextElements}
-          />
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg">Final Preview</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Your thumbnail with text overlay</CardDescription>
+        <TabsContent value="text" className="space-y-4">
+          <Card className="w-full">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base">Text Editor</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                {processedFrame ? (
-                  <>
-                    <canvas ref={finalCanvasRef} className="hidden" />
-                    <img
-                      src={finalThumbnail || processedFrame}
-                      alt="Final thumbnail"
-                      className="object-contain rounded-md"
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                      }}
-                    />
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-2 sm:mb-3" />
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">No frame selected</p>
-                  </div>
-                )}
-              </div>
+            <CardContent className="p-4 md:p-6">
+              <TextEditor
+                onApply={() => {
+                  setShowUpdateToast(true)
+                  handleCreateThumbnail()
+                }}
+                isCreatingThumbnail={isCreatingThumbnail}
+                processedImageSrc={processedImageSrc}
+                textElements={textElements}
+                onTextElementsChange={(elements) => {
+                  setTextElements(elements)
+                }}
+              />
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                onClick={handleSaveFinalThumbnail}
-                disabled={!finalThumbnail}
-                className="text-xs sm:text-sm h-8 sm:h-9"
-              >
-                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Download Thumbnail
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
