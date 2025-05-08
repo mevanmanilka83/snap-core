@@ -220,7 +220,6 @@ export default function VideoThumbnailGenerator() {
     if (!videoRef.current) return;
     
     const video = videoRef.current;
-    // Set crossOrigin attribute
     video.crossOrigin = "anonymous";
     
     setVideoInfo({
@@ -242,28 +241,40 @@ export default function VideoThumbnailGenerator() {
   }
 
   const handleTimeUpdate = () => {
-    if (!videoRef.current || !isPlaying) return;
+    if (!videoRef.current) return;
 
-    try {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
+    const video = videoRef.current;
+    
+    // Update video info with current time
+    if (videoInfo) {
+      setVideoInfo({
+        ...videoInfo,
+        currentTime: video.currentTime
+      });
+    }
 
-      // Draw the current video frame
-      ctx.drawImage(video, 0, 0);
-      
+    // Only update current frame if video is ready
+    if (video.readyState >= 2) {
       try {
-        const imageData = canvas.toDataURL('image/png');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        // Clear canvas and set background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the current video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = canvas.toDataURL('image/png', 1.0);
         setCurrentFrame(imageData);
       } catch (error) {
         console.error("Error updating frame:", error);
       }
-    } catch (error) {
-      console.error("Error in handleTimeUpdate:", error);
     }
   };
 
@@ -329,24 +340,49 @@ export default function VideoThumbnailGenerator() {
         return;
       }
 
+      // Wait for video to be ready
+      if (video.readyState < 2) {
+        toast.error("Video not ready. Please try again.");
+        return;
+      }
+
+      // Clear canvas and set background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       // Draw the current video frame
-      ctx.drawImage(video, 0, 0);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
       // Get the image data
-      const imageData = canvas.toDataURL('image/png');
+      const imageData = canvas.toDataURL('image/png', 1.0);
 
       // Add the current frame to snapshots
       setSnapshots((prev) => [...prev, imageData]);
       setProcessedFrame(imageData);
       setCurrentFrame(imageData);
-      setSelectedSnapshotIndex(snapshots.length);
-      setActiveTab("snapshots");
       toast.success("Snapshot captured");
     } catch (error) {
       console.error("Error capturing snapshot:", error);
       toast.error("Failed to capture snapshot");
     }
   };
+
+  // Add effect to maintain video state when switching tabs
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // When switching back to video tab
+    if (activeTab === "video") {
+      // Restore video state
+      if (videoInfo) {
+        video.currentTime = videoInfo.currentTime;
+        if (isPlaying) {
+          video.play();
+        }
+      }
+    }
+  }, [activeTab, videoInfo, isPlaying]);
 
   const handleAutoCaptureKeyFrames = () => {
     if (!videoRef.current || !videoInfo) {
@@ -1053,6 +1089,12 @@ export default function VideoThumbnailGenerator() {
                         e.dataTransfer.effectAllowed = "copy";
                       }}
                     >
+                      <img
+                        src={snapshot}
+                        alt={`Snapshot ${index + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                      />
                       <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                         <div className="flex gap-2">
                           <Button
