@@ -30,6 +30,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import TextEditor from "./text-editor"
+import { Input } from "@/components/ui/input"
+import { UploadIcon } from "lucide-react"
 
 interface VideoInfo {
   width: number
@@ -227,24 +229,33 @@ export default function VideoThumbnailGenerator() {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  const handleTimeUpdate = (currentTime: number) => {
-    setVideoInfo((prev) => ({
-      ...prev!,
-      currentTime,
-    }))
+  const handleTimeUpdate = () => {
+    if (!videoRef.current || !isPlaying) return;
 
-    if (videoRef.current) {
-      const video = videoRef.current
-      const canvas = document.createElement("canvas")
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        setCurrentFrame(canvas.toDataURL("image/png"))
+    try {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+
+      // Set crossOrigin attribute on video if not already set
+      if (!video.crossOrigin) {
+        video.crossOrigin = "anonymous";
       }
+
+      // Draw the current frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Get the image data
+      const imageData = canvas.toDataURL('image/png', 1.0);
+      setCurrentFrame(imageData);
+    } catch (error) {
+      console.error("Error updating frame:", error);
     }
-  }
+  };
 
   const goToTime = (time: number) => {
     const video = videoRef.current
@@ -263,17 +274,80 @@ export default function VideoThumbnailGenerator() {
     setProcessedFrame(imageSrc)
   }
 
-  const captureSnapshot = () => {
-    if (!currentFrame) return
-
-    setSnapshots((prev) => [...prev, currentFrame])
-    toast.success("Snapshot taken")
-  }
-
   const handleSnapshot = (imageData: string) => {
-    setSnapshots((prev) => [...prev, imageData])
-    toast.success("Snapshot taken")
-  }
+    if (!imageData) {
+      toast.error("No image data received");
+      return;
+    }
+
+    try {
+      // Save current state to undo stack if we have a processed frame
+      if (processedFrame) {
+        setUndoStack((prev) => [...prev, processedFrame]);
+        setRedoStack([]); // Clear redo stack on new action
+      }
+
+      // Update both current frame and snapshots
+      setCurrentFrame(imageData);
+      setSnapshots((prev) => [...prev, imageData]);
+      setProcessedFrame(imageData); // Ensure the frame is processed
+      setSelectedSnapshotIndex(snapshots.length); // Select the newly added snapshot
+      setActiveTab("snapshots"); // Switch to snapshots tab
+      toast.success("Snapshot captured");
+    } catch (error) {
+      console.error("Error handling snapshot:", error);
+      toast.error("Failed to capture snapshot");
+    }
+  };
+
+  const captureSnapshot = () => {
+    const video = videoRef.current;
+    if (!video) {
+      toast.error("No video loaded");
+      return;
+    }
+
+    try {
+      // Create canvas with video dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        toast.error("Failed to create canvas context");
+        return;
+      }
+
+      // Set crossOrigin attribute on video if not already set
+      if (!video.crossOrigin) {
+        video.crossOrigin = "anonymous";
+      }
+
+      // Draw the current video frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Get the image data
+      const imageData = canvas.toDataURL('image/png', 1.0);
+
+      // Save current state to undo stack if we have a processed frame
+      if (processedFrame) {
+        setUndoStack((prev) => [...prev, processedFrame]);
+        setRedoStack([]); // Clear redo stack on new action
+      }
+
+      // Add the current frame to snapshots
+      setSnapshots((prev) => [...prev, imageData]);
+      setProcessedFrame(imageData); // Set as processed frame
+      setCurrentFrame(imageData); // Update current frame
+      setSelectedSnapshotIndex(snapshots.length); // Select the newly added snapshot
+      setActiveTab("snapshots"); // Switch to snapshots tab
+      toast.success("Snapshot captured");
+    } catch (error) {
+      console.error("Error capturing snapshot:", error);
+      toast.error("Failed to capture snapshot. Please ensure the video source allows CORS.");
+    }
+  };
 
   const handleSaveSnapshot = (index: number) => {
     const snapshot = snapshots[index]
@@ -314,10 +388,50 @@ export default function VideoThumbnailGenerator() {
   }
 
   const handleSelectSnapshot = (index: number) => {
-    setSelectedSnapshotIndex(index)
-    setProcessedFrame(snapshots[index])
-    setActiveTab("edit")
-  }
+    if (index < 0 || index >= snapshots.length) {
+      toast.error("Invalid snapshot index");
+      return;
+    }
+    
+    const selectedSnapshot = snapshots[index];
+    if (!selectedSnapshot || selectedSnapshot === 'data:,') {
+      toast.error("Selected snapshot is empty or invalid");
+      return;
+    }
+    
+    setSelectedSnapshotIndex(index);
+    setProcessedFrame(selectedSnapshot);
+    setCurrentFrame(selectedSnapshot);
+    setActiveTab("edit");
+  };
+
+  // Add useEffect to handle snapshot updates
+  useEffect(() => {
+    if (snapshots.length > 0) {
+      // Ensure the last snapshot is valid
+      const lastSnapshot = snapshots[snapshots.length - 1];
+      if (!lastSnapshot || lastSnapshot === 'data:,') {
+        // Remove invalid snapshot
+        setSnapshots((prev) => prev.slice(0, -1));
+        toast.error("Invalid snapshot removed");
+      }
+    }
+  }, [snapshots]);
+
+  // Add useEffect to handle current frame updates
+  useEffect(() => {
+    if (currentFrame && currentFrame !== 'data:,') {
+      setProcessedFrame(currentFrame);
+    }
+  }, [currentFrame]);
+
+  // Add useEffect to handle processed frame updates
+  useEffect(() => {
+    if (processedFrame && processedFrame !== 'data:,') {
+      // Update the final preview if we have a valid processed frame
+      updateFinalPreview();
+    }
+  }, [processedFrame]);
 
   const handleUndo = () => {
     if (undoStack.length === 0) {
@@ -363,52 +477,52 @@ export default function VideoThumbnailGenerator() {
 
   const handleRemoveBackground = async () => {
     if (!processedFrame) {
-      toast.error("No frame selected")
-      return
+      toast.error("No frame selected");
+      return;
     }
 
-    setIsProcessing(true)
-    setProcessingProgress(0)
+    setIsProcessing(true);
+    setProcessingProgress(0);
 
     try {
       // This would be handled by your BackgroundRemovalProcessor component
       // For now, we'll just simulate the process
       for (let i = 0; i <= 100; i += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 200))
-        setProcessingProgress(i)
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        setProcessingProgress(i);
       }
 
       // Simulate background removal by adding a placeholder
       // In a real implementation, you would use the actual processed image
-      const img = new Image()
-      img.src = processedFrame
+      const img = new window.Image();
+      img.src = processedFrame;
       img.onload = () => {
-        const canvas = document.createElement("canvas")
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext("2d")
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
         if (ctx) {
           // Save current state to undo stack
-          setUndoStack((prev) => [...prev, processedFrame!])
-          setRedoStack([]) // Clear redo stack on new action
+          setUndoStack((prev) => [...prev, processedFrame!]);
+          setRedoStack([]); // Clear redo stack on new action
 
           // Apply the current filters to the image
-          applyFilters(ctx)
-          ctx.drawImage(img, 0, 0)
+          applyFilters(ctx);
+          ctx.drawImage(img, 0, 0);
 
           // In a real implementation, this would be the result of background removal
-          const processedImageUrl = canvas.toDataURL("image/png")
-          setProcessedFrame(processedImageUrl)
-          toast.success("Background removed")
+          const processedImageUrl = canvas.toDataURL("image/png");
+          setProcessedFrame(processedImageUrl);
+          toast.success("Background removed");
         }
-      }
+      };
     } catch (error) {
-      console.error("Error removing background:", error)
-      toast.error("Failed to remove background")
+      console.error("Error removing background:", error);
+      toast.error("Failed to remove background");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Apply filters to the image
   const applyFilters = (ctx: CanvasRenderingContext2D) => {
@@ -492,30 +606,30 @@ export default function VideoThumbnailGenerator() {
 
   const handleApplyFilters = () => {
     if (!processedFrame) {
-      toast.error("No frame selected")
-      return
+      toast.error("No frame selected");
+      return;
     }
 
     // Save current state to undo stack
-    setUndoStack((prev) => [...prev, processedFrame])
-    setRedoStack([]) // Clear redo stack on new action
+    setUndoStack((prev) => [...prev, processedFrame]);
+    setRedoStack([]); // Clear redo stack on new action
 
-    const img = new Image()
-    img.src = processedFrame
+    const img = new window.Image();
+    img.src = processedFrame;
     img.onload = () => {
-      const canvas = document.createElement("canvas")
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext("2d")
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
       if (ctx) {
-        applyFilters(ctx)
-        ctx.drawImage(img, 0, 0)
-        const filteredImageUrl = canvas.toDataURL("image/png")
-        setProcessedFrame(filteredImageUrl)
-        toast.success("Filters applied")
+        applyFilters(ctx);
+        ctx.drawImage(img, 0, 0);
+        const filteredImageUrl = canvas.toDataURL("image/png");
+        setProcessedFrame(filteredImageUrl);
+        toast.success("Filters applied");
       }
-    }
-  }
+    };
+  };
 
   const handleCreateThumbnail = () => {
     if (!processedFrame) {
@@ -588,133 +702,134 @@ export default function VideoThumbnailGenerator() {
 
   // Update the final preview with text elements
   const updateFinalPreview = () => {
-    if (!processedFrame || !finalCanvasRef.current) return
+    if (!processedFrame || !finalCanvasRef.current) return;
 
-    const canvas = finalCanvasRef.current
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const canvas = finalCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     // Load the processed image
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    img.src = processedFrame
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.src = processedFrame;
     img.onload = () => {
       // Set canvas dimensions based on the image
-      canvas.width = img.width
-      canvas.height = img.height
+      canvas.width = img.width;
+      canvas.height = img.height;
 
       // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw the processed image
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       // Draw all text elements
       textElements.forEach((element) => {
-        if (!element.visible) return
+        if (!element.visible) return;
 
         // Save context state
-        ctx.save()
+        ctx.save();
 
         // Calculate position
-        const position = calculatePosition(element, canvas.width, canvas.height)
-        ctx.translate(position.x, position.y)
+        const position = calculatePosition(element, canvas.width, canvas.height);
+        ctx.translate(position.x, position.y);
 
         // Apply rotation
         if (element.rotation !== 0) {
-          ctx.rotate((element.rotation * Math.PI) / 180)
+          ctx.rotate((element.rotation * Math.PI) / 180);
         }
 
         // Set font properties
-        let fontStyle = ""
-        if (element.bold) fontStyle += "bold "
-        if (element.italic) fontStyle += "italic "
-        const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-        const scaledFontSize = element.fontSize * scaleFactor * 2
-        fontStyle += `${scaledFontSize}px ${element.fontFamily}`
-        ctx.font = fontStyle
+        let fontStyle = "";
+        if (element.bold) fontStyle += "bold ";
+        if (element.italic) fontStyle += "italic ";
+        const scaleFactor = Math.min(canvas.width, canvas.height) / 1000;
+        const scaledFontSize = element.fontSize * scaleFactor * 2;
+        fontStyle += `${scaledFontSize}px ${element.fontFamily}`;
+        ctx.font = fontStyle;
 
         // Set text alignment
-        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-        ctx.textBaseline = "middle"
+        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center";
+        ctx.textBaseline = "middle";
 
         // Set opacity
-        ctx.globalAlpha = (element.opacity || 100) / 100
+        ctx.globalAlpha = (element.opacity || 100) / 100;
 
         // Draw background rectangle if enabled
         if (element.backgroundEnabled && element.backgroundColor) {
-          const metrics = ctx.measureText(element.text)
-          const textHeight = scaledFontSize * 1.2
-          const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
-          let rectX = 0
-          if (ctx.textAlign === "center") rectX = -rectWidth / 2
-          if (ctx.textAlign === "right") rectX = -rectWidth
-          let rectY = 0
-          if (ctx.textBaseline === "middle") rectY = -textHeight / 2
-          if (ctx.textBaseline === "bottom") rectY = -textHeight
-          ctx.save()
-          ctx.shadowColor = "transparent"
-          ctx.fillStyle = element.backgroundColor
-          ctx.fillRect(rectX, rectY, rectWidth, textHeight)
-          ctx.restore()
+          const metrics = ctx.measureText(element.text);
+          const textHeight = scaledFontSize * 1.2;
+          const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width);
+          let rectX = 0;
+          if (ctx.textAlign === "center") rectX = -rectWidth / 2;
+          if (ctx.textAlign === "right") rectX = -rectWidth;
+          let rectY = 0;
+          const textBaseline = ctx.textBaseline as CanvasTextBaseline;
+          if (textBaseline === "middle") rectY = -textHeight / 2;
+          if (textBaseline === "top") rectY = 0;
+          ctx.save();
+          ctx.shadowColor = "transparent";
+          ctx.fillStyle = element.backgroundColor;
+          ctx.fillRect(rectX, rectY, rectWidth, textHeight);
+          ctx.restore();
         }
 
         // Set shadow if enabled
         if (element.shadow) {
-          ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
-          ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
-          ctx.shadowOffsetX = 2 * scaleFactor
-          ctx.shadowOffsetY = 2 * scaleFactor
+          ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)";
+          ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor;
+          ctx.shadowOffsetX = 2 * scaleFactor;
+          ctx.shadowOffsetY = 2 * scaleFactor;
         } else {
-          ctx.shadowColor = "transparent"
-          ctx.shadowBlur = 0
-          ctx.shadowOffsetX = 0
-          ctx.shadowOffsetY = 0
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         }
 
         // Set text color
-        ctx.fillStyle = element.color
+        ctx.fillStyle = element.color;
 
         // Draw curved text if enabled
         if (element.curve) {
-          const text = element.text
-          const radius = Math.max(80, scaledFontSize * 2)
-          const angleStep = Math.PI / (text.length + 1)
-          const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+          const text = element.text;
+          const radius = Math.max(80, scaledFontSize * 2);
+          const angleStep = Math.PI / (text.length + 1);
+          const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2;
           for (let i = 0; i < text.length; i++) {
-            const char = text[i]
-            ctx.save()
-            ctx.rotate(startAngle + i * angleStep)
-            ctx.translate(0, -radius)
-            ctx.fillText(char, 0, 0)
-            ctx.restore()
+            const char = text[i];
+            ctx.save();
+            ctx.rotate(startAngle + i * angleStep);
+            ctx.translate(0, -radius);
+            ctx.fillText(char, 0, 0);
+            ctx.restore();
           }
         } else {
           // Draw regular text
-          const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
-          ctx.fillText(element.text, 0, 0, maxWidth)
+          const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width;
+          ctx.fillText(element.text, 0, 0, maxWidth);
 
           // Draw underline if enabled
           if (element.underline) {
-            const textMetrics = ctx.measureText(element.text)
-            const underlineY = element.fontSize * 0.15 * scaleFactor
-            ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
-            ctx.beginPath()
-            ctx.moveTo(-textMetrics.width / 2, underlineY)
-            ctx.lineTo(textMetrics.width / 2, underlineY)
-            ctx.stroke()
+            const textMetrics = ctx.measureText(element.text);
+            const underlineY = element.fontSize * 0.15 * scaleFactor;
+            ctx.lineWidth = element.fontSize * 0.05 * scaleFactor;
+            ctx.beginPath();
+            ctx.moveTo(-textMetrics.width / 2, underlineY);
+            ctx.lineTo(textMetrics.width / 2, underlineY);
+            ctx.stroke();
           }
         }
 
         // Restore context state
-        ctx.restore()
-      })
+        ctx.restore();
+      });
 
       // Update the final thumbnail
-      const finalImageUrl = canvas.toDataURL("image/png")
-      setFinalThumbnail(finalImageUrl)
-    }
-  }
+      const finalImageUrl = canvas.toDataURL("image/png");
+      setFinalThumbnail(finalImageUrl);
+    };
+  };
 
   const handleSaveFinalThumbnail = () => {
     if (!finalThumbnail) {
@@ -758,35 +873,103 @@ export default function VideoThumbnailGenerator() {
     }
   }
 
+  const handleSaveBackgroundRemoved = () => {
+    if (!processedFrame) {
+      toast.error("No frame selected")
+      return
+    }
+
+    const link = document.createElement("a")
+    link.href = processedFrame
+    link.download = `background-removed-${Date.now()}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast.success("Image saved successfully")
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please select a video file');
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Set up video element
+    video.crossOrigin = "anonymous";
+    video.src = URL.createObjectURL(file);
+    video.load();
+
+    // Reset states
+    setSnapshots([]);
+    setSelectedSnapshotIndex(-1);
+    setProcessedFrame(null);
+    setCurrentFrame(null);
+    setVideoLoaded(false);
+    setVideoInfo(null);
+  };
+
+  const handleURLLoad = () => {
+    const urlInput = document.getElementById('videoUrl') as HTMLInputElement;
+    const url = urlInput.value.trim();
+
+    if (!url) {
+      toast.error('Please enter a video URL');
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Set up video element
+    video.crossOrigin = "anonymous";
+    video.src = url;
+    video.load();
+
+    // Reset states
+    setSnapshots([]);
+    setSelectedSnapshotIndex(-1);
+    setProcessedFrame(null);
+    setCurrentFrame(null);
+    setVideoLoaded(false);
+    setVideoInfo(null);
+  };
+
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-          <TabsTrigger value="video" className="flex items-center gap-1 md:gap-2">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+          <TabsTrigger value="video" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2">
             <Clock className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Video</span>
+            <span>Video</span>
           </TabsTrigger>
-          <TabsTrigger value="snapshots" className="flex items-center gap-1 md:gap-2">
+          <TabsTrigger value="snapshots" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2">
             <Layers className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Snapshots ({snapshots.length})</span>
+            <span>Snapshots ({snapshots.length})</span>
           </TabsTrigger>
           <TabsTrigger
             value="edit"
-            className="flex items-center gap-1 md:gap-2"
-            disabled={selectedSnapshotIndex === -1 && !currentFrame}
+            className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2"
+            disabled={selectedSnapshotIndex === -1}
           >
             <Palette className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Edit</span>
+            <span>Edit</span>
           </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2" disabled={!processedFrame}>
+          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2" disabled={!processedFrame}>
             <Type className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Text</span>
+            <span>Text</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="video" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="space-y-6">
+        <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-4 sm:space-y-6">
               <VideoPlayer
                 videoRef={videoRef}
                 videoLoaded={videoLoaded}
@@ -799,76 +982,73 @@ export default function VideoThumbnailGenerator() {
               />
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Snapshot Controls</CardTitle>
-                  <CardDescription>Capture frames from the video</CardDescription>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Snapshot Controls</CardTitle>
+                  <CardDescription className="text-sm">Capture frames from the video</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Button onClick={captureSnapshot} disabled={!currentFrame} className="text-xs md:text-sm">
-                        Capture Current Frame
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          if (videoRef.current) {
-                            const video = videoRef.current
-                            // Take snapshots at 0%, 25%, 50%, 75%, and 100% of the video
-                            const duration = video.duration
-                            const times = [0, 0.25, 0.5, 0.75, 1].map((percent) => percent * duration)
-
-                            // Pause the video
-                            const wasPlaying = !video.paused
-                            video.pause()
-
-                            // Take snapshots at each time
-                            let timeIndex = 0
-                            const takeSnapshots = () => {
-                              if (timeIndex < times.length) {
-                                video.currentTime = times[timeIndex]
-                                setTimeout(() => {
-                                  captureSnapshot()
-                                  timeIndex++
-                                  takeSnapshots()
-                                }, 500) // Wait for the frame to load
-                              } else if (wasPlaying) {
-                                // Resume playback if it was playing
-                                video.play()
-                              }
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
+                    <Button 
+                      onClick={captureSnapshot} 
+                      disabled={!currentFrame} 
+                      className="w-full"
+                      size="default"
+                    >
+                      Capture Current Frame
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (videoRef.current) {
+                          const video = videoRef.current;
+                          const duration = video.duration;
+                          const times = [0, 0.25, 0.5, 0.75, 1].map((percent) => percent * duration);
+                          const wasPlaying = !video.paused;
+                          video.pause();
+                          let timeIndex = 0;
+                          const takeSnapshots = () => {
+                            if (timeIndex < times.length) {
+                              video.currentTime = times[timeIndex];
+                              setTimeout(() => {
+                                captureSnapshot();
+                                timeIndex++;
+                                takeSnapshots();
+                              }, 500);
+                            } else if (wasPlaying) {
+                              video.play();
                             }
-
-                            takeSnapshots()
-                            toast.success("Taking snapshots at key points")
                           }
-                        }}
-                        disabled={!videoLoaded}
-                        className="text-xs md:text-sm"
-                      >
-                        Auto Capture Key Frames
-                      </Button>
-                    </div>
+                          takeSnapshots();
+                          toast.success("Taking snapshots at key points");
+                        }
+                      }}
+                      disabled={!videoLoaded}
+                      className="w-full"
+                      size="default"
+                    >
+                      Auto Capture Key Frames
+                    </Button>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2">
                       <Switch
                         id="auto-snap"
                         checked={!!autoSnapInterval}
                         onCheckedChange={toggleAutoSnap}
                         disabled={!videoLoaded}
                       />
-                      <Label htmlFor="auto-snap">Auto Snapshot</Label>
+                      <Label htmlFor="auto-snap" className="text-xs sm:text-sm">Auto Snapshot</Label>
                     </div>
 
                     {autoSnapInterval && (
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="interval">Every</Label>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="interval" className="text-xs sm:text-sm">Every</Label>
                         <Select
                           value={autoSnapInterval.toString()}
                           onValueChange={(value) => setAutoSnapInterval(Number(value))}
                         >
-                          <SelectTrigger className="w-24">
+                          <SelectTrigger className="w-20 sm:w-24 h-8 sm:h-9 text-xs sm:text-sm">
                             <SelectValue placeholder="Interval" />
                           </SelectTrigger>
                           <SelectContent>
@@ -887,64 +1067,21 @@ export default function VideoThumbnailGenerator() {
               </Card>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <DropZone />
-
-              {currentFrame && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Current Frame</CardTitle>
-                    <CardDescription>
-                      {videoInfo
-                        ? `Time: ${formatDuration(videoInfo.currentTime)} / ${formatDuration(videoInfo.duration)}`
-                        : ""}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative aspect-video">
-                      <img
-                        src={currentFrame || "/placeholder.svg"}
-                        alt="Current frame"
-                        className="object-contain rounded-md w-full h-full"
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={captureSnapshot} className="text-xs md:text-sm">
-                      Add to Snapshots
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (currentFrame) {
-                          setProcessedFrame(currentFrame)
-                          setSelectedSnapshotIndex(-1) // Not from snapshots
-                          setActiveTab("edit")
-                        }
-                      }}
-                      className="text-xs md:text-sm"
-                    >
-                      Edit This Frame
-                    </Button>
-                  </CardFooter>
-                </Card>
-              )}
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="snapshots" className="space-y-6">
+        <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Snapshots</CardTitle>
-              <CardDescription>Select a snapshot to edit</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg">Snapshots</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Select a snapshot to edit</CardDescription>
             </CardHeader>
             <CardContent>
               {snapshots.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                   {snapshots.map((snapshot, index) => (
                     <div
                       key={index}
@@ -954,8 +1091,8 @@ export default function VideoThumbnailGenerator() {
                       onClick={() => handleSelectSnapshot(index)}
                       draggable
                       onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", snapshot)
-                        e.dataTransfer.effectAllowed = "copy"
+                        e.dataTransfer.setData("text/plain", snapshot);
+                        e.dataTransfer.effectAllowed = "copy";
                       }}
                     >
                       <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -963,24 +1100,24 @@ export default function VideoThumbnailGenerator() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="bg-white/80 hover:bg-white text-xs md:text-sm"
+                            className="bg-white/80 hover:bg-white text-xs sm:text-sm h-7 sm:h-8"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleSaveSnapshot(index)
+                              e.stopPropagation();
+                              handleSaveSnapshot(index);
                             }}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="bg-white/80 hover:bg-red-500 text-xs md:text-sm"
+                            className="bg-white/80 hover:bg-red-500 text-xs sm:text-sm h-7 sm:h-8"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteSnapshot(index)
+                              e.stopPropagation();
+                              handleDeleteSnapshot(index);
                             }}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         </div>
                       </div>
@@ -991,23 +1128,23 @@ export default function VideoThumbnailGenerator() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Layers className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No snapshots yet. Capture frames from the video first.</p>
+                <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                  <Layers className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-20" />
+                  <p className="text-xs sm:text-sm">No snapshots yet. Capture frames from the video first.</p>
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <Button
                 variant="outline"
                 onClick={() => {
-                  setSnapshots([])
-                  setSelectedSnapshotIndex(-1)
-                  setProcessedFrame(null)
-                  toast.success("All snapshots cleared")
+                  setSnapshots([]);
+                  setSelectedSnapshotIndex(-1);
+                  setProcessedFrame(null);
+                  toast.success("All snapshots cleared");
                 }}
                 disabled={snapshots.length === 0}
-                className="text-xs md:text-sm"
+                className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
               >
                 Clear All
               </Button>
@@ -1015,21 +1152,21 @@ export default function VideoThumbnailGenerator() {
                 onClick={handleSaveAllSnapshots}
                 disabled={snapshots.length === 0}
                 variant="default"
-                className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+                className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
               >
-                <Download className="h-3 w-3 md:h-4 md:w-4" />
+                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Save All Snapshots
               </Button>
             </CardFooter>
           </Card>
         </TabsContent>
 
-        <TabsContent value="edit" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Edit Frame</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base sm:text-lg">Edit Frame</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   {selectedSnapshotIndex >= 0
                     ? `Editing snapshot #${selectedSnapshotIndex + 1}`
                     : "Editing current frame"}
@@ -1061,101 +1198,101 @@ export default function VideoThumbnailGenerator() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">No frame selected</p>
+                      <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-2 sm:mb-3" />
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">No frame selected</p>
                     </div>
                   )}
                 </div>
 
                 {processedFrame && (
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 md:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                         onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
                         disabled={zoomLevel <= 50}
                       >
-                        <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+                        <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
-                      <span className="text-xs md:text-sm">{zoomLevel}%</span>
+                      <span className="text-xs sm:text-sm">{zoomLevel}%</span>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                         onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
                         disabled={zoomLevel >= 200}
                       >
-                        <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
+                        <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center gap-1 md:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                         onClick={() => setZoomLevel(100)}
                         disabled={zoomLevel === 100}
                       >
-                        <Maximize className="h-3 w-3 md:h-4 md:w-4" />
+                        <Maximize className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                         onClick={() => setZoomLevel(50)}
                         disabled={zoomLevel === 50}
                       >
-                        <Minimize className="h-3 w-3 md:h-4 md:w-4" />
+                        <Minimize className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleUndo}
                     disabled={undoStack.length === 0}
-                    className="text-xs md:text-sm"
+                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                   >
-                    <Undo className="h-4 w-4" />
+                    <Undo className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleRedo}
                     disabled={redoStack.length === 0}
-                    className="text-xs md:text-sm"
+                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                   >
-                    <Redo className="h-4 w-4" />
+                    <Redo className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
-                <Button onClick={handleCreateThumbnail} disabled={!processedFrame} className="text-xs md:text-sm">
+                <Button onClick={handleCreateThumbnail} disabled={!processedFrame} className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9">
                   Continue to Text Editor
                 </Button>
               </CardFooter>
             </Card>
 
             <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Image Filters</CardTitle>
-                <CardDescription>Adjust image appearance with filters</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base sm:text-lg">Image Filters</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Adjust image appearance with filters</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="brightness">Brightness ({imageFilters.brightness}%)</Label>
+                      <Label htmlFor="brightness" className="text-xs sm:text-sm">Brightness ({imageFilters.brightness}%)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
                         disabled={imageFilters.brightness === 100}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1172,13 +1309,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="contrast">Contrast ({imageFilters.contrast}%)</Label>
+                      <Label htmlFor="contrast" className="text-xs sm:text-sm">Contrast ({imageFilters.contrast}%)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
                         disabled={imageFilters.contrast === 100}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1195,13 +1332,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="saturation">Saturation ({imageFilters.saturation}%)</Label>
+                      <Label htmlFor="saturation" className="text-xs sm:text-sm">Saturation ({imageFilters.saturation}%)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
                         disabled={imageFilters.saturation === 100}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1218,13 +1355,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="blur">Blur ({imageFilters.blur}px)</Label>
+                      <Label htmlFor="blur" className="text-xs sm:text-sm">Blur ({imageFilters.blur}px)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
                         disabled={imageFilters.blur === 0}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1241,13 +1378,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="hueRotate">Hue Rotate ({imageFilters.hueRotate}°)</Label>
+                      <Label htmlFor="hueRotate" className="text-xs sm:text-sm">Hue Rotate ({imageFilters.hueRotate}°)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
                         disabled={imageFilters.hueRotate === 0}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1264,13 +1401,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="grayscale">Grayscale ({imageFilters.grayscale}%)</Label>
+                      <Label htmlFor="grayscale" className="text-xs sm:text-sm">Grayscale ({imageFilters.grayscale}%)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
                         disabled={imageFilters.grayscale === 0}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1287,13 +1424,13 @@ export default function VideoThumbnailGenerator() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="sepia">Sepia ({imageFilters.sepia}%)</Label>
+                      <Label htmlFor="sepia" className="text-xs sm:text-sm">Sepia ({imageFilters.sepia}%)</Label>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
                         disabled={imageFilters.sepia === 0}
-                        className="text-xs md:text-sm"
+                        className="text-xs sm:text-sm h-7 sm:h-8"
                       >
                         Reset
                       </Button>
@@ -1310,36 +1447,60 @@ export default function VideoThumbnailGenerator() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Filter Presets</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <Label className="text-xs sm:text-sm">Filter Presets</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("grayscale")}
-                      className="text-xs md:text-sm"
+                      className="text-xs sm:text-sm h-8 sm:h-9"
                     >
                       Grayscale
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("sepia")} className="text-xs md:text-sm">
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("sepia")}
+                      className="text-xs sm:text-sm h-8 sm:h-9"
+                    >
                       Sepia
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("vivid")} className="text-xs md:text-sm">
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("vivid")}
+                      className="text-xs sm:text-sm h-8 sm:h-9"
+                    >
                       Vivid
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("cool")} className="text-xs md:text-sm">
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("cool")}
+                      className="text-xs sm:text-sm h-8 sm:h-9"
+                    >
                       Cool
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("warm")} className="text-xs md:text-sm">
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("warm")}
+                      className="text-xs sm:text-sm h-8 sm:h-9"
+                    >
                       Warm
                     </Button>
-                    <Button variant="outline" onClick={resetFilters} className="text-xs md:text-sm">
-                      <RotateCw className="h-4 w-4 mr-2" />
+                    <Button
+                      variant="outline"
+                      onClick={resetFilters}
+                      className="text-xs sm:text-sm h-8 sm:h-9"
+                    >
+                      <RotateCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Reset All
                     </Button>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button onClick={handleApplyFilters} disabled={!processedFrame} className="text-xs md:text-sm">
+                <Button
+                  onClick={handleApplyFilters}
+                  disabled={!processedFrame}
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                >
                   Apply Filters
                 </Button>
               </CardFooter>
@@ -1347,34 +1508,67 @@ export default function VideoThumbnailGenerator() {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Background Removal</CardTitle>
-              <CardDescription>Remove the background from your image</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Background Removal</CardTitle>
+              <CardDescription className="text-sm">Remove the background from your image</CardDescription>
             </CardHeader>
             <CardContent>
               {isProcessing ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-gray-700">
-                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${processingProgress}%` }}></div>
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6">
+                  <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 mb-3 sm:mb-4 dark:bg-gray-700">
+                    <div className="bg-primary h-2 sm:h-2.5 rounded-full" style={{ width: `${processingProgress}%` }}></div>
                   </div>
                   <p className="text-sm text-muted-foreground">Processing... {processingProgress}%</p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Scissors className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-center mb-4">
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6">
+                  <Scissors className="h-8 w-8 text-muted-foreground mb-3" />
+                  <p className="text-sm text-center mb-4">
                     Remove the background from your image to create a professional thumbnail.
                   </p>
-                  <Button onClick={handleRemoveBackground} disabled={!processedFrame} className="text-xs md:text-sm">
-                    Remove Background
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
+                    <Button 
+                      onClick={handleRemoveBackground} 
+                      disabled={!processedFrame} 
+                      className="w-full"
+                      size="default"
+                    >
+                      Remove Background
+                    </Button>
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      <Button 
+                        onClick={() => {
+                          if (processedFrame) {
+                            setProcessedFrame(null)
+                            setSelectedSnapshotIndex(-1)
+                            toast.success("Background removal cancelled")
+                          }
+                        }}
+                        variant="outline"
+                        className="w-full"
+                        size="default"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSaveBackgroundRemoved}
+                        disabled={!processedFrame}
+                        variant="default"
+                        className="w-full bg-black hover:bg-black/90 text-white"
+                        size="default"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="text" className="space-y-6">
+        <TabsContent value="text" className="space-y-4 sm:space-y-6 mt-4">
           <TextEditor
             onApply={handleApplyText}
             isCreatingThumbnail={false}
@@ -1384,9 +1578,9 @@ export default function VideoThumbnailGenerator() {
           />
 
           <Card>
-            <CardHeader>
-              <CardTitle>Final Preview</CardTitle>
-              <CardDescription>Your thumbnail with text overlay</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg">Final Preview</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Your thumbnail with text overlay</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
@@ -1405,8 +1599,8 @@ export default function VideoThumbnailGenerator() {
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-gray-500 dark:text-gray-400">No frame selected</p>
+                    <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-2 sm:mb-3" />
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">No frame selected</p>
                   </div>
                 )}
               </div>
@@ -1415,9 +1609,9 @@ export default function VideoThumbnailGenerator() {
               <Button
                 onClick={handleSaveFinalThumbnail}
                 disabled={!finalThumbnail}
-                className="flex items-center gap-2 text-xs md:text-sm"
+                className="text-xs sm:text-sm h-8 sm:h-9"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Download Thumbnail
               </Button>
             </CardFooter>

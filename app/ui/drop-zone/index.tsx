@@ -431,7 +431,7 @@ export default function ImageUploader() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
+    
     toast.success("Image saved successfully")
   }
 
@@ -535,14 +535,14 @@ export default function ImageUploader() {
 
   const handleSaveBackgroundRemoved = () => {
     if (!processedImageSrc) return
-
+    
     const link = document.createElement("a")
     link.href = processedImageSrc
     link.download = `background-removed-${Date.now()}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
+    
     toast.success("Image saved successfully")
   }
 
@@ -551,14 +551,14 @@ export default function ImageUploader() {
       toast.error("No thumbnail to save")
       return
     }
-
+    
     const link = document.createElement("a")
     link.href = thumbnailSrc
     link.download = `thumbnail-${Date.now()}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
+    
     toast.success("Thumbnail saved successfully")
   }
 
@@ -626,7 +626,7 @@ export default function ImageUploader() {
       setIsCreatingThumbnail(false)
       toast.error("Failed to load image for thumbnail")
     }
-
+    
     bgImg.onerror = handleImageError
     fgImg.onerror = handleImageError
     
@@ -740,12 +740,12 @@ export default function ImageUploader() {
       fgImg.onload = () => {
         // Clear any previous drawings
         ctx.clearRect(0, 0, canvas.width, canvas.height)
-
+        
         // Draw background image with filters
         applyFilters(ctx)
         ctx.drawImage(bgImg, 0, 0)
         ctx.filter = "none" // Reset filters for text
-
+        
         // Draw text elements that should be behind the image
         textElements
           .filter((element) => element.visible && element.layerOrder === "back")
@@ -755,7 +755,7 @@ export default function ImageUploader() {
             ctx.translate(position.x, position.y)
           if (element.rotation !== 0) {
               ctx.rotate((element.rotation * Math.PI) / 180)
-            }
+          }
             const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
             const scaledFontSize = element.fontSize * scaleFactor * 2
 
@@ -995,9 +995,9 @@ export default function ImageUploader() {
 
         <TabsContent value="file" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base">Upload Image File</CardTitle>
-              <CardDescription className="text-xs">Select an image file from your device or drag and drop</CardDescription>
+              <CardDescription className="text-sm">Select an image file from your device or drag and drop</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <label htmlFor="file-upload">
@@ -1080,9 +1080,9 @@ export default function ImageUploader() {
         
         <TabsContent value="url" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base">Upload from URL</CardTitle>
-              <CardDescription className="text-xs">Enter the URL of an image you want to upload</CardDescription>
+              <CardDescription className="text-sm">Enter the URL of an image you want to upload</CardDescription>
             </CardHeader>
             <CardContent className="pt-2 space-y-4">
               <div className="grid grid-cols-4 gap-4">
@@ -1107,7 +1107,7 @@ export default function ImageUploader() {
         <Card className="w-full">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Image Preview</CardTitle>
-            {error && hasAttemptedLoad && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {error && hasAttemptedLoad && <p className="text-sm text-red-500 mt-1">{error}</p>}
           </CardHeader>
           <CardContent className="space-y-4">
             {imageInfo && imageLoaded && (
@@ -1151,8 +1151,8 @@ export default function ImageUploader() {
                 <>
                   {!isLoading && !error && (
                     <div className="text-center p-4">
-                      <UploadIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">No image selected</p>
+                      <UploadIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No image selected</p>
                     </div>
                   )}
                   {isLoading && (
@@ -1270,7 +1270,7 @@ export default function ImageUploader() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {imageLoaded ? "Ready to process image" : "Please upload an image"}
                     </p>
                   </div>
@@ -1291,57 +1291,66 @@ export default function ImageUploader() {
                   </div>
                 )}
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-            <Button onClick={handleCancel} variant="outline" size="default">
+        <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+            <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
             Cancel
           </Button>
           <Button
             onClick={handleSaveBackgroundRemoved}
             disabled={!processedImageSrc}
-              variant="default"
-              className="flex-1 bg-black hover:bg-black/90 text-white text-sm md:text-base"
+            variant="default"
+            size="default"
+            className="flex-1 bg-black hover:bg-black/90 text-white"
           >
-              <Download className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-            Save Processed Image
+            <Download className="h-4 w-4 mr-2" />
+            Save
           </Button>
         </CardFooter>
       </Card>
       </div>
 
       <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-          <TabsTrigger value="text" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Type className="h-3 w-3 sm:h-4 sm:w-4" />
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Type className="h-3 w-3 md:h-4 md:w-4" />
             <span>Text Editor</span>
           </TabsTrigger>
-          <TabsTrigger value="filters" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="filters" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Palette className="h-3 w-3 md:h-4 md:w-4" />
             <span>Image Filters</span>
           </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Layers className="h-3 w-3 md:h-4 md:w-4" />
             <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="text" className="space-y-4">
-          <TextEditor
-            onApply={() => {
-              setShowUpdateToast(true)
-              handleCreateThumbnail()
-            }}
-            isCreatingThumbnail={isCreatingThumbnail}
-            processedImageSrc={processedImageSrc}
-            textElements={textElements}
-            onTextElementsChange={(elements) => {
-              setTextElements(elements)
-            }}
-          />
+      <Card className="w-full">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base">Customize Text</CardTitle>
+              <CardDescription className="text-sm">Add and customize text for your thumbnail</CardDescription>
+        </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              <TextEditor
+                onApply={() => {
+                  setShowUpdateToast(true)
+                  handleCreateThumbnail()
+                }}
+                isCreatingThumbnail={isCreatingThumbnail}
+                processedImageSrc={processedImageSrc}
+                textElements={textElements}
+                onTextElementsChange={(elements) => {
+                  setTextElements(elements)
+                }}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="filters" className="space-y-4">
       <Card className="w-full">
-        <CardHeader>
+        <CardHeader className="p-4 md:p-6">
               <CardTitle>Image Filters</CardTitle>
               <CardDescription>Adjust image appearance with filters</CardDescription>
         </CardHeader>
@@ -1432,7 +1441,7 @@ export default function ImageUploader() {
                     step={0.1}
                     value={[imageFilters.blur]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
-                  />
+                />
             </div>
 
                 <div className="space-y-2">
@@ -1498,7 +1507,7 @@ export default function ImageUploader() {
                     step={1}
                     value={[imageFilters.sepia]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
-                  />
+                />
                 </div>
             </div>
 
@@ -1561,7 +1570,7 @@ export default function ImageUploader() {
 
         <TabsContent value="preview" className="space-y-4">
           <Card className="w-full">
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle>Final Preview</CardTitle>
               <CardDescription>Preview your thumbnail with text and effects</CardDescription>
             </CardHeader>
@@ -1596,7 +1605,7 @@ export default function ImageUploader() {
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
                       <p className="text-sm text-gray-500">Creating thumbnail...</p>
                     </div>
-                  ) : (
+                ) : (
                     <div className="flex flex-col items-center justify-center h-full">
                       <Sparkles className="h-12 w-12 text-gray-400 mb-2" />
                       <p className="text-gray-500 dark:text-gray-400">

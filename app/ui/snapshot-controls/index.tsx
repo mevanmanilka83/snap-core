@@ -51,6 +51,24 @@ export function BackgroundRemovalProcessor({
     };
   }, []);
 
+  // Validate input image
+  useEffect(() => {
+    if (inputImageSrc) {
+      const img = new window.Image();
+      img.onload = () => {
+        if (img.width === 0 || img.height === 0) {
+          setError("Invalid image dimensions");
+        } else {
+          setError(null);
+        }
+      };
+      img.onerror = () => {
+        setError("Failed to load image");
+      };
+      img.src = inputImageSrc;
+    }
+  }, [inputImageSrc]);
+
   const handleResetFilters = () => {
     setBrightness(100);
     setContrast(100);

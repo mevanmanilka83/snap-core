@@ -1,12 +1,14 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
 import {
   Play,
   Pause,
@@ -50,6 +52,21 @@ export function VideoPlayer({
   isPlaying,
   setIsPlaying,
 }: VideoPlayerProps) {
+  const [isMetadataLoaded, setIsMetadataLoaded] = useState(false);
+
+  const handleMetadataLoaded = () => {
+    const video = videoRef.current;
+    if (!video || isMetadataLoaded) return;
+
+    setIsMetadataLoaded(true);
+    onMetadataLoaded({
+      width: video.videoWidth,
+      height: video.videoHeight,
+      duration: video.duration,
+      currentTime: 0,
+    });
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -61,6 +78,7 @@ export function VideoPlayer({
       URL.revokeObjectURL(video.src);
     }
 
+    setIsMetadataLoaded(false);
     video.src = URL.createObjectURL(file);
     video.load();
   };
@@ -69,20 +87,9 @@ export function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
+    setIsMetadataLoaded(false);
     video.src = url;
     video.load();
-  };
-
-  const handleMetadataLoaded = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    onMetadataLoaded({
-      width: video.videoWidth,
-      height: video.videoHeight,
-      duration: video.duration,
-      currentTime: 0,
-    });
   };
 
   const goToTime = (time: number) => {
@@ -103,23 +110,6 @@ export function VideoPlayer({
     } else {
       video.pause();
       setIsPlaying(false);
-    }
-  };
-
-  const takeSnapshot = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/png');
-      if (onSnapshot) {
-        onSnapshot(imageData);
-      }
     }
   };
 
@@ -159,23 +149,12 @@ export function VideoPlayer({
     }
   };
 
-  const handleLoadedMetadata = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    onMetadataLoaded({
-      width: video.videoWidth,
-      height: video.videoHeight,
-      duration: video.duration,
-      currentTime: 0,
-    });
-  };
-
   const handleVideoEnd = () => {
     const video = videoRef.current;
     if (!video) return;
 
     onTimeUpdate(video.duration);
+    setIsMetadataLoaded(false);
   };
 
   const handleSeek = (value: number[]) => {
@@ -188,19 +167,77 @@ export function VideoPlayer({
 
   const handleCaptureFrame = () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {
+      toast.error("No video loaded");
+      return;
+    }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
+    try {
+      // Create canvas with video dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280; // Default width if not available
+      canvas.height = video.videoHeight || 720; // Default height if not available
+      
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        toast.error("Failed to create canvas context");
+        return;
+      }
+
+      // Draw the current video frame
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Get the image data
       const imageData = canvas.toDataURL('image/png');
+      
+      // Send the snapshot to parent component
       if (onSnapshot) {
         onSnapshot(imageData);
+        toast.success("Frame captured");
+      } else {
+        toast.error("Snapshot handler not configured");
       }
+    } catch (error) {
+      console.error("Error capturing frame:", error);
+      toast.error("Failed to capture frame. Please try again.");
     }
+  };
+
+  // Add video ready state check
+  const handleCanPlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Video is ready to play
+    handleMetadataLoaded();
+  };
+
+  // Add loadeddata event handler
+  const handleLoadedData = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Video data is loaded
+    handleMetadataLoaded();
+  };
+
+  // Add play event handler
+  const handlePlay = () => {
+    setIsPlaying(true);
+  };
+
+  // Add pause event handler
+  const handlePause = () => {
+    setIsPlaying(false);
+  };
+
+  // Add seeking event handler
+  const handleSeeking = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Update time when seeking
+    onTimeUpdate(video.currentTime);
   };
 
   const formatTime = (seconds: number) => {
@@ -246,6 +283,10 @@ export function VideoPlayer({
                     const url = (
                       document.getElementById("videoUrl") as HTMLInputElement
                     ).value;
+                    if (!url) {
+                      toast.error("Please enter a video URL");
+                      return;
+                    }
                     handleURLLoad(url);
                   }}
                 >
@@ -261,93 +302,88 @@ export function VideoPlayer({
         </TabsContent>
       </Tabs>
 
-      <Card className="w-full">
+      <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg md:text-xl">Video Player</CardTitle>
-              <CardDescription className="text-sm">Preview and capture frames from your video</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePreviousFrame}
-                disabled={!videoRef.current || isPlaying}
-                className="h-8 w-8 md:h-10 md:w-10 p-0"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextFrame}
-                disabled={!videoRef.current || isPlaying}
-                className="h-8 w-8 md:h-10 md:w-10 p-0"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePlayPause}
-                disabled={!videoRef.current}
-                className="h-8 w-8 md:h-10 md:w-10 p-0"
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="text-base sm:text-lg">Video Player</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            {videoInfo ? `${videoInfo.width}x${videoInfo.height}` : "No video loaded"}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
+          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
             <video
               ref={videoRef}
               className="w-full h-full object-contain"
               onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
+              onLoadedMetadata={handleMetadataLoaded}
+              onCanPlay={handleCanPlay}
+              onLoadedData={handleLoadedData}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onSeeking={handleSeeking}
               onEnded={handleVideoEnd}
+              controls={false}
+              playsInline
             />
-            {!videoRef.current?.src && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">No video selected</p>
+            {!videoLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/5">
+                <p className="text-sm text-muted-foreground">No video loaded</p>
               </div>
             )}
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="flex-1 w-full">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs md:text-sm text-muted-foreground">Current Time:</span>
-                <span className="text-xs md:text-sm font-mono">{formatTime(videoInfo?.currentTime || 0)}</span>
-              </div>
-              <Slider
-                value={[videoInfo?.currentTime || 0]}
-                min={0}
-                max={videoInfo?.duration || 100}
-                step={0.1}
-                onValueChange={handleSeek}
-                className="w-full"
-              />
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs md:text-sm text-muted-foreground">{formatTime(0)}</span>
-                <span className="text-xs md:text-sm text-muted-foreground">{formatTime(videoInfo?.duration || 0)}</span>
-              </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePreviousFrame}
+                disabled={!videoLoaded}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                <SkipBack className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePlayPause}
+                disabled={!videoLoaded}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleNextFrame}
+                disabled={!videoLoaded}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                <SkipForward className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              onClick={handleCaptureFrame}
-              disabled={!videoRef.current || isPlaying}
-              className="w-full md:w-auto"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Capture Frame
-            </Button>
+
+            {videoInfo && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm">{formatTime(videoInfo.currentTime)}</span>
+                <Slider
+                  value={[videoInfo.currentTime]}
+                  min={0}
+                  max={videoInfo.duration}
+                  step={0.1}
+                  onValueChange={handleSeek}
+                  className="flex-1"
+                />
+                <span className="text-xs sm:text-sm">{formatTime(videoInfo.duration)}</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+
+
+
