@@ -68,6 +68,7 @@ interface TextElement {
   lineHeight?: number
   opacity?: number
   visible?: boolean
+  layerOrder?: "front" | "back"
 }
 
 interface TextEditorProps {
@@ -79,6 +80,7 @@ interface TextEditorProps {
 }
 
 const POPULAR_FONTS = [
+  "Poppins",
   "Arial",
   "Helvetica",
   "Times New Roman",
@@ -91,6 +93,23 @@ const POPULAR_FONTS = [
   "Roboto",
   "Open Sans",
   "Montserrat",
+  "Lato",
+  "Playfair Display",
+  "Source Sans Pro",
+  "Raleway",
+  "Ubuntu",
+  "Nunito",
+  "Inter",
+  "Quicksand",
+  "Oswald",
+  "Merriweather",
+  "PT Sans",
+  "Noto Sans",
+  "Work Sans",
+  "Rubik",
+  "Mukta",
+  "Fira Sans",
+  "IBM Plex Sans"
 ]
 
 const PRESET_COLORS = [
@@ -141,6 +160,7 @@ export default function TextEditor({
       lineHeight: 1.2,
       opacity: 100,
       visible: true,
+      layerOrder: "front"
     },
   ])
   const [selectedTextIndex, setSelectedTextIndex] = useState<number>(0)
@@ -199,6 +219,7 @@ export default function TextEditor({
       lineHeight: 1.2,
       opacity: 100,
       visible: true,
+      layerOrder: "front"
     }
 
     setTextElements((prev) => {
@@ -266,6 +287,7 @@ export default function TextEditor({
       lineHeight: 1.2,
       opacity: 100,
       visible: true,
+      layerOrder: "front"
     }
 
     updateTextElement(selectedTextIndex, defaultElement)
@@ -668,44 +690,6 @@ export default function TextEditor({
               </div>
 
               <div className="space-y-2">
-                <Label>Text Alignment</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.textAlign === "left" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { textAlign: "left" })}
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.textAlign === "center" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { textAlign: "center" })}
-                  >
-                    <AlignCenter className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.textAlign === "right" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { textAlign: "right" })}
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.textAlign === "justify" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { textAlign: "justify" })}
-                  >
-                    <AlignJustify className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Text Style</Label>
                 <div className="flex gap-2">
                   <Button
@@ -868,79 +852,23 @@ export default function TextEditor({
           <TabsContent value="position" className="border p-4 rounded-md">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Preset Positions</Label>
-                <div className="grid grid-cols-3 gap-1 mb-2">
+                <Label>Layer Order</Label>
+                <div className="flex gap-2">
                   <Button
                     type="button"
                     size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "top-left" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "top-left" })}
+                    variant={textElements[selectedTextIndex]?.layerOrder === "front" ? "default" : "outline"}
+                    onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "front" })}
                   >
-                    Top Left
+                    Front
                   </Button>
                   <Button
                     type="button"
                     size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "top-center" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "top-center" })}
+                    variant={textElements[selectedTextIndex]?.layerOrder === "back" ? "default" : "outline"}
+                    onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "back" })}
                   >
-                    Top Center
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "top-right" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "top-right" })}
-                  >
-                    Top Right
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "center-left" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "center-left" })}
-                  >
-                    Center Left
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "center" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "center" })}
-                  >
-                    Center
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "center-right" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "center-right" })}
-                  >
-                    Center Right
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "bottom-left" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "bottom-left" })}
-                  >
-                    Bottom Left
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "bottom-center" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "bottom-center" })}
-                  >
-                    Bottom Center
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.position === "bottom-right" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { position: "bottom-right" })}
-                  >
-                    Bottom Right
+                    Back
                   </Button>
                 </div>
               </div>

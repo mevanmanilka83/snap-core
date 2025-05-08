@@ -29,13 +29,6 @@ export function MainNav() {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/projects", label: "Projects" },
-    { href: "/templates", label: "Templates" },
-    { href: "/help", label: "Help" },
-  ]
-
   return (
     <div className="flex items-center justify-between w-full">
       {/* Left section - logo */}
@@ -49,18 +42,6 @@ export function MainNav() {
       {/* Center section - desktop navigation */}
       <nav className="hidden md:flex items-center justify-center flex-1 px-4">
         <ul className="flex space-x-1 lg:space-x-2">
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={`px-3 py-2 text-sm rounded-md transition-colors hover:text-primary hover:bg-muted ${
-                  pathname === item.href ? "text-primary font-medium bg-muted" : "text-muted-foreground"
-                }`}
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
         </ul>
       </nav>
 
@@ -93,21 +74,6 @@ export function MainNav() {
 
               <nav className="flex-1">
                 <ul className="flex flex-col space-y-1">
-                  {navItems.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={`flex items-center px-6 py-3 text-base rounded-l-md transition-colors hover:text-primary hover:bg-muted ${
-                          pathname === item.href
-                            ? "text-primary font-medium bg-muted border-r-2 border-primary"
-                            : "text-muted-foreground"
-                        }`}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
                 </ul>
               </nav>
 

@@ -785,18 +785,18 @@ export default function VideoThumbnailGenerator() {
         </TabsList>
 
         <TabsContent value="video" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <VideoPlayer
-                videoRef={videoRef}
-                videoLoaded={videoLoaded}
-                videoInfo={videoInfo}
-                isPlaying={isPlaying}
-                setIsPlaying={setIsPlaying}
-                onMetadataLoaded={handleMetadataLoaded}
-                onTimeUpdate={handleTimeUpdate}
-                onSnapshot={handleSnapshot}
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <VideoPlayer
+            videoRef={videoRef}
+            videoLoaded={videoLoaded}
+            videoInfo={videoInfo}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            onMetadataLoaded={handleMetadataLoaded}
+            onTimeUpdate={handleTimeUpdate}
+            onSnapshot={handleSnapshot}
+          />
 
               <Card>
                 <CardHeader>
@@ -901,12 +901,14 @@ export default function VideoThumbnailGenerator() {
                   </CardHeader>
                   <CardContent>
                     <div className="relative aspect-video">
-                      <Image
+                      <img
                         src={currentFrame || "/placeholder.svg"}
                         alt="Current frame"
-                        fill
-                        className="object-contain rounded-md"
-                        unoptimized={true}
+                        className="object-contain rounded-md w-full h-full"
+                        style={{
+                          position: 'absolute',
+                          inset: 0
+                        }}
                       />
                     </div>
                   </CardContent>
@@ -933,17 +935,17 @@ export default function VideoThumbnailGenerator() {
         </TabsContent>
 
         <TabsContent value="snapshots" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Snapshots</CardTitle>
-              <CardDescription>Select a snapshot to edit</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle>Snapshots</CardTitle>
+                <CardDescription>Select a snapshot to edit</CardDescription>
+              </CardHeader>
+              <CardContent>
               {snapshots.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {snapshots.map((snapshot, index) => (
-                    <div
-                      key={index}
+                    <div 
+                      key={index} 
                       className={`relative aspect-video cursor-pointer border-2 rounded-md overflow-hidden ${
                         selectedSnapshotIndex === index ? "border-primary" : "border-transparent"
                       }`}
@@ -954,18 +956,11 @@ export default function VideoThumbnailGenerator() {
                         e.dataTransfer.effectAllowed = "copy"
                       }}
                     >
-                      <Image
-                        src={snapshot || "/placeholder.svg"}
-                        alt={`Snapshot ${index + 1}`}
-                        fill
-                        className="object-contain"
-                        unoptimized={true}
-                      />
                       <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
+                      <Button
+                        size="sm"
+                        variant="secondary"
                             className="bg-white/80 hover:bg-white"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -984,7 +979,7 @@ export default function VideoThumbnailGenerator() {
                             }}
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                      </Button>
                         </div>
                       </div>
                       <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
@@ -1013,15 +1008,15 @@ export default function VideoThumbnailGenerator() {
               >
                 Clear All
               </Button>
-              <Button
+                    <Button
                 onClick={handleSaveAllSnapshots}
                 disabled={snapshots.length === 0}
-                variant="default"
+                      variant="default"
                 className="flex items-center gap-2"
-              >
+                    >
                 <Download className="h-4 w-4" />
-                Save All Snapshots
-              </Button>
+                      Save All Snapshots
+                    </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -1041,12 +1036,13 @@ export default function VideoThumbnailGenerator() {
                 <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                   {processedFrame ? (
                     <div className="relative w-full h-full">
-                      <Image
+                      <img
                         src={processedFrame || "/placeholder.svg"}
                         alt="Processed frame"
-                        fill
-                        className="object-contain"
+                        className="object-contain w-full h-full"
                         style={{
+                          position: 'absolute',
+                          inset: 0,
                           transform: `scale(${zoomLevel / 100})`,
                           filter: `
                             brightness(${imageFilters.brightness}%) 
@@ -1056,9 +1052,8 @@ export default function VideoThumbnailGenerator() {
                             hue-rotate(${imageFilters.hueRotate}deg)
                             grayscale(${imageFilters.grayscale}%)
                             sepia(${imageFilters.sepia}%)
-                          `,
+                          `
                         }}
-                        unoptimized={true}
                       />
                     </div>
                   ) : (
@@ -1099,7 +1094,7 @@ export default function VideoThumbnailGenerator() {
                       >
                         <Maximize className="h-4 w-4" />
                       </Button>
-                      <Button
+                  <Button
                         variant="outline"
                         size="icon"
                         onClick={() => setZoomLevel(50)}
@@ -1368,12 +1363,14 @@ export default function VideoThumbnailGenerator() {
                 {processedFrame ? (
                   <>
                     <canvas ref={finalCanvasRef} className="hidden" />
-                    <Image
+                    <img
                       src={finalThumbnail || processedFrame}
                       alt="Final thumbnail"
-                      fill
                       className="object-contain rounded-md"
-                      unoptimized={true}
+                      style={{
+                        position: 'absolute',
+                        inset: 0
+                      }}
                     />
                   </>
                 ) : (
@@ -1381,8 +1378,8 @@ export default function VideoThumbnailGenerator() {
                     <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
                     <p className="text-gray-500 dark:text-gray-400">No frame selected</p>
                   </div>
-                )}
-              </div>
+          )}
+        </div>
             </CardContent>
             <CardFooter className="flex justify-end">
               <Button onClick={handleSaveFinalThumbnail} disabled={!finalThumbnail} className="flex items-center gap-2">

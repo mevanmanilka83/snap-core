@@ -28,6 +28,9 @@ import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/app/ui/text-editor"
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
+import { CoolMode } from "@/components/magicui/cool-mode"
+import { RippleButton } from "@/components/magicui/ripple-button"
 
 interface ImageInfo {
   width: number
@@ -74,6 +77,7 @@ interface TextElement {
   lineHeight?: number
   opacity?: number
   visible?: boolean
+  layerOrder?: "back" | "front"
 }
 
 interface ImageFilter {
@@ -112,6 +116,7 @@ export default function ImageUploader() {
     grayscale: 0,
     sepia: 0,
   })
+  const [showUpdateToast, setShowUpdateToast] = useState(false)
 
   const hiddenImageRef = useRef<HTMLImageElement>(null)
   const previewUrl = useRef<string | null>(null)
@@ -123,20 +128,20 @@ export default function ImageUploader() {
   // Default text element
   const defaultTextElement: TextElement = {
     id: "default-text",
-    text: "TTV",
-    x: 50,
-    y: 50,
-    fontSize: 72,
-    color: "#ffffff",
-    rotation: 0,
-    fontFamily: "Arial",
-    position: "center",
-    maxWidth: 80,
-    curve: false,
+      text: "TTV", 
+      x: 50, 
+      y: 50, 
+      fontSize: 72, 
+      color: "#ffffff", 
+      rotation: 0, 
+      fontFamily: "Arial",
+      position: "center",
+      maxWidth: 80,
+      curve: false,
     backgroundColor: "#000000",
-    backgroundEnabled: false,
-    shadow: true,
-    shadowBlur: 10,
+      backgroundEnabled: false,
+      shadow: true,
+      shadowBlur: 10,
     shadowColor: "#000000",
     textAlign: "center",
     bold: false,
@@ -146,6 +151,7 @@ export default function ImageUploader() {
     lineHeight: 1.2,
     opacity: 100,
     visible: true,
+    layerOrder: "back",
   }
 
   // Text editing states
@@ -164,7 +170,7 @@ export default function ImageUploader() {
       if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(thumbnailUrl.current)
       }
-
+      
       // Clear any pending thumbnail updates
       if (pendingThumbnailUpdate.current) {
         clearTimeout(pendingThumbnailUpdate.current)
@@ -342,7 +348,7 @@ export default function ImageUploader() {
 
     setImageLoaded(true)
     setIsLoading(false)
-
+    
     // Draw the image to canvas after loading
     const canvas = canvasRef.current
     if (canvas) {
@@ -399,7 +405,7 @@ export default function ImageUploader() {
     if (urlInput) {
       urlInput.value = ""
     }
-
+    
     // Clear canvas
     const canvas = canvasRef.current
     if (canvas) {
@@ -455,24 +461,23 @@ export default function ImageUploader() {
       // Process the image with imgly background removal
       const blob = await backgroundRemoval.removeBackground(image_src, {
         progress: (message: string, progress: number) => {
-          // Ensure progress stays within 0-100 range
-          const clampedProgress = Math.min(Math.max(Math.round(progress * 100), 0), 100)
-          setProcessingProgress(clampedProgress)
+          // Just update the progress state without displaying percentage
+          setProcessingProgress(progress)
         },
       })
-
+      
       // Create a URL from the resulting blob
       const processedImageUrl = URL.createObjectURL(blob)
-
+      
       // Revoke the old processed URL if it was a blob
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
-
+      
       // Save the transparent background image URL
       processedUrl.current = processedImageUrl
       setProcessedImageSrc(processedImageUrl)
-
+      
       toast.success("Background removed successfully")
     } catch (err) {
       console.error("Error removing background:", err)
@@ -563,7 +568,7 @@ export default function ImageUploader() {
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     let x = canvasWidth * (element.x / 100)
     let y = canvasHeight * (element.y / 100)
-
+    
     // Adjust position based on the position property
     switch (element.position) {
       case "left":
@@ -596,7 +601,7 @@ export default function ImageUploader() {
         break
       // center is the default, already calculated
     }
-
+    
     return { x, y }
   }
 
@@ -604,20 +609,20 @@ export default function ImageUploader() {
   const createThumbnail = (transparentImageUrl: string) => {
     const canvas = canvasRef.current
     if (!canvas) return
-
+    
     const ctx = canvas.getContext("2d")
     if (!ctx) return
-
+    
     setIsCreatingThumbnail(true)
-
+    
     // Create a new image for the background (use original image)
     const bgImg = new window.Image()
     bgImg.crossOrigin = "anonymous"
-
+    
     // Create the foreground image with transparent background
     const fgImg = new window.Image()
     fgImg.crossOrigin = "anonymous"
-
+    
     // Set up error handling for both images
     const handleImageError = () => {
       setIsCreatingThumbnail(false)
@@ -626,37 +631,21 @@ export default function ImageUploader() {
 
     bgImg.onerror = handleImageError
     fgImg.onerror = handleImageError
-
+    
     bgImg.onload = () => {
       // Set canvas dimensions based on the original image size
-      const img = hiddenImageRef.current
-      if (!img) {
-        setIsCreatingThumbnail(false)
-        return
-      }
+      canvas.width = bgImg.width
+      canvas.height = bgImg.height
 
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
+      // Draw background image with filters
+      applyFilters(ctx)
+      ctx.drawImage(bgImg, 0, 0)
+      ctx.filter = "none" // Reset filters for text
 
-      // Draw the original image as background
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height)
-
-      // Load the transparent image
-      fgImg.onload = () => {
-        // Clear any previous drawings
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-        // Draw background first
-        applyFilters(ctx) // Apply filters to the background image
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height)
-
-        // Reset filters for text and foreground
-        ctx.filter = "none"
-
-        // Draw all text elements
-        textElements.forEach((element) => {
-          if (!element.visible) return
-
+      // Draw text elements that should be behind the image
+      textElements
+        .filter(element => element.visible && element.layerOrder === "back")
+        .forEach((element) => {
           ctx.save()
           const position = calculatePosition(element, canvas.width, canvas.height)
           ctx.translate(position.x, position.y)
@@ -749,29 +738,234 @@ export default function ImageUploader() {
           ctx.restore()
         })
 
-        // Finally draw the transparent image on top
-        ctx.drawImage(fgImg, 0, 0, canvas.width, canvas.height)
+      // Draw foreground image
+      fgImg.onload = () => {
+        // Clear any previous drawings
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        
+        // Draw background image with filters
+        applyFilters(ctx)
+        ctx.drawImage(bgImg, 0, 0)
+        ctx.filter = "none" // Reset filters for text
+        
+        // Draw text elements that should be behind the image
+        textElements
+          .filter(element => element.visible && element.layerOrder === "back")
+          .forEach((element) => {
+            ctx.save()
+            const position = calculatePosition(element, canvas.width, canvas.height)
+            ctx.translate(position.x, position.y)
+            if (element.rotation !== 0) {
+              ctx.rotate((element.rotation * Math.PI) / 180)
+            }
+            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+            const scaledFontSize = element.fontSize * scaleFactor * 2
+
+            // Set font style
+            let fontStyle = ""
+            if (element.bold) fontStyle += "bold "
+            if (element.italic) fontStyle += "italic "
+            fontStyle += `${scaledFontSize}px ${element.fontFamily}`
+            ctx.font = fontStyle
+
+            // Set text alignment
+            ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+            ctx.textBaseline = "middle"
+
+            // Set opacity
+            ctx.globalAlpha = (element.opacity || 100) / 100
+
+            // Draw background rectangle if enabled
+            if (element.backgroundEnabled && element.backgroundColor) {
+              const metrics = ctx.measureText(element.text)
+              const textHeight = scaledFontSize * 1.2
+              const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
+              let rectX = 0
+              if (ctx.textAlign === "center") rectX = -rectWidth / 2
+              if (ctx.textAlign === "right") rectX = -rectWidth
+              let rectY = 0
+              const baseline = ctx.textBaseline as CanvasTextBaseline
+              if (baseline === "middle") rectY = -textHeight / 2
+              if (baseline === "bottom") rectY = -textHeight
+              ctx.save()
+              ctx.shadowColor = "transparent"
+              ctx.fillStyle = element.backgroundColor
+              ctx.fillRect(rectX, rectY, rectWidth, textHeight)
+              ctx.restore()
+            }
+
+            // Set shadow if enabled
+            if (element.shadow) {
+              ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
+              ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
+              ctx.shadowOffsetX = 2 * scaleFactor
+              ctx.shadowOffsetY = 2 * scaleFactor
+            } else {
+              ctx.shadowColor = "transparent"
+              ctx.shadowBlur = 0
+              ctx.shadowOffsetX = 0
+              ctx.shadowOffsetY = 0
+            }
+
+            // Set text color
+            ctx.fillStyle = element.color
+
+            // Draw curved text if enabled
+            if (element.curve) {
+              const text = element.text
+              const radius = Math.max(80, scaledFontSize * 2)
+              const angleStep = Math.PI / (text.length + 1)
+              const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i]
+                ctx.save()
+                ctx.rotate(startAngle + i * angleStep)
+                ctx.translate(0, -radius)
+                ctx.fillText(char, 0, 0)
+                ctx.restore()
+              }
+            } else {
+              // Draw regular text
+              const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
+              ctx.fillText(element.text, 0, 0, maxWidth)
+
+              // Draw underline if enabled
+              if (element.underline) {
+                const textMetrics = ctx.measureText(element.text)
+                const underlineY = element.fontSize * 0.15 * scaleFactor
+                ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
+                ctx.beginPath()
+                ctx.moveTo(-textMetrics.width / 2, underlineY)
+                ctx.lineTo(textMetrics.width / 2, underlineY)
+                ctx.stroke()
+              }
+            }
+
+            ctx.restore()
+          })
+
+        // Draw foreground image
+        ctx.drawImage(fgImg, 0, 0)
+
+        // Draw text elements that should be in front of the image
+        textElements
+          .filter(element => element.visible && element.layerOrder === "front")
+          .forEach((element) => {
+            ctx.save()
+            const position = calculatePosition(element, canvas.width, canvas.height)
+            ctx.translate(position.x, position.y)
+            if (element.rotation !== 0) {
+              ctx.rotate((element.rotation * Math.PI) / 180)
+            }
+            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+            const scaledFontSize = element.fontSize * scaleFactor * 2
+
+            // Set font style
+            let fontStyle = ""
+            if (element.bold) fontStyle += "bold "
+            if (element.italic) fontStyle += "italic "
+            fontStyle += `${scaledFontSize}px ${element.fontFamily}`
+            ctx.font = fontStyle
+
+            // Set text alignment
+            ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+            ctx.textBaseline = "middle"
+
+            // Set opacity
+            ctx.globalAlpha = (element.opacity || 100) / 100
+
+            // Draw background rectangle if enabled
+            if (element.backgroundEnabled && element.backgroundColor) {
+              const metrics = ctx.measureText(element.text)
+              const textHeight = scaledFontSize * 1.2
+              const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
+              let rectX = 0
+              if (ctx.textAlign === "center") rectX = -rectWidth / 2
+              if (ctx.textAlign === "right") rectX = -rectWidth
+              let rectY = 0
+              const baseline = ctx.textBaseline as CanvasTextBaseline
+              if (baseline === "middle") rectY = -textHeight / 2
+              if (baseline === "bottom") rectY = -textHeight
+              ctx.save()
+              ctx.shadowColor = "transparent"
+              ctx.fillStyle = element.backgroundColor
+              ctx.fillRect(rectX, rectY, rectWidth, textHeight)
+              ctx.restore()
+            }
+
+            // Set shadow if enabled
+            if (element.shadow) {
+              ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
+              ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
+              ctx.shadowOffsetX = 2 * scaleFactor
+              ctx.shadowOffsetY = 2 * scaleFactor
+            } else {
+              ctx.shadowColor = "transparent"
+              ctx.shadowBlur = 0
+              ctx.shadowOffsetX = 0
+              ctx.shadowOffsetY = 0
+            }
+
+            // Set text color
+            ctx.fillStyle = element.color
+
+            // Draw curved text if enabled
+            if (element.curve) {
+              const text = element.text
+              const radius = Math.max(80, scaledFontSize * 2)
+              const angleStep = Math.PI / (text.length + 1)
+              const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i]
+                ctx.save()
+                ctx.rotate(startAngle + i * angleStep)
+                ctx.translate(0, -radius)
+                ctx.fillText(char, 0, 0)
+                ctx.restore()
+              }
+            } else {
+              // Draw regular text
+              const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
+              ctx.fillText(element.text, 0, 0, maxWidth)
+
+              // Draw underline if enabled
+              if (element.underline) {
+                const textMetrics = ctx.measureText(element.text)
+                const underlineY = element.fontSize * 0.15 * scaleFactor
+                ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
+                ctx.beginPath()
+                ctx.moveTo(-textMetrics.width / 2, underlineY)
+                ctx.lineTo(textMetrics.width / 2, underlineY)
+                ctx.stroke()
+              }
+            }
+
+            ctx.restore()
+          })
 
         // Convert canvas to data URL and update thumbnail
         const finalImageUrl = canvas.toDataURL("image/png")
-
+        
         // Revoke old thumbnail URL if it exists
         if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
           URL.revokeObjectURL(thumbnailUrl.current)
         }
-
+        
         // Update the thumbnail
         thumbnailUrl.current = finalImageUrl
         setThumbnailSrc(finalImageUrl)
         setIsCreatingThumbnail(false)
 
-        toast.success("Thumbnail created successfully")
+        if (showUpdateToast) {
+          toast.success("Thumbnail updated")
+          setShowUpdateToast(false)
+        }
       }
-
+      
       // Load the transparent image
       fgImg.src = transparentImageUrl
     }
-
+    
     // Load the original image as background
     bgImg.src = imageSrc
   }
@@ -825,7 +1019,7 @@ export default function ImageUploader() {
                     e.preventDefault()
                     e.stopPropagation()
                     e.currentTarget.classList.remove("border-primary")
-
+                    
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                       const file = e.dataTransfer.files[0]
                       if (file.type.startsWith("image/")) {
@@ -836,7 +1030,7 @@ export default function ImageUploader() {
                           const dataTransfer = new DataTransfer()
                           dataTransfer.items.add(file)
                           fileInput.files = dataTransfer.files
-
+                          
                           // Trigger the change handler
                           const event = new Event("change", { bubbles: true })
                           fileInput.dispatchEvent(event)
@@ -885,7 +1079,7 @@ export default function ImageUploader() {
             </CardContent>
           </Card>
         </TabsContent>
-
+        
         <TabsContent value="url" className="space-y-4">
           <Card>
             <CardHeader>
@@ -1060,7 +1254,7 @@ export default function ImageUploader() {
                 ) : isProcessing ? (
                   <div className="flex flex-col items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-sm text-gray-500">Removing background... {processingProgress}%</p>
+                    <p className="text-sm text-gray-500">Removing background...</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">
@@ -1120,9 +1314,16 @@ export default function ImageUploader() {
 
         <TabsContent value="text" className="space-y-4">
           <TextEditor
-            onApply={handleCreateThumbnail}
+            onApply={() => {
+              setShowUpdateToast(true);
+              handleCreateThumbnail();
+            }}
             isCreatingThumbnail={isCreatingThumbnail}
             processedImageSrc={processedImageSrc}
+            textElements={textElements}
+            onTextElementsChange={(elements) => {
+              setTextElements(elements);
+            }}
           />
         </TabsContent>
 
@@ -1342,6 +1543,15 @@ export default function ImageUploader() {
                         height: "100%",
                         position: "absolute",
                         inset: 0,
+                        filter: `
+                          brightness(${imageFilters.brightness}%) 
+                          contrast(${imageFilters.contrast}%) 
+                          saturate(${imageFilters.saturation}%) 
+                          blur(${imageFilters.blur}px) 
+                          hue-rotate(${imageFilters.hueRotate}deg)
+                          grayscale(${imageFilters.grayscale}%)
+                          sepia(${imageFilters.sepia}%)
+                        `,
                       }}
                       crossOrigin="anonymous"
                     />
@@ -1354,33 +1564,18 @@ export default function ImageUploader() {
                     <div className="flex flex-col items-center justify-center h-full">
                       <Sparkles className="h-12 w-12 text-gray-400 mb-2" />
                       <p className="text-gray-500 dark:text-gray-400">
-                        {processedImageSrc ? "Click 'Create Thumbnail' to generate preview" : "Process image first"}
+                        {processedImageSrc ? "Click 'Apply' in the text editor to generate preview" : "Process image first"}
                       </p>
                     </div>
                   )}
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-wrap gap-2">
-              <Button
-                onClick={handleCreateThumbnail}
-                disabled={!processedImageSrc || isCreatingThumbnail}
-                className="flex-1"
-              >
-                {isCreatingThumbnail ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                    Creating...
-                  </span>
-                ) : (
-                  "Create Thumbnail"
-                )}
-              </Button>
-
-              <Button onClick={handleSaveThumbnail} disabled={!thumbnailSrc} variant="default" className="flex-1">
+            <CardFooter className="flex justify-end">
+              <RippleButton onClick={handleSaveThumbnail} disabled={!thumbnailSrc} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
                 <Download className="h-4 w-4 mr-2" />
                 Download Thumbnail
-              </Button>
+              </RippleButton>
             </CardFooter>
           </Card>
         </TabsContent>

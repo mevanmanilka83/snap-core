@@ -140,14 +140,16 @@ export function BackgroundRemovalProcessor({
         <div className="space-y-2">
           <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
             <div className="relative w-full h-full">
-              <Image
+              <img
                 src={processedImageSrc}
                 alt="Background Removed"
-                fill
-                className="object-contain"
-                unoptimized={true}
-                width={width}
-                height={height}
+                className="object-contain w-full h-full"
+                style={{
+                  width: width ? `${width}px` : '100%',
+                  height: height ? `${height}px` : '100%',
+                  position: 'absolute',
+                  inset: 0
+                }}
               />
             </div>
           </div>
