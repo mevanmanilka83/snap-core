@@ -20,6 +20,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import TextEditor from "@/app/ui/text-editor";
 
 interface ImageInfo {
   width: number;
@@ -36,10 +37,14 @@ interface TextElement {
   color: string;
   rotation: number;
   fontFamily: string;
-  position: "center" | "left" | "right" | "top" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  position: "center" | "left" | "right" | "top" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "center-left" | "center-right" | "bottom-center";
   maxWidth?: number;
   curve?: boolean;
   backgroundColor?: string;
+  backgroundEnabled?: boolean;
+  shadow?: boolean;
+  shadowBlur?: number;
+  shadowColor?: string;
 }
 
 export default function ImageUploader() {
@@ -73,7 +78,11 @@ export default function ImageUploader() {
       position: "center",
       maxWidth: 80,
       curve: false,
-      backgroundColor: ""
+      backgroundColor: "",
+      backgroundEnabled: false,
+      shadow: true,
+      shadowBlur: 10,
+      shadowColor: "#000000"
     }
   ]);
   const [selectedTextIndex, setSelectedTextIndex] = useState<number>(0);
@@ -372,7 +381,11 @@ export default function ImageUploader() {
       position: "center",
       maxWidth: 80,
       curve: false,
-      backgroundColor: ""
+      backgroundColor: "",
+      backgroundEnabled: false,
+      shadow: true,
+      shadowBlur: 10,
+      shadowColor: "#000000"
     };
     
     setTextElements(prev => [...prev, newElement]);
@@ -392,7 +405,11 @@ export default function ImageUploader() {
       position: "center",
       maxWidth: 80,
       curve: false,
-      backgroundColor: ""
+      backgroundColor: "",
+      backgroundEnabled: false,
+      shadow: true,
+      shadowBlur: 10,
+      shadowColor: "#000000"
     };
     
     updateTextElement(selectedTextIndex, defaultElement);
@@ -530,8 +547,8 @@ export default function ImageUploader() {
           ctx.shadowOffsetX = 2;
           ctx.shadowOffsetY = 2;
           const maxWidth = (element.maxWidth ?? 80) / 100 * canvas.width;
-          // Draw background rectangle if backgroundColor is set
-          if (element.backgroundColor && element.backgroundColor !== '#00000000') {
+          // Draw background rectangle if enabled
+          if (element.backgroundEnabled && element.backgroundColor && element.backgroundColor !== '#00000000') {
             const metrics = ctx.measureText(element.text);
             const textHeight = scaledFontSize * 1.2;
             let rectWidth = Math.min(metrics.width, maxWidth);
@@ -558,11 +575,33 @@ export default function ImageUploader() {
               ctx.save();
               ctx.rotate(startAngle + i * angleStep);
               ctx.translate(0, -radius);
+              if (element.shadow) {
+                ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = element.shadowBlur ?? 10;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+              } else {
+                ctx.shadowColor = "transparent";
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+              }
               ctx.fillStyle = element.color;
               ctx.fillText(char, 0, 0);
               ctx.restore();
             }
           } else {
+            if (element.shadow) {
+              ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)";
+              ctx.shadowBlur = element.shadowBlur ?? 10;
+              ctx.shadowOffsetX = 2;
+              ctx.shadowOffsetY = 2;
+            } else {
+              ctx.shadowColor = "transparent";
+              ctx.shadowBlur = 0;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+            }
             ctx.fillStyle = element.color;
             ctx.fillText(element.text, 0, 0, maxWidth);
           }
@@ -623,7 +662,7 @@ export default function ImageUploader() {
             </CardHeader>
             <CardContent className="pt-2">
               <label htmlFor="file-upload">
-                <div className="flex flex-col items-center justify-center space-y-4 py-12 px-6 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
+                <div className="flex flex-col items-center justify-center space-y-4 py-8 px-6 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -684,13 +723,10 @@ export default function ImageUploader() {
                     }
                   }}
                 >
-                  <UploadIcon className="h-12 w-12 text-gray-400" />
+                  <UploadIcon className="h-10 w-10 text-gray-400" />
                   <div className="font-medium text-gray-900 dark:text-gray-50">
-                    Click or drop image here
+                    Drop image here or click to browse
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Image files only (jpg, png, gif, etc.)
-                  </p>
                   <input
                     id="file-upload"
                     type="file"
@@ -731,68 +767,108 @@ export default function ImageUploader() {
                   )}
                 </Button>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Enter a direct URL to an image file (jpg, png, gif, etc.)
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      <Card className="w-full">
-        <CardHeader className="pb-2">
-          <CardTitle>Image Preview</CardTitle>
-          {error && hasAttemptedLoad && (
-            <p className="text-sm text-red-500 mt-1">{error}</p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {imageInfo && imageLoaded && (
-            <div className="bg-muted p-2 text-sm rounded flex items-center space-x-2">
-              <Info className="h-4 w-4" />
-              <div>
-                <p>
-                  Image size: {imageInfo.width}x{imageInfo.height} pixels
-                </p>
-                {imageInfo.size > 0 && (
-                  <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-            {imageSrc && imageLoaded ? (
-              <div className="relative w-full h-full">
-                <img
-                  src={imageSrc || "/placeholder.svg"}
-                  alt="Preview"
-                  className="object-contain w-full h-full"
-                  style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
-                  crossOrigin="anonymous"
-                />
-              </div>
-            ) : (
-              <>
-                {!isLoading && !error && (
-                  <div className="text-center p-4">
-                    <UploadIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No image selected
-                    </p>
-                  </div>
-                )}
-                {isLoading && (
-                  <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                )}
-              </>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="w-full">
+          <CardHeader className="pb-2">
+            <CardTitle>Image Preview</CardTitle>
+            {error && hasAttemptedLoad && (
+              <p className="text-sm text-red-500 mt-1">{error}</p>
             )}
-          </div>
-          
-          <div className="mt-4">
-            <CardTitle className="mb-2">Background Removed</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {imageInfo && imageLoaded && (
+              <div className="bg-muted p-2 text-sm rounded flex items-center space-x-2">
+                <Info className="h-4 w-4" />
+                <div>
+                  <p>
+                    Image size: {imageInfo.width}x{imageInfo.height} pixels
+                  </p>
+                  {imageInfo.size > 0 && (
+                    <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+              {imageSrc && imageLoaded ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={imageSrc || "/placeholder.svg"}
+                    alt="Preview"
+                    className="object-contain w-full h-full"
+                    style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+                    crossOrigin="anonymous"
+                  />
+                </div>
+              ) : (
+                <>
+                  {!isLoading && !error && (
+                    <div className="text-center p-4">
+                      <UploadIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500 dark:text-gray-400">
+                        No image selected
+                      </p>
+                    </div>
+                  )}
+                  {isLoading && (
+                    <div className="flex justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleCancel}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            
+            <Button
+              onClick={handleRemoveBackground}
+              disabled={!imageLoaded || isProcessing}
+              className="flex-1"
+            >
+              {isProcessing ? (
+                <span className="flex items-center">
+                  <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
+                  Processing...
+                </span>
+              ) : (
+                "Process Image"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Background Removed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {imageInfo && imageLoaded && (
+              <div className="bg-muted p-2 text-sm rounded flex items-center space-x-2 mb-4">
+                <Info className="h-4 w-4" />
+                <div>
+                  <p>
+                    Image size: {imageInfo.width}x{imageInfo.height} pixels
+                  </p>
+                  {imageInfo.size > 0 && (
+                    <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
               <div className="relative w-full h-full">
                 {processedImageSrc ? (
@@ -821,64 +897,63 @@ export default function ImageUploader() {
                 )}
               </div>
             </div>
-          </div>
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleCancel}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveBackgroundRemoved}
+              disabled={!processedImageSrc}
+              variant="default"
+              className="flex-1 bg-black hover:bg-black/90 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Save Processed Image
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
 
-          <div className="mt-4">
-            <CardTitle className="mb-2">Thumbnail Preview</CardTitle>
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              <div className="relative w-full h-full">
-                {thumbnailSrc ? (
-                  <img
-                    src={thumbnailSrc}
-                    alt="Thumbnail"
-                    className="object-contain w-full h-full"
-                    style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
-                    crossOrigin="anonymous"
-                  />
-                ) : isCreatingThumbnail ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-sm text-gray-500">
-                      Creating thumbnail...
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {processedImageSrc
-                        ? "Ready to generate thumbnail"
-                        : "Process image first"}
-                    </p>
-                  </div>
-                )}
-              </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Thumbnail Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="relative w-full h-full">
+              {thumbnailSrc ? (
+                <img
+                  src={thumbnailSrc}
+                  alt="Thumbnail"
+                  className="object-contain w-full h-full"
+                  style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+                  crossOrigin="anonymous"
+                />
+              ) : isCreatingThumbnail ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                  <p className="text-sm text-gray-500">
+                    Creating thumbnail...
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {processedImageSrc
+                      ? "Ready to generate thumbnail"
+                      : "Process image first"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2">
-          <Button
-            onClick={handleCancel}
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          
-          <Button
-            onClick={handleRemoveBackground}
-            disabled={!imageLoaded || isProcessing}
-            className="flex-1"
-          >
-            {isProcessing ? (
-              <span className="flex items-center">
-                <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                Processing...
-              </span>
-            ) : (
-              "Process Image"
-            )}
-          </Button>
-          
           <Button
             onClick={handleCreateThumbnail}
             disabled={!processedImageSrc || isCreatingThumbnail}
@@ -895,16 +970,6 @@ export default function ImageUploader() {
           </Button>
           
           <Button
-            onClick={handleSaveBackgroundRemoved}
-            disabled={!processedImageSrc}
-            variant="secondary"
-            className="flex-1"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Save Processed Image
-          </Button>
-
-          <Button
             onClick={handleSaveThumbnail}
             disabled={!thumbnailSrc}
             variant="default"
@@ -916,239 +981,11 @@ export default function ImageUploader() {
         </CardFooter>
       </Card>
 
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Text Editor</CardTitle>
-          <CardDescription>
-            Customize text for your thumbnail
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Select 
-                value={selectedTextIndex.toString()} 
-                onValueChange={(value) => setSelectedTextIndex(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select text" />
-                </SelectTrigger>
-                <SelectContent>
-                  {textElements.map((element, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {element.text.substring(0, 15)}{element.text.length > 15 ? '...' : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={addTextElement}>
-                Add Text
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => removeTextElement(selectedTextIndex)}
-                disabled={textElements.length <= 1}
-              >
-                Remove
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-3 border p-3 rounded-md">
-            <div className="space-y-1">
-              <Label htmlFor="text-content">Text Content</Label>
-              <textarea
-                id="text-content"
-                value={textElements[selectedTextIndex]?.text || ''}
-                onChange={(e) => updateTextElement(selectedTextIndex, { text: e.target.value })}
-                className="font-bold w-full min-h-[60px] p-2 rounded border border-input bg-background"
-                rows={3}
-              />
-              <div className="flex items-center gap-4 mt-1">
-                <label className="flex items-center gap-1 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={!!textElements[selectedTextIndex]?.curve}
-                    onChange={e => updateTextElement(selectedTextIndex, { curve: e.target.checked })}
-                  />
-                  Curve Text
-                </label>
-                <label className="flex items-center gap-1 text-sm">
-                  Text Background
-                  <input
-                    type="color"
-                    value={textElements[selectedTextIndex]?.backgroundColor || '#00000000'}
-                    onChange={e => updateTextElement(selectedTextIndex, { backgroundColor: e.target.value })}
-                    className="w-8 h-6 p-0 border-none bg-transparent"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Position</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                <Button type="button" size="sm" variant={textElements[selectedTextIndex]?.position === 'left' ? 'default' : 'outline'} onClick={() => updateTextElement(selectedTextIndex, { position: 'left' })}>Left</Button>
-                <Button type="button" size="sm" variant={textElements[selectedTextIndex]?.position === 'center' ? 'default' : 'outline'} onClick={() => updateTextElement(selectedTextIndex, { position: 'center' })}>Center</Button>
-                <Button type="button" size="sm" variant={textElements[selectedTextIndex]?.position === 'right' ? 'default' : 'outline'} onClick={() => updateTextElement(selectedTextIndex, { position: 'right' })}>Right</Button>
-                <Button type="button" size="sm" variant={textElements[selectedTextIndex]?.position === 'top' ? 'default' : 'outline'} onClick={() => updateTextElement(selectedTextIndex, { position: 'top' })}>Top</Button>
-                <Button type="button" size="sm" variant={textElements[selectedTextIndex]?.position === 'bottom' ? 'default' : 'outline'} onClick={() => updateTextElement(selectedTextIndex, { position: 'bottom' })}>Bottom</Button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-2">
-                <div>
-                  <Label htmlFor="x-position">X Position (%)</Label>
-                  <Input
-                    id="x-position"
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={textElements[selectedTextIndex]?.x ?? 50}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { x: Number(e.target.value) })}
-                    className="w-24"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="y-position">Y Position (%)</Label>
-                  <Input
-                    id="y-position"
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={textElements[selectedTextIndex]?.y ?? 50}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { y: Number(e.target.value) })}
-                    className="w-24"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="max-width">Text Width (%)</Label>
-                <Input
-                  id="max-width"
-                  type="number"
-                  min={10}
-                  max={100}
-                  value={textElements[selectedTextIndex]?.maxWidth ?? 80}
-                  onChange={(e) => updateTextElement(selectedTextIndex, { maxWidth: Number(e.target.value) })}
-                  className="w-24"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Font Size</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={12}
-                  max={200}
-                  value={textElements[selectedTextIndex]?.fontSize || 36}
-                  onChange={(e) => updateTextElement(selectedTextIndex, { fontSize: Number(e.target.value) })}
-                  className="w-24"
-                />
-                <span className="text-sm text-muted-foreground">px</span>
-                <Button type="button" size="sm" variant="outline" onClick={() => updateTextElement(selectedTextIndex, { fontSize: 36 })}>sm</Button>
-                <Button type="button" size="sm" variant="outline" onClick={() => updateTextElement(selectedTextIndex, { fontSize: 72 })}>lg</Button>
-                <Button type="button" size="sm" variant="outline" onClick={() => updateTextElement(selectedTextIndex, { fontSize: 120 })}>xl</Button>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Rotation</Label>
-              <div className="flex items-center gap-2">
-                <Slider
-                  value={[textElements[selectedTextIndex]?.rotation || 0]}
-                  min={-180}
-                  max={180}
-                  step={1}
-                  onValueChange={(value) => updateTextElement(selectedTextIndex, { rotation: value[0] })}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  min={-180}
-                  max={180}
-                  value={textElements[selectedTextIndex]?.rotation || 0}
-                  onChange={(e) => updateTextElement(selectedTextIndex, { rotation: Number(e.target.value) })}
-                  className="w-20"
-                />
-                <div className="flex gap-1 ml-2">
-                  {[-45, -15, 0, 15, 45].map((deg) => (
-                    <Button
-                      key={deg}
-                      type="button"
-                      size="sm"
-                      variant={textElements[selectedTextIndex]?.rotation === deg ? 'default' : 'outline'}
-                      onClick={() => updateTextElement(selectedTextIndex, { rotation: deg })}
-                    >
-                      {deg}&deg;
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Color</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="color"
-                  value={textElements[selectedTextIndex]?.color || '#ffffff'}
-                  onChange={(e) => updateTextElement(selectedTextIndex, { color: e.target.value })}
-                  className="w-12 h-8 p-1"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {textElements[selectedTextIndex]?.color}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Font Family</Label>
-              <Select
-                value={textElements[selectedTextIndex]?.fontFamily || 'Arial'}
-                onValueChange={(value) => updateTextElement(selectedTextIndex, { fontFamily: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select font" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Arial">Arial</SelectItem>
-                  <SelectItem value="Helvetica">Helvetica</SelectItem>
-                  <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                  <SelectItem value="Courier New">Courier New</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button
-                variant="outline"
-                onClick={clearTextProperties}
-                className="flex items-center gap-2"
-              >
-                <RotateCw className="h-4 w-4" />
-                Reset to Default
-              </Button>
-              <Button
-                type="button"
-                className="ml-2"
-                onClick={handleCreateThumbnail}
-                disabled={!processedImageSrc || isCreatingThumbnail}
-              >
-                {isCreatingThumbnail ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                    Applying...
-                  </span>
-                ) : (
-                  "Apply"
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TextEditor 
+        onApply={handleCreateThumbnail}
+        isCreatingThumbnail={isCreatingThumbnail}
+        processedImageSrc={processedImageSrc}
+      />
     </div>
   );
 }

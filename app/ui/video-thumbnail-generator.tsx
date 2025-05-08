@@ -133,82 +133,85 @@ export default function VideoThumbnailGenerator() {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <VideoPlayer
-            videoRef={videoRef}
-            videoLoaded={videoLoaded}
-            videoInfo={videoInfo}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            onMetadataLoaded={handleMetadataLoaded}
-            onTimeUpdate={handleTimeUpdate}
-            onSnapshot={handleSnapshot}
-          />
-          {snapshots.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Snapshots</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {snapshots.map((snapshot, index) => (
-                    <div 
-                      key={index} 
-                      className="relative aspect-video cursor-move"
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', snapshot);
-                        e.dataTransfer.effectAllowed = 'copy';
-                      }}
-                    >
-                      <Image
-                        src={snapshot}
-                        alt={`Snapshot ${index + 1}`}
-                        fill
-                        className="object-contain rounded-md"
-                        unoptimized={true}
-                      />
+      <div className="grid grid-cols-1 gap-6">
+        {/* Top section - Video and Image Preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <VideoPlayer
+              videoRef={videoRef}
+              videoLoaded={videoLoaded}
+              videoInfo={videoInfo}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              onMetadataLoaded={handleMetadataLoaded}
+              onTimeUpdate={handleTimeUpdate}
+              onSnapshot={handleSnapshot}
+            />
+            {snapshots.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Snapshots</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    {snapshots.map((snapshot, index) => (
+                      <div 
+                        key={index} 
+                        className="relative aspect-video cursor-move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', snapshot);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                      >
+                        <Image
+                          src={snapshot}
+                          alt={`Snapshot ${index + 1}`}
+                          fill
+                          className="object-contain rounded-md"
+                          unoptimized={true}
+                        />
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="absolute bottom-2 right-2"
+                          onClick={() => handleSaveSnapshot(index)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Save
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    {snapshots.length > 1 && (
                       <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute bottom-2 right-2"
-                        onClick={() => handleSaveSnapshot(index)}
+                        variant="default"
+                        className="flex-1"
+                        onClick={handleSaveAllSnapshots}
                       >
                         <Download className="h-4 w-4 mr-2" />
-                        Save
+                        Save All Snapshots
                       </Button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2 mt-4">
-                  {snapshots.length > 1 && (
+                    )}
                     <Button
-                      variant="default"
+                      variant="destructive"
                       className="flex-1"
-                      onClick={handleSaveAllSnapshots}
+                      onClick={() => {
+                        setSnapshots([]);
+                        toast.success("All snapshots cleared");
+                      }}
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Save All Snapshots
+                      Cancel All
                     </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => {
-                      setSnapshots([]);
-                      toast.success("All snapshots cleared");
-                    }}
-                  >
-                    Cancel All
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-        <div className="space-y-6">
-          <DropZone />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          <div className="space-y-6">
+            <DropZone />
+          </div>
         </div>
       </div>
     </div>
