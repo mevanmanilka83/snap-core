@@ -761,42 +761,42 @@ export default function VideoThumbnailGenerator() {
   return (
     <div className="container mx-auto py-6 px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="video" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>Video</span>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          <TabsTrigger value="video" className="flex items-center gap-1 md:gap-2">
+            <Clock className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Video</span>
           </TabsTrigger>
-          <TabsTrigger value="snapshots" className="flex items-center gap-2">
-            <Layers className="h-4 w-4" />
-            <span>Snapshots ({snapshots.length})</span>
+          <TabsTrigger value="snapshots" className="flex items-center gap-1 md:gap-2">
+            <Layers className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Snapshots ({snapshots.length})</span>
           </TabsTrigger>
           <TabsTrigger
             value="edit"
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 md:gap-2"
             disabled={selectedSnapshotIndex === -1 && !currentFrame}
           >
-            <Palette className="h-4 w-4" />
-            <span>Edit</span>
+            <Palette className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Edit</span>
           </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-2" disabled={!processedFrame}>
-            <Type className="h-4 w-4" />
-            <span>Text</span>
+          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2" disabled={!processedFrame}>
+            <Type className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Text</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="video" className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <VideoPlayer
-            videoRef={videoRef}
-            videoLoaded={videoLoaded}
-            videoInfo={videoInfo}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            onMetadataLoaded={handleMetadataLoaded}
-            onTimeUpdate={handleTimeUpdate}
-            onSnapshot={handleSnapshot}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="space-y-6">
+              <VideoPlayer
+                videoRef={videoRef}
+                videoLoaded={videoLoaded}
+                videoInfo={videoInfo}
+                isPlaying={isPlaying}
+                setIsPlaying={setIsPlaying}
+                onMetadataLoaded={handleMetadataLoaded}
+                onTimeUpdate={handleTimeUpdate}
+                onSnapshot={handleSnapshot}
+              />
 
               <Card>
                 <CardHeader>
@@ -806,7 +806,7 @@ export default function VideoThumbnailGenerator() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Button onClick={captureSnapshot} disabled={!currentFrame}>
+                      <Button onClick={captureSnapshot} disabled={!currentFrame} className="text-xs md:text-sm">
                         Capture Current Frame
                       </Button>
                       <Button
@@ -843,13 +843,14 @@ export default function VideoThumbnailGenerator() {
                           }
                         }}
                         disabled={!videoLoaded}
+                        className="text-xs md:text-sm"
                       >
                         Auto Capture Key Frames
                       </Button>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="auto-snap"
@@ -906,14 +907,14 @@ export default function VideoThumbnailGenerator() {
                         alt="Current frame"
                         className="object-contain rounded-md w-full h-full"
                         style={{
-                          position: 'absolute',
-                          inset: 0
+                          position: "absolute",
+                          inset: 0,
                         }}
                       />
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={captureSnapshot}>
+                    <Button variant="outline" onClick={captureSnapshot} className="text-xs md:text-sm">
                       Add to Snapshots
                     </Button>
                     <Button
@@ -924,6 +925,7 @@ export default function VideoThumbnailGenerator() {
                           setActiveTab("edit")
                         }
                       }}
+                      className="text-xs md:text-sm"
                     >
                       Edit This Frame
                     </Button>
@@ -935,17 +937,17 @@ export default function VideoThumbnailGenerator() {
         </TabsContent>
 
         <TabsContent value="snapshots" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Snapshots</CardTitle>
-                <CardDescription>Select a snapshot to edit</CardDescription>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Snapshots</CardTitle>
+              <CardDescription>Select a snapshot to edit</CardDescription>
+            </CardHeader>
+            <CardContent>
               {snapshots.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
                   {snapshots.map((snapshot, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`relative aspect-video cursor-pointer border-2 rounded-md overflow-hidden ${
                         selectedSnapshotIndex === index ? "border-primary" : "border-transparent"
                       }`}
@@ -958,10 +960,10 @@ export default function VideoThumbnailGenerator() {
                     >
                       <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                         <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                            className="bg-white/80 hover:bg-white"
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="bg-white/80 hover:bg-white text-xs md:text-sm"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleSaveSnapshot(index)
@@ -972,14 +974,14 @@ export default function VideoThumbnailGenerator() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="bg-white/80 hover:bg-red-500"
+                            className="bg-white/80 hover:bg-red-500 text-xs md:text-sm"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDeleteSnapshot(index)
                             }}
                           >
                             <Trash2 className="h-4 w-4" />
-                      </Button>
+                          </Button>
                         </div>
                       </div>
                       <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
@@ -1005,24 +1007,25 @@ export default function VideoThumbnailGenerator() {
                   toast.success("All snapshots cleared")
                 }}
                 disabled={snapshots.length === 0}
+                className="text-xs md:text-sm"
               >
                 Clear All
               </Button>
-                    <Button
+              <Button
                 onClick={handleSaveAllSnapshots}
                 disabled={snapshots.length === 0}
-                      variant="default"
-                className="flex items-center gap-2"
-                    >
-                <Download className="h-4 w-4" />
-                      Save All Snapshots
-                    </Button>
+                variant="default"
+                className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+              >
+                <Download className="h-3 w-3 md:h-4 md:w-4" />
+                Save All Snapshots
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
 
         <TabsContent value="edit" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>Edit Frame</CardTitle>
@@ -1041,7 +1044,7 @@ export default function VideoThumbnailGenerator() {
                         alt="Processed frame"
                         className="object-contain w-full h-full"
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           inset: 0,
                           transform: `scale(${zoomLevel / 100})`,
                           filter: `
@@ -1052,7 +1055,7 @@ export default function VideoThumbnailGenerator() {
                             hue-rotate(${imageFilters.hueRotate}deg)
                             grayscale(${imageFilters.grayscale}%)
                             sepia(${imageFilters.sepia}%)
-                          `
+                          `,
                         }}
                       />
                     </div>
@@ -1066,41 +1069,45 @@ export default function VideoThumbnailGenerator() {
 
                 {processedFrame && (
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 md:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
                         onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
                         disabled={zoomLevel <= 50}
                       >
-                        <ZoomOut className="h-4 w-4" />
+                        <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
-                      <span className="text-sm">{zoomLevel}%</span>
+                      <span className="text-xs md:text-sm">{zoomLevel}%</span>
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
                         onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
                         disabled={zoomLevel >= 200}
                       >
-                        <ZoomIn className="h-4 w-4" />
+                        <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 md:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
                         onClick={() => setZoomLevel(100)}
                         disabled={zoomLevel === 100}
                       >
-                        <Maximize className="h-4 w-4" />
+                        <Maximize className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
-                  <Button
+                      <Button
                         variant="outline"
                         size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
                         onClick={() => setZoomLevel(50)}
                         disabled={zoomLevel === 50}
                       >
-                        <Minimize className="h-4 w-4" />
+                        <Minimize className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -1108,14 +1115,26 @@ export default function VideoThumbnailGenerator() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleUndo}
+                    disabled={undoStack.length === 0}
+                    className="text-xs md:text-sm"
+                  >
                     <Undo className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleRedo}
+                    disabled={redoStack.length === 0}
+                    className="text-xs md:text-sm"
+                  >
                     <Redo className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button onClick={handleCreateThumbnail} disabled={!processedFrame}>
+                <Button onClick={handleCreateThumbnail} disabled={!processedFrame} className="text-xs md:text-sm">
                   Continue to Text Editor
                 </Button>
               </CardFooter>
@@ -1136,6 +1155,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
                         disabled={imageFilters.brightness === 100}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1158,6 +1178,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
                         disabled={imageFilters.contrast === 100}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1180,6 +1201,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
                         disabled={imageFilters.saturation === 100}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1202,6 +1224,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
                         disabled={imageFilters.blur === 0}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1224,6 +1247,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
                         disabled={imageFilters.hueRotate === 0}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1246,6 +1270,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
                         disabled={imageFilters.grayscale === 0}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1268,6 +1293,7 @@ export default function VideoThumbnailGenerator() {
                         size="sm"
                         onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
                         disabled={imageFilters.sepia === 0}
+                        className="text-xs md:text-sm"
                       >
                         Reset
                       </Button>
@@ -1286,22 +1312,26 @@ export default function VideoThumbnailGenerator() {
                 <div className="space-y-2">
                   <Label>Filter Presets</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" onClick={() => applyPresetFilter("grayscale")}>
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("grayscale")}
+                      className="text-xs md:text-sm"
+                    >
                       Grayscale
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("sepia")}>
+                    <Button variant="outline" onClick={() => applyPresetFilter("sepia")} className="text-xs md:text-sm">
                       Sepia
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("vivid")}>
+                    <Button variant="outline" onClick={() => applyPresetFilter("vivid")} className="text-xs md:text-sm">
                       Vivid
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("cool")}>
+                    <Button variant="outline" onClick={() => applyPresetFilter("cool")} className="text-xs md:text-sm">
                       Cool
                     </Button>
-                    <Button variant="outline" onClick={() => applyPresetFilter("warm")}>
+                    <Button variant="outline" onClick={() => applyPresetFilter("warm")} className="text-xs md:text-sm">
                       Warm
                     </Button>
-                    <Button variant="outline" onClick={resetFilters}>
+                    <Button variant="outline" onClick={resetFilters} className="text-xs md:text-sm">
                       <RotateCw className="h-4 w-4 mr-2" />
                       Reset All
                     </Button>
@@ -1309,7 +1339,7 @@ export default function VideoThumbnailGenerator() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button onClick={handleApplyFilters} disabled={!processedFrame}>
+                <Button onClick={handleApplyFilters} disabled={!processedFrame} className="text-xs md:text-sm">
                   Apply Filters
                 </Button>
               </CardFooter>
@@ -1335,7 +1365,7 @@ export default function VideoThumbnailGenerator() {
                   <p className="text-center mb-4">
                     Remove the background from your image to create a professional thumbnail.
                   </p>
-                  <Button onClick={handleRemoveBackground} disabled={!processedFrame}>
+                  <Button onClick={handleRemoveBackground} disabled={!processedFrame} className="text-xs md:text-sm">
                     Remove Background
                   </Button>
                 </div>
@@ -1368,8 +1398,8 @@ export default function VideoThumbnailGenerator() {
                       alt="Final thumbnail"
                       className="object-contain rounded-md"
                       style={{
-                        position: 'absolute',
-                        inset: 0
+                        position: "absolute",
+                        inset: 0,
                       }}
                     />
                   </>
@@ -1378,11 +1408,15 @@ export default function VideoThumbnailGenerator() {
                     <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
                     <p className="text-gray-500 dark:text-gray-400">No frame selected</p>
                   </div>
-          )}
-        </div>
+                )}
+              </div>
             </CardContent>
             <CardFooter className="flex justify-end">
-              <Button onClick={handleSaveFinalThumbnail} disabled={!finalThumbnail} className="flex items-center gap-2">
+              <Button
+                onClick={handleSaveFinalThumbnail}
+                disabled={!finalThumbnail}
+                className="flex items-center gap-2 text-xs md:text-sm"
+              >
                 <Download className="h-4 w-4" />
                 Download Thumbnail
               </Button>

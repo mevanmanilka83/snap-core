@@ -126,20 +126,20 @@ export default function ImageUploader() {
   // Default text element
   const defaultTextElement: TextElement = {
     id: "default-text",
-      text: "TTV", 
-      x: 50, 
-      y: 50, 
-      fontSize: 72, 
-      color: "#ffffff", 
-      rotation: 0, 
-      fontFamily: "Arial",
-      position: "center",
-      maxWidth: 80,
-      curve: false,
+    text: "TTV",
+    x: 50,
+    y: 50,
+    fontSize: 72,
+    color: "#ffffff",
+    rotation: 0,
+    fontFamily: "Arial",
+    position: "center",
+    maxWidth: 80,
+    curve: false,
     backgroundColor: "#000000",
-      backgroundEnabled: false,
-      shadow: true,
-      shadowBlur: 10,
+    backgroundEnabled: false,
+    shadow: true,
+    shadowBlur: 10,
     shadowColor: "#000000",
     textAlign: "center",
     bold: false,
@@ -168,7 +168,7 @@ export default function ImageUploader() {
       if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(thumbnailUrl.current)
       }
-      
+
       // Clear any pending thumbnail updates
       if (pendingThumbnailUpdate.current) {
         clearTimeout(pendingThumbnailUpdate.current)
@@ -346,7 +346,7 @@ export default function ImageUploader() {
 
     setImageLoaded(true)
     setIsLoading(false)
-    
+
     // Draw the image to canvas after loading
     const canvas = canvasRef.current
     if (canvas) {
@@ -403,7 +403,7 @@ export default function ImageUploader() {
     if (urlInput) {
       urlInput.value = ""
     }
-    
+
     // Clear canvas
     const canvas = canvasRef.current
     if (canvas) {
@@ -463,19 +463,19 @@ export default function ImageUploader() {
           setProcessingProgress(progress)
         },
       })
-      
+
       // Create a URL from the resulting blob
       const processedImageUrl = URL.createObjectURL(blob)
-      
+
       // Revoke the old processed URL if it was a blob
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
-      
+
       // Save the transparent background image URL
       processedUrl.current = processedImageUrl
       setProcessedImageSrc(processedImageUrl)
-      
+
       toast.success("Background removed successfully")
     } catch (err) {
       console.error("Error removing background:", err)
@@ -566,7 +566,7 @@ export default function ImageUploader() {
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     let x = canvasWidth * (element.x / 100)
     let y = canvasHeight * (element.y / 100)
-    
+
     // Adjust position based on the position property
     switch (element.position) {
       case "left":
@@ -599,7 +599,7 @@ export default function ImageUploader() {
         break
       // center is the default, already calculated
     }
-    
+
     return { x, y }
   }
 
@@ -607,20 +607,20 @@ export default function ImageUploader() {
   const createThumbnail = (transparentImageUrl: string) => {
     const canvas = canvasRef.current
     if (!canvas) return
-    
+
     const ctx = canvas.getContext("2d")
     if (!ctx) return
-    
+
     setIsCreatingThumbnail(true)
-    
+
     // Create a new image for the background (use original image)
     const bgImg = new window.Image()
     bgImg.crossOrigin = "anonymous"
-    
+
     // Create the foreground image with transparent background
     const fgImg = new window.Image()
     fgImg.crossOrigin = "anonymous"
-    
+
     // Set up error handling for both images
     const handleImageError = () => {
       setIsCreatingThumbnail(false)
@@ -629,7 +629,7 @@ export default function ImageUploader() {
 
     bgImg.onerror = handleImageError
     fgImg.onerror = handleImageError
-    
+
     bgImg.onload = () => {
       // Set canvas dimensions based on the original image size
       canvas.width = bgImg.width
@@ -753,7 +753,7 @@ export default function ImageUploader() {
             ctx.save()
             const position = calculatePosition(element, canvas.width, canvas.height)
             ctx.translate(position.x, position.y)
-          if (element.rotation !== 0) {
+            if (element.rotation !== 0) {
               ctx.rotate((element.rotation * Math.PI) / 180)
             }
             const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
@@ -798,7 +798,7 @@ export default function ImageUploader() {
               ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
               ctx.shadowOffsetX = 2 * scaleFactor
               ctx.shadowOffsetY = 2 * scaleFactor
-          } else {
+            } else {
               ctx.shadowColor = "transparent"
               ctx.shadowBlur = 0
               ctx.shadowOffsetX = 0
@@ -808,13 +808,13 @@ export default function ImageUploader() {
             // Set text color
             ctx.fillStyle = element.color
 
-          // Draw curved text if enabled
-          if (element.curve) {
+            // Draw curved text if enabled
+            if (element.curve) {
               const text = element.text
               const radius = Math.max(80, scaledFontSize * 2)
               const angleStep = Math.PI / (text.length + 1)
               const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
-            for (let i = 0; i < text.length; i++) {
+              for (let i = 0; i < text.length; i++) {
                 const char = text[i]
                 ctx.save()
                 ctx.rotate(startAngle + i * angleStep)
@@ -822,7 +822,7 @@ export default function ImageUploader() {
                 ctx.fillText(char, 0, 0)
                 ctx.restore()
               }
-              } else {
+            } else {
               // Draw regular text
               const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
               ctx.fillText(element.text, 0, 0, maxWidth)
@@ -940,15 +940,15 @@ export default function ImageUploader() {
 
             ctx.restore()
           })
-        
+
         // Convert canvas to data URL and update thumbnail
         const finalImageUrl = canvas.toDataURL("image/png")
-        
+
         // Revoke old thumbnail URL if it exists
         if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
           URL.revokeObjectURL(thumbnailUrl.current)
         }
-        
+
         // Update the thumbnail
         thumbnailUrl.current = finalImageUrl
         setThumbnailSrc(finalImageUrl)
@@ -959,11 +959,11 @@ export default function ImageUploader() {
           setShowUpdateToast(false)
         }
       }
-      
+
       // Load the transparent image
       fgImg.src = transparentImageUrl
     }
-    
+
     // Load the original image as background
     bgImg.src = imageSrc
   }
@@ -982,27 +982,27 @@ export default function ImageUploader() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-          <TabsTrigger value="file" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <UploadIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="file" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <UploadIcon className="h-3 w-3 md:h-4 md:w-4" />
             <span>Image from File</span>
           </TabsTrigger>
-          <TabsTrigger value="url" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="url" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
             <span>Image from URL</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="file" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Upload Image File</CardTitle>
-              <CardDescription className="text-xs">Select an image file from your device or drag and drop</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-sm md:text-base">Upload Image File</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Select an image file from your device or drag and drop</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <label htmlFor="file-upload">
                 <div
-                  className="flex flex-col items-center justify-center space-y-4 py-6 px-4 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
+                  className="flex flex-col items-center justify-center space-y-3 py-6 px-4 md:py-8 md:px-6 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
                   onDragOver={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
@@ -1063,8 +1063,8 @@ export default function ImageUploader() {
                     }
                   }}
                 >
-                  <UploadIcon className="h-8 w-8 text-gray-400" />
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Drop image here or click to browse</div>
+                  <UploadIcon className="h-8 w-8 md:h-10 md:w-10 text-gray-400" />
+                  <div className="font-medium text-xs md:text-sm text-gray-900 dark:text-gray-50">Drop image here or click to browse</div>
                   <input
                     id="file-upload"
                     type="file"
@@ -1077,20 +1077,20 @@ export default function ImageUploader() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="url" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Upload from URL</CardTitle>
-              <CardDescription className="text-xs">Enter the URL of an image you want to upload</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-sm md:text-base">Upload from URL</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Enter the URL of an image you want to upload</CardDescription>
             </CardHeader>
             <CardContent className="pt-2 space-y-4">
               <div className="grid grid-cols-4 gap-4">
-                <Input type="url" placeholder="https://example.com/image.jpg" className="col-span-3" id="imageUrl" />
-                <Button onClick={handleURLLoad} disabled={isLoading} size="default">
+                <Input type="url" placeholder="https://example.com/image.jpg" className="col-span-3 text-xs md:text-sm" id="imageUrl" />
+                <Button onClick={handleURLLoad} disabled={isLoading} className="flex-1 text-xs md:text-sm h-8 md:h-9">
                   {isLoading ? (
                     <span className="flex items-center">
-                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
+                      <span className="animate-spin mr-2 h-3 w-3 md:h-4 md:w-4 border-2 border-b-transparent border-white rounded-full"></span>
                       Loading
                     </span>
                   ) : (
@@ -1103,18 +1103,20 @@ export default function ImageUploader() {
         </TabsContent>
       </Tabs>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <Card className="w-full">
-          <CardHeader className="pb-2">
+          <CardHeader className="p-4 md:p-6 pb-2">
             <CardTitle className="text-base">Image Preview</CardTitle>
-            {error && hasAttemptedLoad && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {error && hasAttemptedLoad && <p className="text-xs md:text-sm text-red-500 mt-1">{error}</p>}
           </CardHeader>
           <CardContent className="space-y-4">
             {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2">
-                <Info className="h-4 w-4 flex-shrink-0" />
+              <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2">
+                <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                 <div>
-                  <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
+                  <p>
+                    Image size: {imageInfo.width}x{imageInfo.height} pixels
+                  </p>
                   {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
                 </div>
               </div>
@@ -1151,13 +1153,13 @@ export default function ImageUploader() {
                 <>
                   {!isLoading && !error && (
                     <div className="text-center p-4">
-                      <UploadIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">No image selected</p>
+                      <UploadIcon className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">No image selected</p>
                     </div>
                   )}
                   {isLoading && (
-                    <div className="flex justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <div className="flex justify-center py-8 md:py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary"></div>
                     </div>
                   )}
                 </>
@@ -1167,57 +1169,56 @@ export default function ImageUploader() {
             {imageLoaded && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 md:gap-2">
-            <Button
-              variant="outline"
+                  <Button
+                    variant="outline"
                     size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
+                    className="h-8 w-8"
                     onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
                     disabled={zoomLevel <= 50}
                   >
-                    <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+                    <ZoomOut className="h-4 w-4" />
                   </Button>
                   <span className="text-xs md:text-sm">{zoomLevel}%</span>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
+                    className="h-8 w-8"
                     onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
                     disabled={zoomLevel >= 200}
                   >
-                    <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
+                    <ZoomIn className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex items-center gap-1 md:gap-2">
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
+                    className="h-8 w-8"
                     onClick={() => setZoomLevel(100)}
                     disabled={zoomLevel === 100}
                   >
-                    <Maximize className="h-3 w-3 md:h-4 md:w-4" />
+                    <Maximize className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
+                    className="h-8 w-8"
                     onClick={() => setZoomLevel(50)}
                     disabled={zoomLevel === 50}
                   >
-                    <Minimize className="h-3 w-3 md:h-4 md:w-4" />
+                    <Minimize className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
-            <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
+          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+            <Button onClick={handleCancel} variant="outline" className="flex-1">
               Cancel
             </Button>
             <Button
               onClick={handleRemoveBackground}
               disabled={!imageLoaded || isProcessing}
-              size="default"
               className="flex-1"
             >
               {isProcessing ? (
@@ -1233,18 +1234,20 @@ export default function ImageUploader() {
         </Card>
 
         <Card className="w-full">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <CardTitle className="text-base">Background Removed</CardTitle>
           </CardHeader>
           <CardContent>
             {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2 mb-4">
-                <Info className="h-4 w-4 flex-shrink-0" />
+              <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2 mb-4">
+                <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                 <div>
-                  <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
+                  <p>
+                    Image size: {imageInfo.width}x{imageInfo.height} pixels
+                  </p>
                   {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                  </div>
-          </div>
+                </div>
+              </div>
             )}
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
               <div className="relative w-full h-full">
@@ -1265,61 +1268,61 @@ export default function ImageUploader() {
                   />
                 ) : isProcessing ? (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-sm text-gray-500">Removing background...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mb-2 md:mb-4"></div>
+                    <p className="text-xs md:text-sm text-gray-500">Removing background...</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                       {imageLoaded ? "Ready to process image" : "Please upload an image"}
                     </p>
                   </div>
                 )}
+              </div>
             </div>
-          </div>
 
             {processedImageSrc && (
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0}>
+                  <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0} className="h-8 w-8">
                     <Undo className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0}>
+                  <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0} className="h-8 w-8">
                     <Redo className="h-4 w-4" />
                   </Button>
-                  </div>
-                  </div>
-                )}
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-            <Button onClick={handleCancel} variant="outline" size="default">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveBackgroundRemoved}
-            disabled={!processedImageSrc}
+                </div>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+            <Button onClick={handleCancel} variant="outline" className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveBackgroundRemoved}
+              disabled={!processedImageSrc}
               variant="default"
-              className="flex-1 bg-black hover:bg-black/90 text-white text-sm md:text-base"
-          >
-              <Download className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-            Save Processed Image
-          </Button>
-        </CardFooter>
-      </Card>
+              className="flex-1 bg-black hover:bg-black/90 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Save Processed Image
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
       <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-          <TabsTrigger value="text" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Type className="h-3 w-3 sm:h-4 sm:w-4" />
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Type className="h-3 w-3 md:h-4 md:w-4" />
             <span>Text Editor</span>
           </TabsTrigger>
-          <TabsTrigger value="filters" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="filters" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Palette className="h-3 w-3 md:h-4 md:w-4" />
             <span>Image Filters</span>
           </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
+          <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+            <Layers className="h-3 w-3 md:h-4 md:w-4" />
             <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
@@ -1340,25 +1343,26 @@ export default function ImageUploader() {
         </TabsContent>
 
         <TabsContent value="filters" className="space-y-4">
-      <Card className="w-full">
-        <CardHeader>
-              <CardTitle>Image Filters</CardTitle>
-              <CardDescription>Adjust image appearance with filters</CardDescription>
-        </CardHeader>
-            <CardContent className="space-y-6">
+          <Card className="w-full">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-sm md:text-base">Image Filters</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Adjust image appearance with filters</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 p-4 md:p-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-          <div className="flex items-center justify-between">
-                    <Label htmlFor="brightness">Brightness ({imageFilters.brightness}%)</Label>
-              <Button 
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="brightness" className="text-xs md:text-sm">Brightness ({imageFilters.brightness}%)</Label>
+                    <Button 
                       variant="ghost"
-                size="sm" 
+                      size="sm" 
                       onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
                       disabled={imageFilters.brightness === 100}
-              >
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
+                    >
                       Reset
-              </Button>
-            </div>
+                    </Button>
+                  </div>
                   <Slider
                     id="brightness"
                     min={0}
@@ -1367,20 +1371,21 @@ export default function ImageUploader() {
                     value={[imageFilters.brightness]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
                   />
-            </div>
+                </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="contrast">Contrast ({imageFilters.contrast}%)</Label>
+                    <Label htmlFor="contrast" className="text-xs md:text-sm">Contrast ({imageFilters.contrast}%)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
                       disabled={imageFilters.contrast === 100}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
-                </div>
+                  </div>
                   <Slider
                     id="contrast"
                     min={0}
@@ -1393,12 +1398,13 @@ export default function ImageUploader() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="saturation">Saturation ({imageFilters.saturation}%)</Label>
+                    <Label htmlFor="saturation" className="text-xs md:text-sm">Saturation ({imageFilters.saturation}%)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
                       disabled={imageFilters.saturation === 100}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
@@ -1415,16 +1421,17 @@ export default function ImageUploader() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="blur">Blur ({imageFilters.blur}px)</Label>
+                    <Label htmlFor="blur" className="text-xs md:text-sm">Blur ({imageFilters.blur}px)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
                       disabled={imageFilters.blur === 0}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
-              </div>
+                  </div>
                   <Slider
                     id="blur"
                     min={0}
@@ -1433,25 +1440,26 @@ export default function ImageUploader() {
                     value={[imageFilters.blur]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
                   />
-            </div>
+                </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="hueRotate">Hue Rotate ({imageFilters.hueRotate}°)</Label>
+                    <Label htmlFor="hueRotate" className="text-xs md:text-sm">Hue Rotate ({imageFilters.hueRotate}°)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
                       disabled={imageFilters.hueRotate === 0}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
-              </div>
-                <Slider
+                  </div>
+                  <Slider
                     id="hueRotate"
                     min={0}
                     max={360}
-                  step={1}
+                    step={1}
                     value={[imageFilters.hueRotate]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
                   />
@@ -1459,16 +1467,17 @@ export default function ImageUploader() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="grayscale">Grayscale ({imageFilters.grayscale}%)</Label>
+                    <Label htmlFor="grayscale" className="text-xs md:text-sm">Grayscale ({imageFilters.grayscale}%)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
                       disabled={imageFilters.grayscale === 0}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
-                </div>
+                  </div>
                   <Slider
                     id="grayscale"
                     min={0}
@@ -1477,81 +1486,86 @@ export default function ImageUploader() {
                     value={[imageFilters.grayscale]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
                   />
-            </div>
+                </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="sepia">Sepia ({imageFilters.sepia}%)</Label>
+                    <Label htmlFor="sepia" className="text-xs md:text-sm">Sepia ({imageFilters.sepia}%)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
                       disabled={imageFilters.sepia === 0}
+                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
                     >
                       Reset
                     </Button>
-            </div>
+                  </div>
                   <Slider
                     id="sepia"
-                  min={0}
+                    min={0}
                     max={100}
                     step={1}
                     value={[imageFilters.sepia]}
                     onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
                   />
                 </div>
-            </div>
+              </div>
 
               <div className="space-y-2">
-                <Label>Filter Presets</Label>
+                <Label className="text-xs md:text-sm">Filter Presets</Label>
                 <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant="outline"
+                  <Button
+                    variant="outline"
                     onClick={() => applyPresetFilter("grayscale")}
-                    className="flex-1 text-sm md:text-base"
-              >
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
+                  >
                     Grayscale
-              </Button>
-              <Button
+                  </Button>
+                  <Button
                     variant="outline"
                     onClick={() => applyPresetFilter("sepia")}
-                    className="flex-1 text-sm md:text-base"
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
                   >
                     Sepia
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => applyPresetFilter("vivid")}
-                    className="flex-1 text-sm md:text-base"
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
                   >
                     Vivid
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => applyPresetFilter("cool")}
-                    className="flex-1 text-sm md:text-base"
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
                   >
                     Cool
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => applyPresetFilter("warm")}
-                    className="flex-1 text-sm md:text-base"
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
                   >
                     Warm
                   </Button>
-                  <Button variant="outline" onClick={resetFilters} className="flex-1 text-sm md:text-base">
-                    <RotateCw className="h-4 w-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    onClick={resetFilters} 
+                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
+                  >
+                    <RotateCw className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                     Reset All
                   </Button>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end">
+            <CardFooter className="flex justify-end p-4 md:p-6">
               <Button
                 onClick={handleCreateThumbnail}
                 disabled={!processedImageSrc || isCreatingThumbnail}
-                className="flex-1 text-sm md:text-base"
+                className="flex-1 text-xs md:text-sm h-8 md:h-9"
               >
                 Apply Filters
               </Button>
@@ -1561,11 +1575,11 @@ export default function ImageUploader() {
 
         <TabsContent value="preview" className="space-y-4">
           <Card className="w-full">
-            <CardHeader>
-              <CardTitle>Final Preview</CardTitle>
-              <CardDescription>Preview your thumbnail with text and effects</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-sm md:text-base">Final Preview</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Preview your thumbnail with text and effects</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                 <div className="relative w-full h-full">
                   {thumbnailSrc ? (
@@ -1593,34 +1607,33 @@ export default function ImageUploader() {
                     />
                   ) : isCreatingThumbnail ? (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                      <p className="text-sm text-gray-500">Creating thumbnail...</p>
+                      <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mb-2 md:mb-4"></div>
+                      <p className="text-xs md:text-sm text-gray-500">Creating thumbnail...</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <Sparkles className="h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">
+                      <Sparkles className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mb-2" />
+                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                         {processedImageSrc
                           ? "Click 'Apply' in the text editor to generate preview"
                           : "Process image first"}
                       </p>
                     </div>
                   )}
-            </div>
-          </div>
-        </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end p-4 md:p-6">
+              <RippleButton
                 onClick={handleSaveThumbnail}
                 disabled={!thumbnailSrc}
-                size="default"
-                className="flex-1"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm h-8 md:h-9"
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                 Download Thumbnail
-              </Button>
+              </RippleButton>
             </CardFooter>
-      </Card>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
