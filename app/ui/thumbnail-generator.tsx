@@ -1108,43 +1108,43 @@ export default function VideoThumbnailGenerator() {
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2">
+        <TabsList className="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2 overflow-x-auto">
           <TabsTrigger 
             value="video" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
           >
-            <Clock className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Video</span>
           </TabsTrigger>
           <TabsTrigger 
             value="snapshots"
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
           >
-            <Layers className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Snapshots ({snapshots.length})</span>
           </TabsTrigger>
           <TabsTrigger
             value="edit"
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
             disabled={selectedSnapshotIndex === -1}
           >
-            <Palette className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Edit</span>
           </TabsTrigger>
           <TabsTrigger 
             value="text" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
             disabled={!processedFrame}
           >
-            <Type className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Text</span>
           </TabsTrigger>
           <TabsTrigger 
             value="preview" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2 px-2 sm:px-3 whitespace-nowrap"
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
             disabled={!processedFrame}
           >
-            <ImageIcon className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
@@ -1163,17 +1163,17 @@ export default function VideoThumbnailGenerator() {
                 onSnapshot={handleSnapshot}
               />
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Snapshot Controls</CardTitle>
-                  <CardDescription className="text-sm">Capture frames from the video</CardDescription>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2 px-4 sm:px-6">
+                  <CardTitle className="text-base sm:text-lg">Snapshot Controls</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Capture frames from the video</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
+                <CardContent className="space-y-4 px-4 sm:px-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
                     <Button 
                       onClick={captureSnapshot} 
                       disabled={!videoLoaded} 
-                      className="w-full"
+                      className="w-full h-auto min-h-[44px] text-sm sm:text-base"
                       size="default"
                     >
                       Capture Current Frame
@@ -1182,32 +1182,33 @@ export default function VideoThumbnailGenerator() {
                       variant="outline"
                       onClick={handleAutoCaptureKeyFrames}
                       disabled={!videoLoaded}
-                      className="w-full"
+                      className="w-full h-auto min-h-[44px] text-sm sm:text-base"
                       size="default"
                     >
                       Auto Capture Key Frames
                     </Button>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Switch
                         id="auto-snap"
                         checked={!!autoSnapInterval}
                         onCheckedChange={toggleAutoSnap}
                         disabled={!videoLoaded}
+                        className="h-5 w-9"
                       />
-                      <Label htmlFor="auto-snap" className="text-xs sm:text-sm">Auto Snapshot</Label>
+                      <Label htmlFor="auto-snap" className="text-sm sm:text-base">Auto Snapshot</Label>
                     </div>
 
                     {autoSnapInterval && (
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="interval" className="text-xs sm:text-sm">Every</Label>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Label htmlFor="interval" className="text-sm sm:text-base">Every</Label>
                         <Select
                           value={autoSnapInterval.toString()}
                           onValueChange={(value) => setAutoSnapInterval(Number(value))}
                         >
-                          <SelectTrigger className="w-20 sm:w-24 h-8 sm:h-9 text-xs sm:text-sm">
+                          <SelectTrigger className="w-24 sm:w-28 h-9 sm:h-10 text-sm sm:text-base">
                             <SelectValue placeholder="Interval" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1240,7 +1241,7 @@ export default function VideoThumbnailGenerator() {
             </CardHeader>
             <CardContent>
               {snapshots.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {snapshots.map((snapshot, index) => (
                     <div
                       key={index}
@@ -1269,28 +1270,28 @@ export default function VideoThumbnailGenerator() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="bg-white/80 hover:bg-white text-xs sm:text-sm h-7 sm:h-8"
+                            className="bg-white/80 hover:bg-white text-sm h-8 sm:h-9 min-w-[36px]"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSaveSnapshot(index);
                             }}
                           >
-                            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="bg-white/80 hover:bg-red-500 text-xs sm:text-sm h-7 sm:h-8"
+                            className="bg-white/80 hover:bg-red-500 text-sm h-8 sm:h-9 min-w-[36px]"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteSnapshot(index);
                             }}
                           >
-                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs sm:text-sm px-2 py-1 rounded">
                         #{index + 1}
                       </div>
                     </div>
@@ -1333,8 +1334,8 @@ export default function VideoThumbnailGenerator() {
 
         <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <Card className="w-full">
-              <CardHeader className="pb-2">
+            <Card className="w-full overflow-hidden">
+              <CardHeader className="pb-2 px-4 sm:px-6">
                 <CardTitle className="text-base sm:text-lg">Edit Frame</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
                   {selectedSnapshotIndex >= 0
@@ -1342,7 +1343,7 @@ export default function VideoThumbnailGenerator() {
                     : "Editing current frame"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 px-4 sm:px-6">
                 <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                   {processedFrame ? (
                     <div className="relative w-full h-full">
@@ -1368,80 +1369,84 @@ export default function VideoThumbnailGenerator() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-2 sm:mb-3" />
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">No frame selected</p>
+                      <ImageIcon className="h-12 w-12 sm:h-14 sm:w-14 text-gray-400 mb-3 sm:mb-4" />
+                      <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No frame selected</p>
                     </div>
                   )}
                 </div>
 
                 {processedFrame && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                         onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
                         disabled={zoomLevel <= 50}
                       >
-                        <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <ZoomOut className="h-4 w-4" />
                       </Button>
-                      <span className="text-xs sm:text-sm">{zoomLevel}%</span>
+                      <span className="text-sm sm:text-base">{zoomLevel}%</span>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                         onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
                         disabled={zoomLevel >= 200}
                       >
-                        <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <ZoomIn className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                         onClick={() => setZoomLevel(100)}
                         disabled={zoomLevel === 100}
                       >
-                        <Maximize className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <Maximize className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                         onClick={() => setZoomLevel(50)}
                         disabled={zoomLevel === 50}
                       >
-                        <Minimize className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <Minimize className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <CardFooter className="flex flex-col sm:flex-row gap-3 px-4 sm:px-6">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleUndo}
                     disabled={undoStack.length === 0}
-                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                   >
-                    <Undo className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Undo className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleRedo}
                     disabled={redoStack.length === 0}
-                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
                   >
-                    <Redo className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Redo className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button onClick={handleCreateThumbnail} disabled={!processedFrame} className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9">
+                <Button 
+                  onClick={handleCreateThumbnail} 
+                  disabled={!processedFrame} 
+                  className="w-full sm:w-auto text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
+                >
                   Continue to Text Editor
                 </Button>
               </CardFooter>
@@ -1616,50 +1621,50 @@ export default function VideoThumbnailGenerator() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm">Filter Presets</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="space-y-3">
+                  <Label className="text-sm sm:text-base">Filter Presets</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("grayscale")}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
                       Grayscale
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("sepia")}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
                       Sepia
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("vivid")}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
                       Vivid
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("cool")}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
                       Cool
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => applyPresetFilter("warm")}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
                       Warm
                     </Button>
                     <Button
                       variant="outline"
                       onClick={resetFilters}
-                      className="text-xs sm:text-sm h-8 sm:h-9"
+                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
                     >
-                      <RotateCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <RotateCw className="h-4 w-4 mr-2" />
                       Reset All
                     </Button>
                   </div>
