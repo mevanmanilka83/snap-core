@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  Settings,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface VideoPlayerProps {
   onMetadataLoaded: (videoInfo: {
@@ -53,92 +64,184 @@ export function VideoPlayer({
   setIsPlaying,
 }: VideoPlayerProps) {
   const [isMetadataLoaded, setIsMetadataLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const metadataLoadedRef = useRef(false);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   const handleMetadataLoaded = () => {
     const video = videoRef.current;
-    if (!video || isMetadataLoaded) return;
+    if (!video || metadataLoadedRef.current) return;
 
-    setIsMetadataLoaded(true);
-    onMetadataLoaded({
-      width: video.videoWidth,
-      height: video.videoHeight,
-      duration: video.duration,
-      currentTime: 0,
-    });
+    try {
+      metadataLoadedRef.current = true;
+      setIsMetadataLoaded(true);
+      onMetadataLoaded({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: video.duration,
+        currentTime: 0,
+      });
+    } catch (err) {
+      console.error("Error loading video metadata:", err);
+      setError("Failed to load video metadata");
+      toast.error("Failed to load video metadata");
+    }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const video = videoRef.current;
     if (!video) return;
 
-    if (video.src) {
-      URL.revokeObjectURL(video.src);
+    try {
+      setIsLoading(true);
+      setError(null);
+      metadataLoadedRef.current = false;
+
+      // Clean up old URL if exists
+      if (video.src) {
+        URL.revokeObjectURL(video.src);
+      }
+
+      setIsMetadataLoaded(false);
+      const blobUrl = URL.createObjectURL(file);
+      video.src = blobUrl;
+      video.load();
+
+      // Wait for video to be ready
+      await new Promise((resolve, reject) => {
+        const handleCanPlay = () => {
+          video.removeEventListener('canplay', handleCanPlay);
+          video.removeEventListener('error', handleError);
+          resolve(true);
+        };
+
+        const handleError = (e: Event) => {
+          video.removeEventListener('canplay', handleCanPlay);
+          video.removeEventListener('error', handleError);
+          reject(new Error("Failed to load video"));
+        };
+
+        video.addEventListener('canplay', handleCanPlay);
+        video.addEventListener('error', handleError);
+      });
+
+    } catch (err) {
+      console.error("Error loading video file:", err);
+      setError("Failed to load video file");
+      toast.error("Failed to load video file");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsMetadataLoaded(false);
-    video.src = URL.createObjectURL(file);
-    video.load();
   };
 
-  const handleURLLoad = (url: string) => {
+  const handleURLLoad = async (url: string) => {
     const video = videoRef.current;
     if (!video) return;
 
-    setIsMetadataLoaded(false);
-    video.src = url;
-    video.load();
-  };
+    try {
+      setIsLoading(true);
+      setError(null);
+      metadataLoadedRef.current = false;
 
-  const goToTime = (time: number) => {
-    const video = videoRef.current;
-    if (!video || !videoInfo) return;
+      // Clean up old URL if exists
+      if (video.src) {
+        URL.revokeObjectURL(video.src);
+      }
 
-    video.currentTime = Math.min(videoInfo.duration, Math.max(0, time));
-    onTimeUpdate(video.currentTime);
-  };
+      setIsMetadataLoaded(false);
+      video.src = url;
+      video.load();
 
-  const togglePlayPause = () => {
-    const video = videoRef.current;
-    if (!video) return;
+      // Wait for video to be ready
+      await new Promise((resolve, reject) => {
+        const handleCanPlay = () => {
+          video.removeEventListener('canplay', handleCanPlay);
+          video.removeEventListener('error', handleError);
+          resolve(true);
+        };
 
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
+        const handleError = (e: Event) => {
+          video.removeEventListener('canplay', handleCanPlay);
+          video.removeEventListener('error', handleError);
+          reject(new Error("Failed to load video"));
+        };
+
+        video.addEventListener('canplay', handleCanPlay);
+        video.addEventListener('error', handleError);
+      });
+
+    } catch (err) {
+      console.error("Error loading video URL:", err);
+      setError("Failed to load video URL");
+      toast.error("Failed to load video URL");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePreviousFrame = () => {
+  const goToTime = async (time: number) => {
     const video = videoRef.current;
     if (!video || !videoInfo) return;
 
-    const newTime = Math.max(0, videoInfo.currentTime - 1);
-    goToTime(newTime);
+    try {
+      const newTime = Math.min(videoInfo.duration, Math.max(0, time));
+      video.currentTime = newTime;
+      onTimeUpdate(newTime);
+    } catch (err) {
+      console.error("Error seeking video:", err);
+      toast.error("Failed to seek video");
+    }
   };
 
-  const handleNextFrame = () => {
-    const video = videoRef.current;
-    if (!video || !videoInfo) return;
-
-    const newTime = Math.min(videoInfo.duration, videoInfo.currentTime + 1);
-    goToTime(newTime);
-  };
-
-  const handlePlayPause = () => {
+  const togglePlayPause = async () => {
     const video = videoRef.current;
     if (!video) return;
 
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
+    try {
+      if (video.paused) {
+        await video.play();
+        setIsPlaying(true);
+      } else {
+        video.pause();
+        setIsPlaying(false);
+      }
+    } catch (err) {
+      console.error("Error toggling play/pause:", err);
+      toast.error("Failed to play/pause video");
+    }
+  };
+
+  const handleRewind = async () => {
+    const video = videoRef.current;
+    if (!video || !videoInfo) return;
+
+    try {
+      const newTime = Math.max(0, videoInfo.currentTime - 5); // Rewind 5 seconds
+      await goToTime(newTime);
+    } catch (err) {
+      console.error("Error rewinding video:", err);
+      toast.error("Failed to rewind video");
+    }
+  };
+
+  const handleFastForward = async () => {
+    const video = videoRef.current;
+    if (!video || !videoInfo) return;
+
+    try {
+      const newTime = Math.min(videoInfo.duration, videoInfo.currentTime + 5); // Forward 5 seconds
+      await goToTime(newTime);
+    } catch (err) {
+      console.error("Error fast forwarding video:", err);
+      toast.error("Failed to fast forward video");
     }
   };
 
@@ -154,18 +257,23 @@ export function VideoPlayer({
     if (!video) return;
 
     onTimeUpdate(video.duration);
-    setIsMetadataLoaded(false);
+    setIsPlaying(false);
   };
 
-  const handleSeek = (value: number[]) => {
+  const handleSeek = async (value: number[]) => {
     const video = videoRef.current;
     if (!video || !videoInfo) return;
 
-    const newTime = Math.min(videoInfo.duration, Math.max(0, value[0]));
-    goToTime(newTime);
+    try {
+      const newTime = Math.min(videoInfo.duration, Math.max(0, value[0]));
+      await goToTime(newTime);
+    } catch (err) {
+      console.error("Error seeking video:", err);
+      toast.error("Failed to seek video");
+    }
   };
 
-  const handleCaptureFrame = () => {
+  const handleCaptureFrame = async () => {
     const video = videoRef.current;
     if (!video) {
       toast.error("No video loaded");
@@ -175,13 +283,12 @@ export function VideoPlayer({
     try {
       // Create canvas with video dimensions
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1280; // Default width if not available
-      canvas.height = video.videoHeight || 720; // Default height if not available
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
       
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) {
-        toast.error("Failed to create canvas context");
-        return;
+        throw new Error("Failed to create canvas context");
       }
 
       // Draw the current video frame
@@ -195,7 +302,7 @@ export function VideoPlayer({
         onSnapshot(imageData);
         toast.success("Frame captured");
       } else {
-        toast.error("Snapshot handler not configured");
+        throw new Error("Snapshot handler not configured");
       }
     } catch (error) {
       console.error("Error capturing frame:", error);
@@ -203,48 +310,111 @@ export function VideoPlayer({
     }
   };
 
-  // Add video ready state check
-  const handleCanPlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Video is ready to play
-    handleMetadataLoaded();
-  };
-
-  // Add loadeddata event handler
-  const handleLoadedData = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Video data is loaded
-    handleMetadataLoaded();
-  };
-
-  // Add play event handler
-  const handlePlay = () => {
-    setIsPlaying(true);
-  };
-
-  // Add pause event handler
-  const handlePause = () => {
-    setIsPlaying(false);
-  };
-
-  // Add seeking event handler
-  const handleSeeking = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Update time when seeking
-    onTimeUpdate(video.currentTime);
-  };
-
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.round(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  const handleVolumeChange = (value: number[]) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const newVolume = value[0];
+    video.volume = newVolume;
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isMuted) {
+      video.volume = volume || 1;
+      setIsMuted(false);
+    } else {
+      video.volume = 0;
+      setIsMuted(true);
+    }
+  };
+
+  const handlePlaybackRateChange = (rate: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.playbackRate = rate;
+    setPlaybackRate(rate);
+  };
+
+  const toggleFullscreen = async () => {
+    if (!playerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        await playerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Error toggling fullscreen:", err);
+      toast.error("Failed to toggle fullscreen");
+    }
+  };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!videoLoaded) return;
+
+      switch (e.key.toLowerCase()) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlayPause();
+          break;
+        case "arrowleft":
+          e.preventDefault();
+          handleRewind();
+          break;
+        case "arrowright":
+          e.preventDefault();
+          handleFastForward();
+          break;
+        case "m":
+          e.preventDefault();
+          toggleMute();
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "arrowup":
+          e.preventDefault();
+          handleVolumeChange([Math.min(1, volume + 0.1)]);
+          break;
+        case "arrowdown":
+          e.preventDefault();
+          handleVolumeChange([Math.max(0, volume - 0.1)]);
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+    return () => document.removeEventListener("keydown", handleKeyPress);
+  }, [videoLoaded, volume]);
+
+  // Handle fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
@@ -262,6 +432,7 @@ export function VideoPlayer({
                 accept="video/*"
                 onChange={handleFileChange}
                 className="text-xs sm:text-sm md:text-base"
+                disabled={isLoading}
               />
             </CardContent>
           </Card>
@@ -276,6 +447,7 @@ export function VideoPlayer({
                   placeholder="https://"
                   className="w-full"
                   id="videoUrl"
+                  disabled={isLoading}
                 />
                 <Button
                   className="w-full sm:w-24"
@@ -289,8 +461,9 @@ export function VideoPlayer({
                     }
                     handleURLLoad(url);
                   }}
+                  disabled={isLoading}
                 >
-                  Load
+                  {isLoading ? "Loading..." : "Load"}
                 </Button>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">
@@ -302,7 +475,7 @@ export function VideoPlayer({
         </TabsContent>
       </Tabs>
 
-      <Card>
+      <Card ref={playerRef}>
         <CardHeader>
           <CardTitle className="text-base sm:text-lg">Video Player</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
@@ -316,51 +489,122 @@ export function VideoPlayer({
               className="w-full h-full object-contain"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleMetadataLoaded}
-              onCanPlay={handleCanPlay}
-              onLoadedData={handleLoadedData}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onSeeking={handleSeeking}
+              onCanPlay={handleMetadataLoaded}
+              onLoadedData={handleMetadataLoaded}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onSeeking={handleTimeUpdate}
               onEnded={handleVideoEnd}
+              onError={(e) => {
+                console.error("Video error:", e);
+                setError("Error playing video");
+                toast.error("Error playing video");
+              }}
               controls={false}
               playsInline
             />
             {!videoLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/5">
-                <p className="text-sm text-muted-foreground">No video loaded</p>
+                <p className="text-sm text-muted-foreground">
+                  {isLoading ? "Loading video..." : "No video loaded"}
+                </p>
+              </div>
+            )}
+            {error && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/5">
+                <p className="text-sm text-red-500">{error}</p>
               </div>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePreviousFrame}
-                disabled={!videoLoaded}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                <SkipBack className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePlayPause}
-                disabled={!videoLoaded}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNextFrame}
-                disabled={!videoLoaded}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                <SkipForward className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleRewind}
+                  disabled={!videoLoaded || isLoading}
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  <Rewind className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={togglePlayPause}
+                  disabled={!videoLoaded || isLoading}
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleFastForward}
+                  disabled={!videoLoaded || isLoading}
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  <FastForward className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-24">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleMute}
+                    disabled={!videoLoaded || isLoading}
+                    className="h-8 w-8 sm:h-9 sm:w-9"
+                  >
+                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </Button>
+                  <Slider
+                    value={[isMuted ? 0 : volume]}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onValueChange={handleVolumeChange}
+                    className="w-full"
+                    disabled={!videoLoaded || isLoading}
+                  />
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={!videoLoaded || isLoading}
+                      className="h-8 w-8 sm:h-9 sm:w-9"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((rate) => (
+                      <DropdownMenuItem
+                        key={rate}
+                        onClick={() => handlePlaybackRateChange(rate)}
+                        className={playbackRate === rate ? "bg-accent" : ""}
+                      >
+                        {rate}x
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleFullscreen}
+                  disabled={!videoLoaded || isLoading}
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
 
             {videoInfo && (
@@ -373,6 +617,7 @@ export function VideoPlayer({
                   step={0.1}
                   onValueChange={handleSeek}
                   className="flex-1"
+                  disabled={!videoLoaded || isLoading}
                 />
                 <span className="text-xs sm:text-sm">{formatTime(videoInfo.duration)}</span>
               </div>
