@@ -160,6 +160,9 @@ export default function VideoThumbnailGenerator() {
     },
   ])
 
+  const [canGoToTextAndPreview, setCanGoToTextAndPreview] = useState(false);
+  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
@@ -231,6 +234,13 @@ export default function VideoThumbnailGenerator() {
       updateFinalPreview()
     }
   }, [textElements, processedFrame])
+
+  // Update the final preview when processedFrame, textElements, or imageFilters change
+  useEffect(() => {
+    if (processedFrame) {
+      updateFinalPreview();
+    }
+  }, [processedFrame, textElements, imageFilters]);
 
   const handleMetadataLoaded = () => {
     if (!videoRef.current) return;
@@ -663,11 +673,14 @@ export default function VideoThumbnailGenerator() {
           // Update states
           setProcessedFrame(processedImageUrl);
           setProcessedImageSrc(processedImageUrl);
+          setBackgroundRemoved(true);
 
           // Update final preview
           updateFinalPreview();
 
           toast.success("Background removed successfully");
+          // Switch to text tab after state is updated
+          // setTimeout(() => setActiveTab("text"), 0); // Remove auto navigation
         } catch (error) {
           console.error("Error removing background:", error);
           toast.error("Failed to remove background. Please try again.");
@@ -874,7 +887,7 @@ export default function VideoThumbnailGenerator() {
     return { x, y }
   }
 
-  // Update the final preview with text elements
+  // Update the final preview with correct text layering (back, image, front)
   const updateFinalPreview = () => {
     if (!processedFrame) {
       console.debug("No processed frame available for preview");
@@ -913,18 +926,22 @@ export default function VideoThumbnailGenerator() {
       ctx.drawImage(img, 0, 0);
       ctx.filter = "none"; // Reset filters for text
 
-      // Sort text elements by layer order
-      const sortedElements = [...textElements].sort((a, b) => {
-        const aOrder = a.layerOrder === "back" ? 0 : 1;
-        const bOrder = b.layerOrder === "back" ? 0 : 1;
-        return aOrder - bOrder;
-      });
+      // Draw text elements that should be behind the image
+      textElements
+        .filter((element) => element.visible !== false && element.layerOrder === "back")
+        .forEach((element) => {
+          drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
+        });
 
-      // Draw text elements in order
-      sortedElements.forEach((element) => {
-        if (!element.visible) return;
-        drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-      });
+      // Draw the processed image again (as foreground)
+      ctx.drawImage(img, 0, 0);
+
+      // Draw text elements that should be in front of the image
+      textElements
+        .filter((element) => element.visible !== false && element.layerOrder === "front")
+        .forEach((element) => {
+          drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
+        });
 
       // Update the final thumbnail
       try {
@@ -944,14 +961,6 @@ export default function VideoThumbnailGenerator() {
 
     img.src = processedFrame;
   };
-
-  // Add useEffect to handle preview updates
-  useEffect(() => {
-    if (processedFrame) {
-      console.debug("Updating final preview due to state change");
-      updateFinalPreview();
-    }
-  }, [processedFrame, textElements, imageFilters, processedImageSrc]);
 
   // Add helper function for drawing text elements
   const drawTextElement = (
@@ -1136,34 +1145,10 @@ export default function VideoThumbnailGenerator() {
       return;
     }
 
-    // Strictly prevent moving to text tab without background removal
-    if (newTab === "text") {
-      // Check if we're coming from edit tab
-      if (activeTab === "edit") {
-        if (!processedImageSrc) {
-          toast.error("You must remove the background before proceeding to text editing");
-          return;
-        }
-        // Double check that the background was actually removed
-        if (!processedImageSrc.includes('data:image/png;base64')) {
-          toast.error("Background removal is required before proceeding to text editing");
-          return;
-        }
-      } else {
-        // For other tabs, still require background removal
-        if (!processedImageSrc) {
-          toast.error("Please remove background before adding text");
-          return;
-        }
-      }
-      setActiveTab(newTab);
-      return;
-    }
-
-    // For preview tab, require background removal
-    if (newTab === "preview") {
-      if (!processedImageSrc) {
-        toast.error("Please remove background first to see the preview");
+    // For text and preview tabs, require canGoToTextAndPreview
+    if (newTab === "text" || newTab === "preview") {
+      if (!canGoToTextAndPreview) {
+        toast.error('Please remove the background and click Next in the Edit tab before proceeding.');
         return;
       }
       setActiveTab(newTab);
@@ -1202,7 +1187,7 @@ export default function VideoThumbnailGenerator() {
           <TabsTrigger 
             value="text" 
             className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedImageSrc}
+            disabled={!canGoToTextAndPreview}
           >
             <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Text</span>
@@ -1210,7 +1195,7 @@ export default function VideoThumbnailGenerator() {
           <TabsTrigger 
             value="preview" 
             className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedImageSrc}
+            disabled={!canGoToTextAndPreview}
           >
             <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Final Preview</span>
@@ -1279,6 +1264,14 @@ export default function VideoThumbnailGenerator() {
             handleRemoveBackground={handleRemoveBackground}
             snapshots={snapshots}
             selectedSnapshotIndex={selectedSnapshotIndex}
+            onNext={() => {
+              if (!backgroundRemoved) {
+                toast.error('Please remove the background before proceeding to text editing. Background removal is important for text placement.');
+                return;
+              }
+              setCanGoToTextAndPreview(true);
+              handleTabChange('text');
+            }}
           />
         </TabsContent>
 

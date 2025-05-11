@@ -33,7 +33,8 @@ const EditSection = ({
   setProcessingProgress,
   handleRemoveBackground,
   snapshots,
-  selectedSnapshotIndex
+  selectedSnapshotIndex,
+  onNext
 }: any) => {
   // Get the selected snapshot
   const selectedSnapshot = selectedSnapshotIndex >= 0 && snapshots[selectedSnapshotIndex] ? snapshots[selectedSnapshotIndex] : null;
@@ -126,7 +127,7 @@ const EditSection = ({
           )}
         </CardContent>
       </Card>
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6 flex flex-col h-full">
         <FiltersSection
           imageFilters={imageFilters}
           setImageFilters={setImageFilters}
@@ -145,6 +146,15 @@ const EditSection = ({
           processedFrame={selectedSnapshot}
           handleRemoveBackground={handleRemoveBackground}
         />
+        <CardFooter className="flex justify-end pt-4 pb-2 px-0">
+          <button
+            type="button"
+            className="px-6 py-2 rounded bg-primary text-white font-semibold disabled:bg-gray-300 disabled:text-gray-500 transition-all w-full sm:w-auto"
+            onClick={() => onNext && onNext()}
+          >
+            Next
+          </button>
+        </CardFooter>
       </div>
     </div>
   );

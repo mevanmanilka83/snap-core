@@ -439,6 +439,54 @@ export default function ImageUploader() {
     toast.success("Image saved successfully")
   }
 
+  const handleTabChange = (newTab: string) => {
+    // For edit tab, require an image to be loaded
+    if (newTab === "edit") {
+      if (!imageLoaded) {
+        toast.error("Please upload an image first");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // Strictly prevent moving to text tab without background removal
+    if (newTab === "text") {
+      // Check if we're coming from edit tab
+      if (activeTab === "edit") {
+        if (!processedImageSrc) {
+          toast.error("You must remove the background before proceeding to text editing");
+          return;
+        }
+        // Double check that the background was actually removed
+        if (!processedImageSrc.includes('data:image/png;base64')) {
+          toast.error("Background removal is required before proceeding to text editing");
+          return;
+        }
+      } else {
+        // For other tabs, still require background removal
+        if (!processedImageSrc) {
+          toast.error("Please remove background before adding text");
+          return;
+        }
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // For preview tab, require background removal
+    if (newTab === "preview") {
+      if (!processedImageSrc) {
+        toast.error("Please remove background first to see the preview");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    setActiveTab(newTab);
+  };
+
   const handleRemoveBackground = async () => {
     if (!imageLoaded || !previewUrl.current) {
       setError("Please select an image first")
@@ -467,19 +515,22 @@ export default function ImageUploader() {
           setProcessingProgress(progress)
         },
       })
-
+      
       // Create a URL from the resulting blob
       const processedImageUrl = URL.createObjectURL(blob)
-
+      
       // Revoke the old processed URL if it was a blob
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
-
+      
       // Save the transparent background image URL
       processedUrl.current = processedImageUrl
       setProcessedImageSrc(processedImageUrl)
-
+      
+      // Automatically switch to text tab after successful background removal
+      setActiveTab("text")
+      
       toast.success("Background removed successfully")
     } catch (err) {
       console.error("Error removing background:", err)
@@ -985,15 +1036,38 @@ export default function ImageUploader() {
         crossOrigin="anonymous"
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="file" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <UploadIcon className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Image from File</span>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2 overflow-x-auto">
+          <TabsTrigger 
+            value="upload" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+          >
+            <UploadIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+            <span>Upload</span>
           </TabsTrigger>
-          <TabsTrigger value="url" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Image from URL</span>
+          <TabsTrigger 
+            value="edit" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+            disabled={!imageLoaded}
+          >
+            <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+            <span>Edit</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="text" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+            disabled={!processedImageSrc}
+          >
+            <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+            <span>Text</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="preview" 
+            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+            disabled={!processedImageSrc}
+          >
+            <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+            <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
 

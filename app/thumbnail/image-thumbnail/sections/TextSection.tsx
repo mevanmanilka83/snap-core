@@ -1,7 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import TextEditor from "@/app/shared/text-editor";
 import { AlertCircle } from "lucide-react";
-import { useEffect } from "react";
 
 const TextSection = ({
   isCreatingThumbnail,
@@ -10,27 +9,13 @@ const TextSection = ({
   setTextElements,
   handleCreateThumbnail
 }: any) => {
-  // Normalize text elements to always have layerOrder (fix legacy data)
-  useEffect(() => {
-    if (textElements && textElements.some((el: any) => !el.layerOrder)) {
-      setTextElements(
-        textElements.map((el: any) => ({
-          ...el,
-          layerOrder: el.layerOrder || "front"
-        }))
-      );
-    }
-    // Only run when textElements changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textElements]);
-
   const handleTextElementsChange = (updatedElements: any[]) => {
-    setTextElements(
-      updatedElements.map(el => ({
-        ...el,
-        layerOrder: el.layerOrder || "front"
-      }))
-    );
+    // Ensure each text element has a layerOrder property
+    const elementsWithLayerOrder = updatedElements.map(element => ({
+      ...element,
+      layerOrder: element.layerOrder || "front" // Default to front if not specified
+    }));
+    setTextElements(elementsWithLayerOrder);
   };
 
   return (

@@ -1,52 +1,78 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Share2 } from "lucide-react";
+import { ImageIcon, Download, AlertCircle } from "lucide-react";
 
-const FinalPreviewSection = (props: any) => {
-  const { thumbnailSrc, handleDownload, handleShare, isCreatingThumbnail } = props;
+const FinalPreviewSection = ({
+  finalThumbnail,
+  imageInfo,
+  handleSaveFinalThumbnail,
+  processedImageSrc,
+  textElements,
+  backgroundRemoved
+}: any) => {
+  // Sort text elements by layer order
+  const sortedTextElements = textElements?.sort((a: any, b: any) => {
+    const aOrder = a.layerOrder === "back" ? 0 : 1;
+    const bOrder = b.layerOrder === "back" ? 0 : 1;
+    return aOrder - bOrder;
+  }) || [];
 
   return (
-    <Card className="w-full">
-      <CardHeader className="p-4 md:p-6">
-        <CardTitle className="text-sm md:text-base">Final Preview</CardTitle>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base sm:text-lg">Final Preview</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          {processedImageSrc ? "Preview your thumbnail with all effects applied" : "Background removal required"}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 p-4 md:p-6">
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-          {thumbnailSrc ? (
-            <img
-              src={thumbnailSrc}
-              alt="Final thumbnail preview"
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">
-                Process image first
-              </p>
+      <CardContent>
+        {!backgroundRemoved ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+            <p className="text-sm">Please remove the background first to see the final preview</p>
+            <p className="text-xs mt-2">Go to the Background Removal section and use the Remove Background button</p>
+          </div>
+        ) : !finalThumbnail ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <ImageIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-sm">No preview available</p>
+            <p className="text-xs mt-2">Add text in the Text tab to see the final preview</p>
+          </div>
+        ) : (
+          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="relative w-full h-full">
+              <img
+                src={finalThumbnail}
+                alt="Final Thumbnail"
+                className="w-full h-full object-contain"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  console.error("Error loading final thumbnail");
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
+              />
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                {imageInfo ? `${imageInfo.width}x${imageInfo.height}` : 'Preview'}
+              </div>
             </div>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          {finalThumbnail && (
+            <span>Ready to download</span>
           )}
         </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            onClick={handleDownload}
-            disabled={!thumbnailSrc || isCreatingThumbnail}
-            className="flex-1 text-xs md:text-sm h-8 md:h-9"
-          >
-            <Download className="mr-2 h-3 w-3 md:h-4 md:w-4" />
-            Download
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleShare}
-            disabled={!thumbnailSrc || isCreatingThumbnail}
-            className="flex-1 text-xs md:text-sm h-8 md:h-9"
-          >
-            <Share2 className="mr-2 h-3 w-3 md:h-4 md:w-4" />
-            Share
-          </Button>
-        </div>
-      </CardContent>
+        <Button
+          onClick={handleSaveFinalThumbnail}
+          disabled={!backgroundRemoved || !finalThumbnail}
+          className="flex items-center gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Download Thumbnail
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

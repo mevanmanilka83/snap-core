@@ -9,7 +9,7 @@ const FinalPreviewSection = ({
   processedImageSrc,
   textElements
 }: any) => {
-  // Sort text elements by layer order
+  // Sort text elements by layer order (not used in this component, but kept for parity)
   const sortedTextElements = textElements?.sort((a: any, b: any) => {
     const aOrder = a.layerOrder === "back" ? 0 : 1;
     const bOrder = b.layerOrder === "back" ? 0 : 1;
@@ -38,7 +38,7 @@ const FinalPreviewSection = ({
             <p className="text-xs mt-2">Add text in the Text tab to see the final preview</p>
           </div>
         ) : (
-          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+          <div className="relative aspect-video flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-[linear-gradient(45deg,_#eee_25%,_transparent_25%,_transparent_75%,_#eee_75%,_#eee),_linear-gradient(45deg,_#eee_25%,_transparent_25%,_transparent_75%,_#eee_75%,_#eee)] bg-[length:20px_20px] bg-[position:0_0,10px_10px]">
             <div className="relative w-full h-full">
               <img
                 src={finalThumbnail}
