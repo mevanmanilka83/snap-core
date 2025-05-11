@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { VideoPlayer } from "@/app/ui/video-player"
-import DropZone from "@/app/ui/drop-zone"
+import { VideoPlayer } from "@/app/shared/video-player"
+import DropZone from "@/app/shared/drop-zone"
 import { toast } from "sonner"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
 import Image from "next/image"
@@ -29,8 +29,13 @@ import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import TextEditor from "./text-editor"
+import TextEditor from "@/app/shared/text-editor"
 import * as backgroundRemoval from "@imgly/background-removal"
+import VideoSection from "./sections/VideoSection"
+import SnapshotsSection from "./sections/SnapshotsSection"
+import EditSection from "./sections/EditSection"
+import TextSection from "./sections/TextSection"
+import FinalPreviewSection from "./sections/FinalPreviewSection"
 
 interface VideoInfo {
   width: number
@@ -1150,691 +1155,73 @@ export default function VideoThumbnailGenerator() {
         </TabsList>
 
         <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div className="space-y-4 sm:space-y-6">
-              <VideoPlayer
-                videoRef={videoRef}
-                videoLoaded={videoLoaded}
-                videoInfo={videoInfo}
-                isPlaying={isPlaying}
-                setIsPlaying={setIsPlaying}
-                onMetadataLoaded={handleMetadataLoaded}
-                onTimeUpdate={handleTimeUpdate}
-                onSnapshot={handleSnapshot}
-              />
-
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-2 px-4 sm:px-6">
-                  <CardTitle className="text-base sm:text-lg">Snapshot Controls</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Capture frames from the video</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 px-4 sm:px-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
-                    <Button 
-                      onClick={captureSnapshot} 
-                      disabled={!videoLoaded} 
-                      className="w-full h-auto min-h-[44px] text-sm sm:text-base"
-                      size="default"
-                    >
-                      Capture Current Frame
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleAutoCaptureKeyFrames}
-                      disabled={!videoLoaded}
-                      className="w-full h-auto min-h-[44px] text-sm sm:text-base"
-                      size="default"
-                    >
-                      Auto Capture Key Frames
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <Switch
-                        id="auto-snap"
-                        checked={!!autoSnapInterval}
-                        onCheckedChange={toggleAutoSnap}
-                        disabled={!videoLoaded}
-                        className="h-5 w-9"
-                      />
-                      <Label htmlFor="auto-snap" className="text-sm sm:text-base">Auto Snapshot</Label>
-                    </div>
-
-                    {autoSnapInterval && (
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Label htmlFor="interval" className="text-sm sm:text-base">Every</Label>
-                        <Select
-                          value={autoSnapInterval.toString()}
-                          onValueChange={(value) => setAutoSnapInterval(Number(value))}
-                        >
-                          <SelectTrigger className="w-24 sm:w-28 h-9 sm:h-10 text-sm sm:text-base">
-                            <SelectValue placeholder="Interval" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1s</SelectItem>
-                            <SelectItem value="2">2s</SelectItem>
-                            <SelectItem value="5">5s</SelectItem>
-                            <SelectItem value="10">10s</SelectItem>
-                            <SelectItem value="30">30s</SelectItem>
-                            <SelectItem value="60">1m</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-4 sm:space-y-6">
-              <DropZone />
-            </div>
-          </div>
+          <VideoSection
+            videoRef={videoRef}
+            videoLoaded={videoLoaded}
+            videoInfo={videoInfo}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            handleMetadataLoaded={handleMetadataLoaded}
+            handleTimeUpdate={handleTimeUpdate}
+            handleSnapshot={handleSnapshot}
+            captureSnapshot={captureSnapshot}
+            handleAutoCaptureKeyFrames={handleAutoCaptureKeyFrames}
+            autoSnapInterval={autoSnapInterval}
+            setAutoSnapInterval={setAutoSnapInterval}
+            toggleAutoSnap={toggleAutoSnap}
+          />
         </TabsContent>
 
         <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg">Snapshots</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Select a snapshot to edit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {snapshots.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {snapshots.map((snapshot, index) => (
-                    <div
-                      key={index}
-                      className={`relative aspect-video cursor-pointer border-2 rounded-md overflow-hidden ${
-                        selectedSnapshotIndex === index ? "border-primary" : "border-transparent"
-                      }`}
-                      onClick={() => handleSelectSnapshot(index)}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", snapshot);
-                        e.dataTransfer.effectAllowed = "copy";
-                      }}
-                    >
-                      <img 
-                        src={snapshot} 
-                        alt={`Snapshot ${index + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                        onError={(e) => {
-                          console.error(`Error loading snapshot ${index}:`, e);
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/80 hover:bg-white text-sm h-8 sm:h-9 min-w-[36px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveSnapshot(index);
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="bg-white/80 hover:bg-red-500 text-sm h-8 sm:h-9 min-w-[36px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteSnapshot(index);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs sm:text-sm px-2 py-1 rounded">
-                        #{index + 1}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 sm:py-12 text-muted-foreground">
-                  <Layers className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-20" />
-                  <p className="text-xs sm:text-sm">No snapshots yet. Capture frames from the video first.</p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSnapshots([]);
-                  setSelectedSnapshotIndex(-1);
-                  setProcessedFrame(null);
-                  setProcessedImageSrc(null);
-                  toast.success("All snapshots cleared");
-                }}
-                disabled={snapshots.length === 0}
-                className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
-              >
-                Clear All
-              </Button>
-              <Button
-                onClick={handleSaveAllSnapshots}
-                disabled={snapshots.length === 0}
-                variant="default"
-                className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
-              >
-                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Save All Snapshots
-              </Button>
-            </CardFooter>
-          </Card>
+          <SnapshotsSection
+            snapshots={snapshots}
+            selectedSnapshotIndex={selectedSnapshotIndex}
+            handleSelectSnapshot={handleSelectSnapshot}
+            handleSaveSnapshot={handleSaveSnapshot}
+            handleDeleteSnapshot={handleDeleteSnapshot}
+            handleSaveAllSnapshots={handleSaveAllSnapshots}
+            setSnapshots={setSnapshots}
+            setSelectedSnapshotIndex={setSelectedSnapshotIndex}
+            setProcessedFrame={setProcessedFrame}
+            setProcessedImageSrc={setProcessedImageSrc}
+            toast={toast}
+          />
         </TabsContent>
 
         <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <Card className="w-full overflow-hidden">
-              <CardHeader className="pb-2 px-4 sm:px-6">
-                <CardTitle className="text-base sm:text-lg">Edit Frame</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  {selectedSnapshotIndex >= 0
-                    ? `Editing snapshot #${selectedSnapshotIndex + 1}`
-                    : "Editing current frame"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 px-4 sm:px-6">
-                <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                  {processedFrame ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={processedFrame || "/placeholder.svg"}
-                        alt="Processed frame"
-                        className="object-contain w-full h-full"
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          transform: `scale(${zoomLevel / 100})`,
-                          filter: `
-                            brightness(${imageFilters.brightness}%) 
-                            contrast(${imageFilters.contrast}%) 
-                            saturate(${imageFilters.saturation}%) 
-                            blur(${imageFilters.blur}px) 
-                            hue-rotate(${imageFilters.hueRotate}deg)
-                            grayscale(${imageFilters.grayscale}%)
-                            sepia(${imageFilters.sepia}%)
-                          `,
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <ImageIcon className="h-12 w-12 sm:h-14 sm:w-14 text-gray-400 mb-3 sm:mb-4" />
-                      <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No frame selected</p>
-                    </div>
-                  )}
-                </div>
-
-                {processedFrame && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                        onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
-                        disabled={zoomLevel <= 50}
-                      >
-                        <ZoomOut className="h-4 w-4" />
-                      </Button>
-                      <span className="text-sm sm:text-base">{zoomLevel}%</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                        onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
-                        disabled={zoomLevel >= 200}
-                      >
-                        <ZoomIn className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                        onClick={() => setZoomLevel(100)}
-                        disabled={zoomLevel === 100}
-                      >
-                        <Maximize className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                        onClick={() => setZoomLevel(50)}
-                        disabled={zoomLevel === 50}
-                      >
-                        <Minimize className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row gap-3 px-4 sm:px-6">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleUndo}
-                    disabled={undoStack.length === 0}
-                    className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                  >
-                    <Undo className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleRedo}
-                    disabled={redoStack.length === 0}
-                    className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px]"
-                  >
-                    <Redo className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button 
-                  onClick={handleCreateThumbnail} 
-                  disabled={!processedFrame} 
-                  className="w-full sm:w-auto text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                >
-                  Continue to Text Editor
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="w-full">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg">Image Filters</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Adjust image appearance with filters</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="brightness" className="text-xs sm:text-sm">Brightness ({imageFilters.brightness}%)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
-                        disabled={imageFilters.brightness === 100}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="brightness"
-                      min={0}
-                      max={200}
-                      step={1}
-                      value={[imageFilters.brightness]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="contrast" className="text-xs sm:text-sm">Contrast ({imageFilters.contrast}%)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
-                        disabled={imageFilters.contrast === 100}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="contrast"
-                      min={0}
-                      max={200}
-                      step={1}
-                      value={[imageFilters.contrast]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, contrast: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="saturation" className="text-xs sm:text-sm">Saturation ({imageFilters.saturation}%)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
-                        disabled={imageFilters.saturation === 100}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="saturation"
-                      min={0}
-                      max={200}
-                      step={1}
-                      value={[imageFilters.saturation]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, saturation: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="blur" className="text-xs sm:text-sm">Blur ({imageFilters.blur}px)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
-                        disabled={imageFilters.blur === 0}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="blur"
-                      min={0}
-                      max={10}
-                      step={0.1}
-                      value={[imageFilters.blur]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="hueRotate" className="text-xs sm:text-sm">Hue Rotate ({imageFilters.hueRotate}°)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
-                        disabled={imageFilters.hueRotate === 0}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="hueRotate"
-                      min={0}
-                      max={360}
-                      step={1}
-                      value={[imageFilters.hueRotate]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="grayscale" className="text-xs sm:text-sm">Grayscale ({imageFilters.grayscale}%)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
-                        disabled={imageFilters.grayscale === 0}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="grayscale"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={[imageFilters.grayscale]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="sepia" className="text-xs sm:text-sm">Sepia ({imageFilters.sepia}%)</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
-                        disabled={imageFilters.sepia === 0}
-                        className="text-xs sm:text-sm h-7 sm:h-8"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    <Slider
-                      id="sepia"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={[imageFilters.sepia]}
-                      onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm sm:text-base">Filter Presets</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => applyPresetFilter("grayscale")}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      Grayscale
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => applyPresetFilter("sepia")}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      Sepia
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => applyPresetFilter("vivid")}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      Vivid
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => applyPresetFilter("cool")}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      Cool
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => applyPresetFilter("warm")}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      Warm
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={resetFilters}
-                      className="text-sm sm:text-base h-9 sm:h-10 min-h-[36px]"
-                    >
-                      <RotateCw className="h-4 w-4 mr-2" />
-                      Reset All
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button
-                  onClick={handleApplyFilters}
-                  disabled={!processedFrame}
-                  className="text-xs sm:text-sm h-8 sm:h-9"
-                >
-                  Apply Filters
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Background Removal</CardTitle>
-              <CardDescription className="text-sm">Remove the background from your image</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isProcessing ? (
-                <div className="flex flex-col items-center justify-center py-4 sm:py-6">
-                  <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 mb-3 sm:mb-4 dark:bg-gray-700">
-                    <div 
-                      className="bg-primary h-2 sm:h-2.5 rounded-full transition-all duration-300" 
-                      style={{ width: `${processingProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Removing background... {processingProgress}%
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4 sm:py-6">
-                  <Scissors className="h-8 w-8 text-muted-foreground mb-3" />
-                  <p className="text-sm text-center mb-4">
-                    Remove the background from your image to create a professional thumbnail.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full">
-                    <Button 
-                      onClick={handleRemoveBackground} 
-                      disabled={!processedFrame || isProcessing} 
-                      className="w-full"
-                      size="default"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center">
-                          <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full" />
-                          Processing...
-                        </span>
-                      ) : (
-                        "Remove Background"
-                      )}
-                    </Button>
-                    <div className="grid grid-cols-2 gap-2 w-full">
-                      <Button 
-                        onClick={() => {
-                          if (processedFrame) {
-                            // Restore previous state if available
-                            if (undoStack.length > 0) {
-                              const previousState = undoStack[undoStack.length - 1];
-                              setProcessedFrame(previousState);
-                              setProcessedImageSrc(previousState);
-                              setUndoStack(prev => prev.slice(0, -1));
-                            } else {
-                              setProcessedFrame(null);
-                              setProcessedImageSrc(null);
-                            }
-                            setSelectedSnapshotIndex(-1);
-                            toast.success("Background removal cancelled");
-                          }
-                        }}
-                        variant="outline"
-                        className="w-full"
-                        size="default"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveBackgroundRemoved}
-                        disabled={!processedFrame}
-                        variant="default"
-                        className="w-full bg-black hover:bg-black/90 text-white"
-                        size="default"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <EditSection
+            processedFrame={processedFrame}
+            zoomLevel={zoomLevel}
+            setZoomLevel={setZoomLevel}
+            imageFilters={imageFilters}
+            setImageFilters={setImageFilters}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+            undoStack={undoStack}
+            redoStack={redoStack}
+            handleCreateThumbnail={handleCreateThumbnail}
+            handleApplyFilters={handleApplyFilters}
+            resetFilters={resetFilters}
+            applyPresetFilter={applyPresetFilter}
+          />
         </TabsContent>
 
         <TabsContent value="text" className="space-y-4">
-          <Card className="w-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base">Text Editor</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <TextEditor
-                onApply={() => {
-                  setShowUpdateToast(true)
-                  handleCreateThumbnail()
-                }}
-                isCreatingThumbnail={isCreatingThumbnail}
-                processedImageSrc={processedImageSrc}
-                textElements={textElements}
-                onTextElementsChange={(elements) => {
-                  setTextElements(elements)
-                }}
-              />
-            </CardContent>
-          </Card>
+          <TextSection
+            isCreatingThumbnail={isCreatingThumbnail}
+            processedImageSrc={processedImageSrc}
+            textElements={textElements}
+            setTextElements={setTextElements}
+            handleCreateThumbnail={handleCreateThumbnail}
+          />
         </TabsContent>
 
         <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg">Final Preview</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Preview your thumbnail with all effects applied</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                {finalThumbnail ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={finalThumbnail}
-                      alt="Final Thumbnail"
-                      className="w-full h-full object-contain"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        console.error("Error loading final thumbnail");
-                        e.currentTarget.src = "/placeholder.svg";
-                      }}
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                      {videoInfo ? `${videoInfo.width}x${videoInfo.height}` : 'Preview'}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">No preview available</p>
-                    <p className="text-xs text-gray-400 mt-1">Apply filters and text to see the final preview</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                {finalThumbnail && (
-                  <span>Ready to download</span>
-                )}
-              </div>
-              <Button
-                onClick={handleSaveFinalThumbnail}
-                disabled={!finalThumbnail}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download Thumbnail
-              </Button>
-            </CardFooter>
-          </Card>
+          <FinalPreviewSection
+            finalThumbnail={finalThumbnail}
+            videoInfo={videoInfo}
+            handleSaveFinalThumbnail={handleSaveFinalThumbnail}
+          />
         </TabsContent>
       </Tabs>
     </div>

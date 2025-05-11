@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 const VideoThumbnailGenerator = dynamic(
-  () => import("@/app/ui/thumbnail-generator"),
+  () => import("@/app/thumbnail/video-thumbnail/page"),
   { ssr: false }
 );
 

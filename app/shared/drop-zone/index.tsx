@@ -27,7 +27,7 @@ import {
 import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import TextEditor from "@/app/ui/text-editor"
+import TextEditor from "@/app/shared/text-editor"
 import { RippleButton } from "@/components/magicui/ripple-button"
 
 interface ImageInfo {
