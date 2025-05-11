@@ -166,9 +166,14 @@ export default function TextEditor({
 
   // Initialize with provided text elements if available
   useEffect(() => {
-    if (initialTextElements && initialTextElements.length > 0) {
+    if (
+      initialTextElements &&
+      initialTextElements.length > 0 &&
+      initialTextElements !== textElements // Only update if reference is different
+    ) {
       setTextElements(initialTextElements)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTextElements])
 
   // Update text element properties
@@ -378,91 +383,176 @@ export default function TextEditor({
     }
 
     // Draw text elements
-    textElements.forEach((element) => {
-      if (!element.visible) return
+    [...textElements]
+      .filter(element => element.layerOrder === 'back' && element.visible)
+      .forEach((element) => {
+        // Save context state
+        ctx.save()
 
-      // Save context state
-      ctx.save()
+        // Set font properties
+        let fontStyle = ""
+        if (element.bold) fontStyle += "bold "
+        if (element.italic) fontStyle += "italic "
+        fontStyle += `${(element.fontSize * canvas.width) / 1280}px ${element.fontFamily}`
+        ctx.font = fontStyle
 
-      // Set font properties
-      let fontStyle = ""
-      if (element.bold) fontStyle += "bold "
-      if (element.italic) fontStyle += "italic "
-      fontStyle += `${(element.fontSize * canvas.width) / 1280}px ${element.fontFamily}`
-      ctx.font = fontStyle
+        // Set text alignment
+        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+        ctx.textBaseline = "middle"
 
-      // Set text alignment
-      ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-      ctx.textBaseline = "middle"
+        // Calculate position
+        const x = (element.x * canvas.width) / 100
+        const y = (element.y * canvas.height) / 100
 
-      // Calculate position
-      const x = (element.x * canvas.width) / 100
-      const y = (element.y * canvas.height) / 100
+        // Apply rotation
+        ctx.translate(x, y)
+        ctx.rotate((element.rotation * Math.PI) / 180)
 
-      // Apply rotation
-      ctx.translate(x, y)
-      ctx.rotate((element.rotation * Math.PI) / 180)
-
-      // Set text color and opacity
-      ctx.fillStyle = element.color
-      ctx.globalAlpha = (element.opacity || 100) / 100
-
-      // Draw text background if enabled
-      if (element.backgroundEnabled && element.backgroundColor) {
-        const textMetrics = ctx.measureText(element.text)
-        const padding = element.fontSize * 0.2
-        ctx.fillStyle = element.backgroundColor
-        ctx.fillRect(
-          -textMetrics.width / 2 - padding,
-          -element.fontSize / 2 - padding,
-          textMetrics.width + padding * 2,
-          element.fontSize + padding * 2,
-        )
+        // Set text color and opacity
         ctx.fillStyle = element.color
-      }
+        ctx.globalAlpha = (element.opacity || 100) / 100
 
-      // Draw text shadow if enabled
-      if (element.shadow && element.shadowBlur && element.shadowColor) {
-        ctx.shadowColor = element.shadowColor
-        ctx.shadowBlur = (element.shadowBlur * canvas.width) / 1280
-        ctx.shadowOffsetX = 2
-        ctx.shadowOffsetY = 2
-      }
-
-      // Draw text
-      if (element.curve) {
-        // Simple curved text implementation
-        const characters = element.text.split("")
-        const radius = element.fontSize * 2
-        const angleStep = 0.2
-        let currentAngle = (-angleStep * (characters.length - 1)) / 2
-
-        characters.forEach((char) => {
-          ctx.save()
-          ctx.rotate(currentAngle)
-          ctx.fillText(char, 0, -radius)
-          ctx.restore()
-          currentAngle += angleStep
-        })
-      } else {
-        // Regular text
-        ctx.fillText(element.text, 0, 0)
-
-        // Draw underline if enabled
-        if (element.underline) {
+        // Draw text background if enabled
+        if (element.backgroundEnabled && element.backgroundColor) {
           const textMetrics = ctx.measureText(element.text)
-          const underlineY = element.fontSize * 0.15
-          ctx.lineWidth = element.fontSize * 0.05
-          ctx.beginPath()
-          ctx.moveTo(-textMetrics.width / 2, underlineY)
-          ctx.lineTo(textMetrics.width / 2, underlineY)
-          ctx.stroke()
+          const padding = element.fontSize * 0.2
+          ctx.fillStyle = element.backgroundColor
+          ctx.fillRect(
+            -textMetrics.width / 2 - padding,
+            -element.fontSize / 2 - padding,
+            textMetrics.width + padding * 2,
+            element.fontSize + padding * 2,
+          )
+          ctx.fillStyle = element.color
         }
-      }
 
-      // Restore context state
-      ctx.restore()
-    })
+        // Draw text shadow if enabled
+        if (element.shadow && element.shadowBlur && element.shadowColor) {
+          ctx.shadowColor = element.shadowColor
+          ctx.shadowBlur = (element.shadowBlur * canvas.width) / 1280
+          ctx.shadowOffsetX = 2
+          ctx.shadowOffsetY = 2
+        }
+
+        // Draw text
+        if (element.curve) {
+          // Simple curved text implementation
+          const characters = element.text.split("")
+          const radius = element.fontSize * 2
+          const angleStep = 0.2
+          let currentAngle = (-angleStep * (characters.length - 1)) / 2
+
+          characters.forEach((char) => {
+            ctx.save()
+            ctx.rotate(currentAngle)
+            ctx.fillText(char, 0, -radius)
+            ctx.restore()
+            currentAngle += angleStep
+          })
+        } else {
+          // Regular text
+          ctx.fillText(element.text, 0, 0)
+
+          // Draw underline if enabled
+          if (element.underline) {
+            const textMetrics = ctx.measureText(element.text)
+            const underlineY = element.fontSize * 0.15
+            ctx.lineWidth = element.fontSize * 0.05
+            ctx.beginPath()
+            ctx.moveTo(-textMetrics.width / 2, underlineY)
+            ctx.lineTo(textMetrics.width / 2, underlineY)
+            ctx.stroke()
+          }
+        }
+
+        // Restore context state
+        ctx.restore()
+      });
+    [...textElements]
+      .filter(element => element.layerOrder !== 'back' && element.visible)
+      .forEach((element) => {
+        // Save context state
+        ctx.save()
+
+        // Set font properties
+        let fontStyle = ""
+        if (element.bold) fontStyle += "bold "
+        if (element.italic) fontStyle += "italic "
+        fontStyle += `${(element.fontSize * canvas.width) / 1280}px ${element.fontFamily}`
+        ctx.font = fontStyle
+
+        // Set text alignment
+        ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+        ctx.textBaseline = "middle"
+
+        // Calculate position
+        const x = (element.x * canvas.width) / 100
+        const y = (element.y * canvas.height) / 100
+
+        // Apply rotation
+        ctx.translate(x, y)
+        ctx.rotate((element.rotation * Math.PI) / 180)
+
+        // Set text color and opacity
+        ctx.fillStyle = element.color
+        ctx.globalAlpha = (element.opacity || 100) / 100
+
+        // Draw text background if enabled
+        if (element.backgroundEnabled && element.backgroundColor) {
+          const textMetrics = ctx.measureText(element.text)
+          const padding = element.fontSize * 0.2
+          ctx.fillStyle = element.backgroundColor
+          ctx.fillRect(
+            -textMetrics.width / 2 - padding,
+            -element.fontSize / 2 - padding,
+            textMetrics.width + padding * 2,
+            element.fontSize + padding * 2,
+          )
+          ctx.fillStyle = element.color
+        }
+
+        // Draw text shadow if enabled
+        if (element.shadow && element.shadowBlur && element.shadowColor) {
+          ctx.shadowColor = element.shadowColor
+          ctx.shadowBlur = (element.shadowBlur * canvas.width) / 1280
+          ctx.shadowOffsetX = 2
+          ctx.shadowOffsetY = 2
+        }
+
+        // Draw text
+        if (element.curve) {
+          // Simple curved text implementation
+          const characters = element.text.split("")
+          const radius = element.fontSize * 2
+          const angleStep = 0.2
+          let currentAngle = (-angleStep * (characters.length - 1)) / 2
+
+          characters.forEach((char) => {
+            ctx.save()
+            ctx.rotate(currentAngle)
+            ctx.fillText(char, 0, -radius)
+            ctx.restore()
+            currentAngle += angleStep
+          })
+        } else {
+          // Regular text
+          ctx.fillText(element.text, 0, 0)
+
+          // Draw underline if enabled
+          if (element.underline) {
+            const textMetrics = ctx.measureText(element.text)
+            const underlineY = element.fontSize * 0.15
+            ctx.lineWidth = element.fontSize * 0.05
+            ctx.beginPath()
+            ctx.moveTo(-textMetrics.width / 2, underlineY)
+            ctx.lineTo(textMetrics.width / 2, underlineY)
+            ctx.stroke()
+          }
+        }
+
+        // Restore context state
+        ctx.restore()
+      });
   }, [textElements, processedImageSrc])
 
   // Export canvas as image

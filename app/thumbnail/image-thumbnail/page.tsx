@@ -793,7 +793,7 @@ export default function ImageUploader() {
 
       // Draw foreground image
       fgImg.onload = () => {
-        // Clear any previous drawings
+        // Clear canvas first
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
         // Draw background image with filters

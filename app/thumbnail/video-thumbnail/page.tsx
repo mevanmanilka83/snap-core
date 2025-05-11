@@ -889,20 +889,22 @@ export default function VideoThumbnailGenerator() {
 
   // Update the final preview with correct text layering (back, image, front)
   const updateFinalPreview = () => {
-    if (!processedFrame) {
-      console.debug("No processed frame available for preview");
+    if (!processedFrame || !snapshots[selectedSnapshotIndex]) {
+      console.debug("No processed frame or snapshot available for preview");
       return;
     }
 
     // Create a new canvas for the final preview
     const previewCanvas = document.createElement('canvas');
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
+    const processedImg = new window.Image();
+    const originalImg = new window.Image();
+    processedImg.crossOrigin = "anonymous";
+    originalImg.crossOrigin = "anonymous";
 
-    img.onload = () => {
-      // Set canvas dimensions based on the image
-      previewCanvas.width = img.width;
-      previewCanvas.height = img.height;
+    originalImg.onload = () => {
+      // Set canvas dimensions based on the original image
+      previewCanvas.width = originalImg.width;
+      previewCanvas.height = originalImg.height;
       const ctx = previewCanvas.getContext("2d");
       
       if (!ctx) {
@@ -913,7 +915,7 @@ export default function VideoThumbnailGenerator() {
       // Clear canvas
       ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-      // Draw the processed image with filters
+      // Draw the original image as background with filters
       ctx.filter = `
         brightness(${imageFilters.brightness}%) 
         contrast(${imageFilters.contrast}%) 
@@ -923,23 +925,23 @@ export default function VideoThumbnailGenerator() {
         grayscale(${imageFilters.grayscale}%)
         sepia(${imageFilters.sepia}%)
       `;
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(originalImg, 0, 0);
       ctx.filter = "none"; // Reset filters for text
 
-      // Draw text elements that should be behind the image
+      // Draw all 'back' text elements (in array order)
       textElements
-        .filter((element) => element.visible !== false && element.layerOrder === "back")
-        .forEach((element) => {
+        .filter(e => e.layerOrder === "back" && e.visible !== false)
+        .forEach(element => {
           drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
         });
 
-      // Draw the processed image again (as foreground)
-      ctx.drawImage(img, 0, 0);
+      // Draw the processed image (subject)
+      ctx.drawImage(processedImg, 0, 0);
 
-      // Draw text elements that should be in front of the image
+      // Draw all 'front' text elements (in array order)
       textElements
-        .filter((element) => element.visible !== false && element.layerOrder === "front")
-        .forEach((element) => {
+        .filter(e => e.layerOrder !== "back" && e.visible !== false)
+        .forEach(element => {
           drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
         });
 
@@ -954,12 +956,19 @@ export default function VideoThumbnailGenerator() {
       }
     };
 
-    img.onerror = () => {
-      console.error("Error loading image for final preview");
+    originalImg.onerror = () => {
+      console.error("Error loading original image for final preview");
       toast.error("Failed to create final preview");
     };
 
-    img.src = processedFrame;
+    processedImg.onerror = () => {
+      console.error("Error loading processed image for final preview");
+      toast.error("Failed to create final preview");
+    };
+
+    // Load both images
+    originalImg.src = snapshots[selectedSnapshotIndex];
+    processedImg.src = processedFrame;
   };
 
   // Add helper function for drawing text elements
