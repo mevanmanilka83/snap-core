@@ -1224,7 +1224,7 @@ export default function ImageUploader() {
             <Button
               onClick={handleRemoveBackground}
               disabled={!imageLoaded || isProcessing}
-              className="flex-1"
+              className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
             >
               {isProcessing ? (
                 <span className="flex items-center">
@@ -1307,7 +1307,7 @@ export default function ImageUploader() {
               onClick={handleSaveBackgroundRemoved}
               disabled={!processedImageSrc}
               variant="default"
-              className="flex-1 bg-black hover:bg-black/90 text-white"
+              className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
             >
               <Download className="h-4 w-4 mr-2" />
               Save Processed Image

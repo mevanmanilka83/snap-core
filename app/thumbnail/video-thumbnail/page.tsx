@@ -1203,6 +1203,16 @@ export default function VideoThumbnailGenerator() {
             handleApplyFilters={handleApplyFilters}
             resetFilters={resetFilters}
             applyPresetFilter={applyPresetFilter}
+            imageInfo={videoInfo}
+            imageLoaded={videoLoaded}
+            processedImageSrc={processedImageSrc}
+            isProcessing={isProcessing}
+            isCreatingThumbnail={isCreatingThumbnail}
+            setProcessedImageSrc={setProcessedImageSrc}
+            setIsProcessing={setIsProcessing}
+            setUndoStack={setUndoStack}
+            setRedoStack={setRedoStack}
+            setProcessingProgress={setProcessingProgress}
           />
         </TabsContent>
 
