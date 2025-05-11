@@ -3,9 +3,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Camera } from "lucide-react"
-import { ModeToggle } from "./mode-toggle"
+import ModeToggle from "./ModeToggle"
 
-export function MainNav() {
+export default function MainNav() {
   const pathname = usePathname()
 
   return (
@@ -17,17 +17,17 @@ export function MainNav() {
           Snap Core
         </span>
       </Link>
-
       {/* Center section - desktop navigation */}
-      <nav className="hidden md:flex items-center justify-center flex-1 px-4">
-        <ul className="flex space-x-1 lg:space-x-2">
-        </ul>
+      <nav className="hidden md:flex items-center gap-4 mx-auto">
+        {/* No links here now */}
       </nav>
-
-      {/* Right section - theme toggle */}
-      <div className="flex items-center space-x-2">
+      {/* Right section - theme toggle and FAQ */}
+      <div className="flex items-center space-x-6">
+        <Link href="#faq" className={pathname === "/" ? "hover:underline" : "hover:underline"}>
+          FAQ
+        </Link>
         <ModeToggle />
       </div>
     </div>
   )
-}
+} 

@@ -3,8 +3,9 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import { ThemeProvider } from "@/components/theme-provider"
-import { SiteHeader } from "@/components/site-header"
+import ThemeProvider from "@/main-header/ThemeProvider"
+import SiteHeader from "@/main-header/SiteHeader"
+import Footer from "../components/footer/footer"
 import Dot from "@/components/dot"
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
               <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-screen-2xl mx-auto w-full">
                 {children}
               </main>
+              <Footer />
             </div>
           </Dot>
           <Toaster position="top-right" className="sm:max-w-sm md:max-w-md" />

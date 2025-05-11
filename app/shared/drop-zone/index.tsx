@@ -1323,7 +1323,7 @@ export default function ImageUploader() {
             <span>Image Filters</span>
           </TabsTrigger>
           <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Layers className="h-3 w-3 md:h-4 md:w-4" />
+            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
             <span>Final Preview</span>
           </TabsTrigger>
         </TabsList>
