@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
 const BackgroundRemovedSection = (props: any) => {
@@ -7,7 +7,10 @@ const BackgroundRemovedSection = (props: any) => {
   return (
     <Card className="w-full">
       <CardHeader className="p-4 md:p-6">
-        <CardTitle className="text-base">Background Removed</CardTitle>
+        <CardTitle className="text-base">Background Removal</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Remove the background to proceed with text editing in the image section
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {imageInfo && imageLoaded && (

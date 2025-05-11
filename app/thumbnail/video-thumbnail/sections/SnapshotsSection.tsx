@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Layers, Download, Trash2, ImageIcon } from "lucide-react";
+import { Layers, Download, Trash2, ImageIcon, AlertCircle } from "lucide-react";
 
 const SnapshotsSection = ({
   snapshots,
@@ -18,7 +18,9 @@ const SnapshotsSection = ({
   <Card>
     <CardHeader className="pb-2">
       <CardTitle className="text-base sm:text-lg">Snapshots</CardTitle>
-      <CardDescription className="text-xs sm:text-sm">Select a snapshot to edit</CardDescription>
+      <CardDescription className="text-xs sm:text-sm">
+        Select a snapshot to begin editing. Background removal is required before adding text.
+      </CardDescription>
     </CardHeader>
     <CardContent>
       {snapshots.length > 0 ? (

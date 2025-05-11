@@ -1270,8 +1270,11 @@ export default function ImageUploader() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {imageLoaded ? "Ready to process image" : "Please upload an image"}
+                    <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {processedImageSrc
+                        ? "Click 'Apply' in the text editor to generate preview"
+                        : ""}
                     </p>
                   </div>
                 )}
@@ -1607,11 +1610,11 @@ export default function ImageUploader() {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <Sparkles className="h-12 w-12 text-gray-400 mb-2" />
+                      <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
                       <p className="text-gray-500 dark:text-gray-400">
                         {processedImageSrc
                           ? "Click 'Apply' in the text editor to generate preview"
-                          : "Process image first"}
+                          : ""}
                       </p>
                     </div>
                   )}

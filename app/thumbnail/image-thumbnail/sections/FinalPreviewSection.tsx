@@ -21,7 +21,7 @@ const FinalPreviewSection = (props: any) => {
           ) : (
             <div className="flex h-full items-center justify-center">
               <p className="text-sm text-muted-foreground">
-                Create a thumbnail to see the preview
+                Process image first
               </p>
             </div>
           )}

@@ -22,12 +22,11 @@ import {
   ZoomOut,
   Maximize,
   Minimize,
-  Sparkles,
 } from "lucide-react"
 import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import TextEditor from "@/app/ui/text-editor"
+import TextEditor from "@/app/shared/text-editor"
 import { RippleButton } from "@/components/magicui/ripple-button"
 import FileUploadSection from "./sections/FileUploadSection"
 import ImagePreviewSection from "./sections/ImagePreviewSection"
@@ -960,7 +959,7 @@ export default function ImageUploader() {
         setIsCreatingThumbnail(false)
 
         if (showUpdateToast) {
-          toast.success("Thumbnail updated")
+          toast.success("Thumbnail updated. Ready to add text.")
           setShowUpdateToast(false)
         }
       }
@@ -1240,7 +1239,10 @@ export default function ImageUploader() {
 
         <Card className="w-full">
           <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base">Background Removed</CardTitle>
+            <CardTitle className="text-base">Background Removal</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Remove the background to proceed with text editing in the image section
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {imageInfo && imageLoaded && (
@@ -1341,7 +1343,7 @@ export default function ImageUploader() {
             isCreatingThumbnail={isCreatingThumbnail}
             processedImageSrc={processedImageSrc}
             textElements={textElements}
-            onTextElementsChange={(elements) => {
+            onTextElementsChange={(elements: TextElement[]) => {
               setTextElements(elements)
             }}
           />
@@ -1617,7 +1619,6 @@ export default function ImageUploader() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">
-                      <Sparkles className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mb-2" />
                       <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                         {processedImageSrc
                           ? "Click 'Apply' in the text editor to generate preview"

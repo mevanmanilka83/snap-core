@@ -1,69 +1,91 @@
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Info, Download } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Info, Download, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const BackgroundRemovedSection = (props: any) => {
-  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing } = props;
-
+const BackgroundRemovedSection = ({
+  imageInfo,
+  imageLoaded,
+  processedImageSrc,
+  zoomLevel,
+  isProcessing,
+  processedFrame,
+  handleRemoveBackground
+}: any) => {
   return (
     <Card className="w-full">
-      <CardHeader className="p-4 md:p-6 pb-2">
-        <CardTitle className="text-base">Background Removed</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base sm:text-lg">Background Removal</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Remove the background to proceed with text editing
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {imageInfo && imageLoaded && (
-          <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2">
-            <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-            <div>
-              <p>
-                Image size: {imageInfo.width}x{imageInfo.height} pixels
-              </p>
-              {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-            </div>
+        {!processedFrame ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+            <p className="text-sm">Please select a snapshot first</p>
           </div>
-        )}
-
-        <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-          {processedImageSrc ? (
+        ) : !processedImageSrc ? (
+          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
             <div className="relative w-full h-full">
               <img
-                src={processedImageSrc || "/placeholder.svg"}
-                alt="Background Removed"
+                src={processedFrame}
+                alt="Selected frame"
                 className="object-contain w-full h-full"
                 style={{
-                  objectFit: "contain",
-                  width: "100%",
-                  height: "100%",
-                  position: "absolute",
-                  inset: 0,
                   transform: `scale(${zoomLevel / 100})`,
                 }}
                 crossOrigin="anonymous"
               />
             </div>
-          ) : isProcessing ? (
-            <div className="flex justify-center py-8 md:py-12">
-              <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="relative w-full h-full">
+              <img
+                src={processedImageSrc}
+                alt="Processed frame"
+                className="object-contain w-full h-full"
+                style={{
+                  transform: `scale(${zoomLevel / 100})`,
+                }}
+                crossOrigin="anonymous"
+              />
             </div>
-          ) : (
-            <div className="text-center p-4">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                {imageLoaded ? "Ready to process image" : "Please upload an image"}
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
-        <Button variant="outline" className="flex-1">
-          Cancel
-        </Button>
+      <CardFooter className="flex flex-col sm:flex-row gap-2">
         <Button
-          className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
+          onClick={handleRemoveBackground}
+          disabled={!processedFrame || isProcessing}
+          className="w-full sm:w-1/2 h-9 sm:h-10"
         >
-          <Download className="h-4 w-4 mr-2" />
-          Save
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Removing Background...
+            </>
+          ) : (
+            "Remove Background"
+          )}
         </Button>
+        {processedImageSrc && (
+          <Button
+            onClick={() => {
+              const link = document.createElement('a');
+              link.href = processedImageSrc;
+              link.download = 'background-removed.png';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            className="w-full sm:w-1/2 h-9 sm:h-10"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Save Image
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

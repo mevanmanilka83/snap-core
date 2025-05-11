@@ -92,6 +92,7 @@ interface TextElement {
   lineHeight?: number
   opacity?: number
   visible?: boolean
+  layerOrder?: "front" | "back"
 }
 
 export default function VideoThumbnailGenerator() {
@@ -155,6 +156,7 @@ export default function VideoThumbnailGenerator() {
       lineHeight: 1.2,
       opacity: 100,
       visible: true,
+      layerOrder: "front"
     },
   ])
 
@@ -812,7 +814,7 @@ export default function VideoThumbnailGenerator() {
     setShowTextEditor(true);
     setActiveTab("text");
     updateFinalPreview();
-    toast.success("Ready to add text");
+    toast.success("Thumbnail updated. Ready to add text.");
   };
 
   // Calculate position based on the position property
@@ -911,8 +913,15 @@ export default function VideoThumbnailGenerator() {
       ctx.drawImage(img, 0, 0);
       ctx.filter = "none"; // Reset filters for text
 
-      // Draw all text elements
-      textElements.forEach((element) => {
+      // Sort text elements by layer order
+      const sortedElements = [...textElements].sort((a, b) => {
+        const aOrder = a.layerOrder === "back" ? 0 : 1;
+        const bOrder = b.layerOrder === "back" ? 0 : 1;
+        return aOrder - bOrder;
+      });
+
+      // Draw text elements in order
+      sortedElements.forEach((element) => {
         if (!element.visible) return;
         drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
       });
@@ -1110,9 +1119,63 @@ export default function VideoThumbnailGenerator() {
     video.load();
   };
 
+  const handleTabChange = (newTab: string) => {
+    // Allow access to video and snapshots tabs without restrictions
+    if (newTab === "video" || newTab === "snapshots") {
+      setActiveTab(newTab);
+      return;
+    }
+
+    // For edit tab, require a selected snapshot
+    if (newTab === "edit") {
+      if (selectedSnapshotIndex === -1) {
+        toast.error("Please select a snapshot first");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // Strictly prevent moving to text tab without background removal
+    if (newTab === "text") {
+      // Check if we're coming from edit tab
+      if (activeTab === "edit") {
+        if (!processedImageSrc) {
+          toast.error("You must remove the background before proceeding to text editing");
+          return;
+        }
+        // Double check that the background was actually removed
+        if (!processedImageSrc.includes('data:image/png;base64')) {
+          toast.error("Background removal is required before proceeding to text editing");
+          return;
+        }
+      } else {
+        // For other tabs, still require background removal
+        if (!processedImageSrc) {
+          toast.error("Please remove background before adding text");
+          return;
+        }
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // For preview tab, require background removal
+    if (newTab === "preview") {
+      if (!processedImageSrc) {
+        toast.error("Please remove background first to see the preview");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    setActiveTab(newTab);
+  };
+
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2 overflow-x-auto">
           <TabsTrigger 
             value="video" 
@@ -1139,7 +1202,7 @@ export default function VideoThumbnailGenerator() {
           <TabsTrigger 
             value="text" 
             className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedFrame}
+            disabled={!processedImageSrc}
           >
             <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Text</span>
@@ -1147,7 +1210,7 @@ export default function VideoThumbnailGenerator() {
           <TabsTrigger 
             value="preview" 
             className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedFrame}
+            disabled={!processedImageSrc}
           >
             <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
             <span>Final Preview</span>
@@ -1213,6 +1276,9 @@ export default function VideoThumbnailGenerator() {
             setUndoStack={setUndoStack}
             setRedoStack={setRedoStack}
             setProcessingProgress={setProcessingProgress}
+            handleRemoveBackground={handleRemoveBackground}
+            snapshots={snapshots}
+            selectedSnapshotIndex={selectedSnapshotIndex}
           />
         </TabsContent>
 
@@ -1231,6 +1297,8 @@ export default function VideoThumbnailGenerator() {
             finalThumbnail={finalThumbnail}
             videoInfo={videoInfo}
             handleSaveFinalThumbnail={handleSaveFinalThumbnail}
+            processedImageSrc={processedImageSrc}
+            textElements={textElements}
           />
         </TabsContent>
       </Tabs>
