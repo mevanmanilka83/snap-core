@@ -1,5 +1,8 @@
 import VideoSection from "./video-thumbnail/sections/VideoSection";
+import ImageTabSelection from "./image-thumbnail/sections/ImageTabSelection";
 import ImageSection from "./image-thumbnail/sections/ImageSection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image, ImageIcon, Eraser, Type } from "lucide-react";
 
 const MainSection = ({
   videoRef,
@@ -33,7 +36,7 @@ const MainSection = ({
         setAutoSnapInterval={setAutoSnapInterval}
         toggleAutoSnap={toggleAutoSnap}
       />
-      <ImageSection />
+      <ImageTabSelection ImageSection={ImageSection} />
     </div>
   );
 };
