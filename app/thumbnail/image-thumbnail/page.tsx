@@ -27,7 +27,6 @@ import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/app/shared/text-editor"
-import { RippleButton } from "@/components/magicui/ripple-button"
 import FileUploadSection from "./sections/FileUploadSection"
 import ImagePreviewSection from "./sections/ImagePreviewSection"
 import BackgroundRemovedSection from "./sections/BackgroundRemovedSection"
@@ -1704,14 +1703,14 @@ export default function ImageUploader() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end p-4 md:p-6">
-              <RippleButton
+              <Button
                 onClick={handleSaveThumbnail}
                 disabled={!thumbnailSrc}
                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm h-8 md:h-9"
               >
                 <Download className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                 Download Thumbnail
-              </RippleButton>
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>

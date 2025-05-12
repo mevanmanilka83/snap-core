@@ -21,11 +21,8 @@ export default function MainNav() {
       <nav className="hidden md:flex items-center gap-4 mx-auto">
         {/* No links here now */}
       </nav>
-      {/* Right section - theme toggle and FAQ */}
-      <div className="flex items-center space-x-6">
-        <Link href="#faq" className={pathname === "/" ? "hover:underline" : "hover:underline"}>
-          FAQ
-        </Link>
+      {/* Right section - theme toggle */}
+      <div className="flex items-center">
         <ModeToggle />
       </div>
     </div>

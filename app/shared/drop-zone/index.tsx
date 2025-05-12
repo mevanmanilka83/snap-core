@@ -28,7 +28,6 @@ import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/app/shared/text-editor"
-import { RippleButton } from "@/components/magicui/ripple-button"
 
 interface ImageInfo {
   width: number
@@ -459,7 +458,7 @@ export default function ImageUploader() {
       // Process the image with imgly background removal
       const blob = await backgroundRemoval.removeBackground(image_src, {
         progress: (message: string, progress: number) => {
-          // Just update the progress state without displaying percentage
+          // Update progress state
           setProcessingProgress(progress)
         },
       })
@@ -467,7 +466,7 @@ export default function ImageUploader() {
       // Create a URL from the resulting blob
       const processedImageUrl = URL.createObjectURL(blob)
       
-      // Revoke the old processed URL if it was a blob
+      // Clean up old URL if it exists
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
@@ -1243,8 +1242,8 @@ export default function ImageUploader() {
                 <div>
                   <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
                   {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                  </div>
-          </div>
+                </div>
+              </div>
             )}
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
               <div className="relative w-full h-full">
@@ -1278,8 +1277,8 @@ export default function ImageUploader() {
                     </p>
                   </div>
                 )}
+              </div>
             </div>
-          </div>
 
             {processedImageSrc && (
               <div className="flex items-center justify-between mt-4">
@@ -1290,26 +1289,26 @@ export default function ImageUploader() {
                   <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0}>
                     <Redo className="h-4 w-4" />
                   </Button>
-                  </div>
-                  </div>
-                )}
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+                </div>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
             <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveBackgroundRemoved}
-            disabled={!processedImageSrc}
-            variant="default"
-            size="default"
-            className="flex-1 bg-black hover:bg-black/90 text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-        </CardFooter>
-      </Card>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveBackgroundRemoved}
+              disabled={!processedImageSrc}
+              variant="default"
+              size="default"
+              className="flex-1 bg-black hover:bg-black/90 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
       <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">

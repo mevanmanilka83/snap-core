@@ -1,6 +1,5 @@
 "use client"
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock, Layers, Palette, Type, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import MainSection from "../../main-section"
@@ -8,6 +7,9 @@ import SnapshotsSection from "./SnapshotsSection"
 import EditSection from "./EditSection"
 import TextSection from "./TextSection"
 import FinalPreviewSection from "./FinalPreviewSection"
+import { TabsProvider, TabsBtn, TabsContent } from "@/app/components/tab"
+import SmoothScroll from "@/app/components/smooth-scroll"
+import { useMediaQuery } from "@/app/components/useMediaQuery"
 
 interface VideoTabSelectionProps {
   activeTab: string
@@ -133,141 +135,147 @@ export default function VideoTabSelection({
   handleSaveFinalThumbnail,
   processedImageSrc,
 }: VideoTabSelectionProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-5 gap-1 sm:gap-2 overflow-x-auto">
-        <TabsTrigger 
-          value="video" 
-          className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-        >
-          <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-          <span>Video</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="snapshots"
-          className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-        >
-          <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-          <span>Snapshots ({snapshots.length})</span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="edit"
-          className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-          disabled={selectedSnapshotIndex === -1}
-        >
-          <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-          <span>Edit</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="text" 
-          className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-          disabled={!canGoToTextAndPreview}
-        >
-          <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-          <span>Text</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="preview" 
-          className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-          disabled={!canGoToTextAndPreview}
-        >
-          <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-          <span>Final Preview</span>
-        </TabsTrigger>
-      </TabsList>
+    <TabsProvider defaultValue={activeTab} wobbly={!isMobile}>
+      <div className="w-full">
+        <SmoothScroll className="w-full">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 p-[3px] min-w-fit">
+            <TabsBtn 
+              value="video" 
+              className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+            >
+              <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="truncate">Video</span>
+            </TabsBtn>
+            <TabsBtn 
+              value="snapshots"
+              className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+            >
+              <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="truncate">Snapshots ({snapshots.length})</span>
+            </TabsBtn>
+            <TabsBtn
+              value="edit"
+              className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+              disabled={selectedSnapshotIndex === -1}
+            >
+              <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="truncate">Edit</span>
+            </TabsBtn>
+            <TabsBtn 
+              value="text" 
+              className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+              disabled={!canGoToTextAndPreview}
+            >
+              <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="truncate">Text</span>
+            </TabsBtn>
+            <TabsBtn 
+              value="preview" 
+              className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
+              disabled={!canGoToTextAndPreview}
+            >
+              <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="truncate">Final Preview</span>
+            </TabsBtn>
+          </div>
+        </SmoothScroll>
 
-      <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
-        <MainSection
-          videoRef={videoRef}
-          videoLoaded={videoLoaded}
-          videoInfo={videoInfo}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          handleMetadataLoaded={handleMetadataLoaded}
-          handleTimeUpdate={handleTimeUpdate}
-          handleSnapshot={handleSnapshot}
-          captureSnapshot={captureSnapshot}
-          handleAutoCaptureKeyFrames={handleAutoCaptureKeyFrames}
-          autoSnapInterval={autoSnapInterval}
-          setAutoSnapInterval={setAutoSnapInterval}
-          toggleAutoSnap={toggleAutoSnap}
-        />
-      </TabsContent>
+        <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
+          <MainSection
+            videoRef={videoRef}
+            videoLoaded={videoLoaded}
+            videoInfo={videoInfo}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            handleMetadataLoaded={handleMetadataLoaded}
+            handleTimeUpdate={handleTimeUpdate}
+            handleSnapshot={handleSnapshot}
+            captureSnapshot={captureSnapshot}
+            handleAutoCaptureKeyFrames={handleAutoCaptureKeyFrames}
+            autoSnapInterval={autoSnapInterval}
+            setAutoSnapInterval={setAutoSnapInterval}
+            toggleAutoSnap={toggleAutoSnap}
+          />
+        </TabsContent>
 
-      <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
-        <SnapshotsSection
-          snapshots={snapshots}
-          selectedSnapshotIndex={selectedSnapshotIndex}
-          handleSelectSnapshot={handleSelectSnapshot}
-          handleSaveSnapshot={handleSaveSnapshot}
-          handleDeleteSnapshot={handleDeleteSnapshot}
-          handleSaveAllSnapshots={handleSaveAllSnapshots}
-          setSnapshots={setSnapshots}
-          setSelectedSnapshotIndex={setSelectedSnapshotIndex}
-          setProcessedFrame={setProcessedFrame}
-          setProcessedImageSrc={setProcessedImageSrc}
-          toast={toast}
-        />
-      </TabsContent>
+        <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
+          <SnapshotsSection
+            snapshots={snapshots}
+            selectedSnapshotIndex={selectedSnapshotIndex}
+            handleSelectSnapshot={handleSelectSnapshot}
+            handleSaveSnapshot={handleSaveSnapshot}
+            handleDeleteSnapshot={handleDeleteSnapshot}
+            handleSaveAllSnapshots={handleSaveAllSnapshots}
+            setSnapshots={setSnapshots}
+            setSelectedSnapshotIndex={setSelectedSnapshotIndex}
+            setProcessedFrame={setProcessedFrame}
+            setProcessedImageSrc={setProcessedImageSrc}
+            toast={toast}
+          />
+        </TabsContent>
 
-      <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
-        <EditSection
-          processedFrame={processedFrame}
-          zoomLevel={zoomLevel}
-          setZoomLevel={setZoomLevel}
-          imageFilters={imageFilters}
-          setImageFilters={setImageFilters}
-          handleUndo={handleUndo}
-          handleRedo={handleRedo}
-          undoStack={undoStack}
-          redoStack={redoStack}
-          handleCreateThumbnail={handleCreateThumbnail}
-          handleApplyFilters={handleApplyFilters}
-          resetFilters={resetFilters}
-          applyPresetFilter={applyPresetFilter}
-          imageInfo={videoInfo}
-          imageLoaded={videoLoaded}
-          processedImageSrc={processedImageSrc}
-          isProcessing={isProcessing}
-          isCreatingThumbnail={isCreatingThumbnail}
-          setProcessedImageSrc={setProcessedImageSrc}
-          setIsProcessing={setIsProcessing}
-          setUndoStack={setUndoStack}
-          setRedoStack={setRedoStack}
-          setProcessingProgress={setProcessingProgress}
-          handleRemoveBackground={handleRemoveBackground}
-          snapshots={snapshots}
-          selectedSnapshotIndex={selectedSnapshotIndex}
-          onNext={() => {
-            if (!backgroundRemoved) {
-              toast.error('Please remove the background before proceeding to text editing. Background removal is important for text placement.');
-              return;
-            }
-            setCanGoToTextAndPreview(true);
-            handleTabChange('text');
-          }}
-        />
-      </TabsContent>
+        <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
+          <EditSection
+            processedFrame={processedFrame}
+            zoomLevel={zoomLevel}
+            setZoomLevel={setZoomLevel}
+            imageFilters={imageFilters}
+            setImageFilters={setImageFilters}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+            undoStack={undoStack}
+            redoStack={redoStack}
+            handleCreateThumbnail={handleCreateThumbnail}
+            handleApplyFilters={handleApplyFilters}
+            resetFilters={resetFilters}
+            applyPresetFilter={applyPresetFilter}
+            imageInfo={videoInfo}
+            imageLoaded={videoLoaded}
+            processedImageSrc={processedImageSrc}
+            isProcessing={isProcessing}
+            isCreatingThumbnail={isCreatingThumbnail}
+            setProcessedImageSrc={setProcessedImageSrc}
+            setIsProcessing={setIsProcessing}
+            setUndoStack={setUndoStack}
+            setRedoStack={setRedoStack}
+            setProcessingProgress={setProcessingProgress}
+            handleRemoveBackground={handleRemoveBackground}
+            snapshots={snapshots}
+            selectedSnapshotIndex={selectedSnapshotIndex}
+            onNext={() => {
+              if (!backgroundRemoved) {
+                toast.error('Please remove the background before proceeding to text editing. Background removal is important for text placement.');
+                return;
+              }
+              setCanGoToTextAndPreview(true);
+              handleTabChange('text');
+            }}
+          />
+        </TabsContent>
 
-      <TabsContent value="text" className="space-y-4">
-        <TextSection
-          isCreatingThumbnail={isCreatingThumbnail}
-          processedImageSrc={processedImageSrc}
-          textElements={textElements}
-          setTextElements={setTextElements}
-          handleCreateThumbnail={handleCreateThumbnail}
-        />
-      </TabsContent>
+        <TabsContent value="text" className="space-y-4">
+          <TextSection
+            isCreatingThumbnail={isCreatingThumbnail}
+            processedImageSrc={processedImageSrc}
+            textElements={textElements}
+            setTextElements={setTextElements}
+            handleCreateThumbnail={handleCreateThumbnail}
+          />
+        </TabsContent>
 
-      <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
-        <FinalPreviewSection
-          finalThumbnail={finalThumbnail}
-          videoInfo={videoInfo}
-          handleSaveFinalThumbnail={handleSaveFinalThumbnail}
-          processedImageSrc={processedImageSrc}
-          textElements={textElements}
-        />
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
+          <FinalPreviewSection
+            finalThumbnail={finalThumbnail}
+            videoInfo={videoInfo}
+            handleSaveFinalThumbnail={handleSaveFinalThumbnail}
+            processedImageSrc={processedImageSrc}
+            textElements={textElements}
+          />
+        </TabsContent>
+      </div>
+    </TabsProvider>
   )
 } 
