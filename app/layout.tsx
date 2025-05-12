@@ -6,9 +6,9 @@ import { Toaster } from "@/components/ui/sonner"
 import ThemeProvider from "@/main-header/ThemeProvider"
 import SiteHeader from "@/main-header/SiteHeader"
 import Footer from "@/footer/footer"
-import Dot from "@/components/dot"
 import { cn } from "@/lib/utils"
 import SmoothScroll from "@/components/smooth-scroll"
+import SmoothFollower from "@/components/SmoothFollower"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,17 +47,16 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="snap-core-theme"
         >
-          <Dot className="min-h-screen">
-            <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <SmoothScroll>
-                <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-screen-2xl mx-auto w-full">
-                  {children}
-                </main>
-              </SmoothScroll>
-              <Footer />
-            </div>
-          </Dot>
+          <div className="relative flex min-h-screen flex-col">
+            <SiteHeader />
+            <SmoothScroll>
+              <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-screen-2xl mx-auto w-full">
+                {children}
+              </main>
+            </SmoothScroll>
+            <Footer />
+          </div>
+          <SmoothFollower />
           <Toaster position="top-right" className="sm:max-w-sm md:max-w-md" />
         </ThemeProvider>
       </body>

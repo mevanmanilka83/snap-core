@@ -7,10 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Camera, Sparkles, ImageIcon, Layers, Download, RefreshCw, Shield } from "lucide-react"
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
 import ImageGrid from "@/components/home/ImageGrid"
+import HeroSection from "@/components/home/hero-section"
+import FeatureSection from "@/components/home/feature-section"
 
 export default function Home() {
   return (
     <div className="w-full">
+      <HeroSection />
+      <FeatureSection />
+      
       {/* Generator Section */}
       <section className="max-w-5xl mx-auto mb-24 px-4">
         <div className="text-center mb-12">
