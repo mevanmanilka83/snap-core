@@ -1,29 +1,41 @@
 'use client';
 
-import { useEffect } from 'react';
-import Lenis from '@studio-freight/lenis';
+import { useEffect, useRef } from 'react';
 
-export default function SmoothScroll({ children }: { children: React.ReactNode }) {
+interface SmoothScrollProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export default function SmoothScroll({ children, className = '' }: SmoothScrollProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      infinite: false,
-    });
+    const container = containerRef.current;
+    if (!container) return;
 
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    return () => {
-      lenis.destroy();
+    const handleWheel = (e: WheelEvent) => {
+      // Only handle horizontal scrolling if content is wider than container
+      if (container.scrollWidth > container.clientWidth) {
+        // Check if we're at the edges of horizontal scroll
+        const isAtLeftEdge = container.scrollLeft <= 0;
+        const isAtRightEdge = container.scrollLeft + container.clientWidth >= container.scrollWidth;
+        
+        // Only prevent default if we're not at the edges and trying to scroll horizontally
+        if (!isAtLeftEdge && !isAtRightEdge) {
+          e.preventDefault();
+          container.scrollLeft += e.deltaY;
+        }
+      }
     };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  return <>{children}</>;
+  return (
+    <div ref={containerRef} className={`overflow-x-auto ${className}`}>
+      {children}
+    </div>
+  );
 } 

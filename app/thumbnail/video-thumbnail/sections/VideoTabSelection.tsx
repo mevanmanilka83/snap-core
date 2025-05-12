@@ -7,9 +7,9 @@ import SnapshotsSection from "./SnapshotsSection"
 import EditSection from "./EditSection"
 import TextSection from "./TextSection"
 import FinalPreviewSection from "./FinalPreviewSection"
-import { TabsProvider, TabsBtn, TabsContent } from "@/app/components/tab"
-import SmoothScroll from "@/app/components/smooth-scroll"
-import { useMediaQuery } from "@/app/components/useMediaQuery"
+import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab"
+import SmoothScroll from "@/components/smooth-scroll"
+import { useMediaQuery } from "@/components/useMediaQuery"
 
 interface VideoTabSelectionProps {
   activeTab: string
@@ -138,8 +138,8 @@ export default function VideoTabSelection({
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <TabsProvider defaultValue={activeTab} wobbly={!isMobile}>
-      <div className="w-full">
+    <TabsProvider defaultValue="video" wobbly={!isMobile}>
+      <div className="flex flex-col gap-4">
         <SmoothScroll className="w-full">
           <div className="flex items-center justify-center gap-1 sm:gap-2 p-[3px] min-w-fit">
             <TabsBtn 
