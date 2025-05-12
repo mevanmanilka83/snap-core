@@ -9,6 +9,7 @@ import { WordPullUp } from "@/components/eldoraui/wordpullup"
 import ImageGrid from "@/components/home/ImageGrid"
 import HeroSection from "@/components/home/hero-section"
 import FeatureSection from "@/components/home/feature-section"
+import FAQSection from "@/components/home/faq"
 
 export default function Home() {
   return (
@@ -28,6 +29,8 @@ export default function Home() {
           <ClientWrapper />
         </div>
       </section>
+
+      <FAQSection />
     </div>
   )
 }
