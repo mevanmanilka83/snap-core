@@ -46,7 +46,7 @@ export default function HowItWorks() {
   return (
     <section ref={sectionRef} className="max-w-3xl mx-auto mb-24 px-4">
       <div className="text-center mb-12">
-        <Badge variant="outline" className="mb-4">
+        <Badge variant="outline" className="mb-4 text-xs sm:text-sm">
           How It Works
         </Badge>
         <div className="min-h-[120px] flex items-center justify-center">
@@ -55,14 +55,14 @@ export default function HowItWorks() {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6 }}
           >
-            <WordPullUp text="Create Thumbnails from Videos or Images" className="text-3xl md:text-4xl mb-4" />
+            <WordPullUp text="Create Thumbnails from Videos or Images" className="text-2xl sm:text-3xl md:text-4xl mb-4" />
           </motion.div>
         </div>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-muted-foreground max-w-2xl mx-auto"
+          className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base"
         >
           Transform your videos or images into eye-catching thumbnails. Upload images directly or capture frames from videos - all processed locally in your browser.
         </motion.p>
@@ -79,7 +79,7 @@ export default function HowItWorks() {
               variants={stepVariants}
             >
               <StaticStep step={index + 1} title={step.title}>
-                <p className="text-muted-foreground text-sm">{step.description}</p>
+                <p className="text-muted-foreground text-xs sm:text-sm">{step.description}</p>
               </StaticStep>
             </motion.div>
           ))}

@@ -1,10 +1,24 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { AnimatePresence, motion, useInView } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+
+const faqVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  })
+}
 
 const faqs = [
   {
@@ -42,68 +56,57 @@ const faqs = [
 ]
 
 export default function FAQSection() {
-  const [mounted, setMounted] = useState(false)
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const handleClick = (index: number) => {
-    setActiveIndex(activeIndex === index ? null : index)
-  }
-
-  if (!mounted) {
-    return null
-  }
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const isInView = useInView(sectionRef, { amount: 0.3 })
 
   return (
-    <section className="max-w-4xl mx-auto mb-24 px-4">
+    <section ref={sectionRef} className="max-w-3xl mx-auto mb-24 px-4">
       <div className="text-center mb-12">
-        <Badge variant="outline" className="mb-4">
+        <Badge variant="outline" className="mb-4 text-xs sm:text-sm">
           FAQ
         </Badge>
         <div className="min-h-[120px] flex items-center justify-center">
-          <WordPullUp text="Frequently Asked Questions" className="text-3xl md:text-4xl mb-4" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+          >
+            <WordPullUp text="Frequently Asked Questions" className="text-2xl sm:text-3xl md:text-4xl mb-4" />
+          </motion.div>
         </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base"
+        >
           Find answers to common questions about creating thumbnails from videos and images with Snap Core.
-        </p>
+        </motion.p>
       </div>
 
-      <div className="h-fit border rounded-lg p-2 dark:bg-[#111111] bg-[#F2F2F2]">
+      <div className="space-y-4">
         {faqs.map((faq, index) => (
           <motion.div
-            key={`faq-${index}`}
-            className={`overflow-hidden ${index !== faqs.length - 1 ? 'border-b' : ''}`}
-            onClick={() => handleClick(index)}
+            key={index}
+            custom={index}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            variants={faqVariants}
           >
-            <button
-              className="p-3 px-2 w-full cursor-pointer sm:text-base text-xs items-center transition-all font-semibold dark:text-white text-black flex gap-2"
-            >
-              <Plus
-                className={`${activeIndex === index ? 'rotate-45' : 'rotate-0'} transition-transform ease-in-out w-5 h-5 dark:text-gray-200 text-gray-600`}
-              />
-              {faq.question}
-            </button>
-            <AnimatePresence mode="sync">
-              {activeIndex === index && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    ease: 'easeInOut',
-                    delay: 0.14,
-                  }}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value={`item-${index}`}>
+                <AccordionTrigger
+                  className="text-left text-xs sm:text-sm font-display font-medium"
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 >
-                  <p className="dark:text-white text-black p-3 xl:text-base sm:text-sm text-xs pt-0 w-[90%]">
-                    {faq.answer}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-muted-foreground text-xs sm:text-sm">{faq.answer}</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </motion.div>
         ))}
       </div>

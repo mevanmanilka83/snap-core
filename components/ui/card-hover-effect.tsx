@@ -1,74 +1,136 @@
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+"use client"
+
+import { useState, useEffect, useRef } from 'react'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { cn } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+const Container = ({
+  children,
+  className,
+  ...props
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div
+      className={cn(
+        "relative group/card hover:z-10 transition-all duration-300",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+const Sparkles = () => {
+  const [mounted, setMounted] = useState(false);
+  const [sparkles, setSparkles] = useState<Array<{ id: number; top: string; left: string }>>([]);
+
+  useEffect(() => {
+    setMounted(true);
+    const generateSparkles = () => {
+      const newSparkles = Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`
+      }));
+      setSparkles(newSparkles);
+    };
+    generateSparkles();
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {sparkles.map((sparkle) => (
+        <motion.span
+          key={sparkle.id}
+          animate={{
+            top: `calc(${sparkle.top} + ${Math.random() * 10 - 5}px)`,
+            left: `calc(${sparkle.left} + ${Math.random() * 10 - 5}px)`,
+            opacity: [0, 1, 0],
+            scale: [0, 1, 0]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatDelay: Math.random() * 2
+          }}
+          className="inline-block bg-black dark:bg-white"
+          style={{
+            position: "absolute",
+            width: "2px",
+            height: "2px",
+            borderRadius: "50%",
+            zIndex: 1
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const CardSkeleton = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => {
+  return (
+    <Card className="border bg-card/50 backdrop-blur-sm hover:shadow-md transition-all relative z-20 h-full">
+      <CardContent className="flex-1">
+        <div className="relative h-40 flex items-center justify-center">
+          <motion.div
+            animate={{
+              y: [0, -10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="relative z-10"
+          >
+            {icon}
+          </motion.div>
+          <div className="absolute inset-0">
+            <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+            <Sparkles />
+          </div>
+        </div>
+        <CardHeader>
+          <CardTitle className="text-sm sm:text-base">{title}</CardTitle>
+          <p className="text-muted-foreground text-xs sm:text-sm">{description}</p>
+        </CardHeader>
+      </CardContent>
+    </Card>
+  );
+};
 
 export const HoverEffect = ({
   items,
   className,
 }: {
   items: {
-    title: string;
-    description: string;
-    link: string;
-    icon?: React.ReactNode;
-  }[];
-  className?: string;
+    icon: React.ReactNode
+    title: string
+    description: string
+    link?: string
+  }[]
+  className?: string
 }) => {
-  let [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   return (
-    <div
-      className={cn(
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 py-10",
-        className
-      )}
-    >
+    <div className={cn("grid", className)}>
       {items.map((item, idx) => (
-        <a
-          href={item?.link}
-          key={item?.link}
-          className="relative group block p-2 h-full w-full"
-          onMouseEnter={() => setHoveredIndex(idx)}
-          onMouseLeave={() => setHoveredIndex(null)}
-        >
-          <AnimatePresence>
-            {hoveredIndex === idx && (
-              <motion.span
-                className="absolute inset-0 h-full w-full bg-neutral-200 dark:bg-slate-800/[0.8] block rounded-3xl"
-                layoutId="hoverBackground"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: 1,
-                  transition: { duration: 0.15 },
-                }}
-                exit={{
-                  opacity: 0,
-                  transition: { duration: 0.15, delay: 0.2 },
-                }}
-              />
-            )}
-          </AnimatePresence>
-          <Card className="border bg-card/50 backdrop-blur-sm hover:shadow-md transition-all relative z-20">
-            <CardHeader className="pb-2">
-              {item.icon && (
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                  {item.icon}
-                </div>
-              )}
-              <CardTitle className="text-xl">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{item.description}</p>
-            </CardContent>
-          </Card>
-        </a>
+        <Container key={idx}>
+          <CardSkeleton {...item} />
+        </Container>
       ))}
     </div>
   );
 };
 
-export const Card = ({
+export const HoverCard = ({
   className,
   children,
 }: {
@@ -88,7 +150,8 @@ export const Card = ({
     </div>
   );
 };
-export const CardTitle = ({
+
+export const HoverCardTitle = ({
   className,
   children,
 }: {
@@ -101,7 +164,8 @@ export const CardTitle = ({
     </h4>
   );
 };
-export const CardDescription = ({
+
+export const HoverCardDescription = ({
   className,
   children,
 }: {
