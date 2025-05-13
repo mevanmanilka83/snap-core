@@ -10,17 +10,19 @@ import ImageGrid from "@/components/home/ImageGrid"
 import HeroSection from "@/components/home/hero-section"
 import FeatureSection from "@/components/home/feature-section"
 import FAQSection from "@/components/home/faq"
+import HowItWorks from "@/components/home/how-it-works"
 
 export default function Home() {
   return (
     <div className="w-full">
       <HeroSection />
       <FeatureSection />
+      <HowItWorks />
       
       {/* Generator Section */}
       <section className="max-w-5xl mx-auto mb-24 px-4">
         <div className="text-center mb-12">
-          <WordPullUp text="Try the Thumbnail Generator" className="text-3xl" />
+          <WordPullUp text="Try Snap Core's Image Processing" className="text-3xl" />
         </div>
 
         <ImageGrid />

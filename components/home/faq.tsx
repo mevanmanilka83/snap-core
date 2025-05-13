@@ -1,48 +1,112 @@
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+"use client"
+
+import { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
 
 const faqs = [
-    {
-      question: "How does the AI thumbnail generator work?",
-      answer:
-        "Our AI thumbnail generator uses advanced machine learning algorithms to create professional-looking thumbnails based on your input. Simply enter a description or upload an image, and our AI will generate a custom thumbnail for you.",
-    },
-    {
-      question: "Can I customize the generated thumbnails?",
-      answer:
-        "Yes! After generating a thumbnail, you can customize various elements including text, colors, layout, and more to match your brand and style preferences.",
-    },
-    {
-      question: "What file formats can I export my thumbnails in?",
-      answer:
-        "You can export your thumbnails in PNG, JPG, and WebP formats. Each format is optimized for different platforms and use cases.",
-    },
-    {
-      question: "Is there a limit to how many thumbnails I can generate?",
-      answer:
-        "No, there's no limit to the number of thumbnails you can generate. Feel free to create as many variations as you need until you find the perfect one.",
-    },
-  ]
+  {
+    question: "What is Snap Core and how does it work?",
+    answer: "Snap Core is a powerful browser-based thumbnail generator that lets you create professional thumbnails from both videos and images. You can upload images directly or capture frames from videos, remove backgrounds, and add text overlays - all processed locally in your browser for maximum privacy and speed."
+  },
+  {
+    question: "Can I use both videos and images?",
+    answer: "Yes! Snap Core supports both workflows. You can either upload images directly using drag and drop, or load videos to capture specific frames. Both methods provide instant preview and processing capabilities."
+  },
+  {
+    question: "What file formats are supported?",
+    answer: "Snap Core supports all major video formats (MP4, WebM, MOV) and image formats (JPG, PNG). For videos, you can capture frames instantly, and for images, you can upload them directly through our drag-and-drop interface."
+  },
+  {
+    question: "How does the background removal work?",
+    answer: "Our AI-powered background removal works on both captured video frames and uploaded images. It automatically detects and removes backgrounds with pixel-perfect precision, maintaining fine details like hair and transparent elements. The process happens in real-time with instant preview."
+  },
+  {
+    question: "Can I customize my thumbnails?",
+    answer: "Yes! After capturing a frame or uploading an image, you can add text overlays with various fonts and styles, apply image filters, and customize every aspect of your thumbnail. All changes are previewed in real-time."
+  },
+  {
+    question: "Is my content private?",
+    answer: "Yes, Snap Core processes everything locally in your browser. We don't store any of your videos, images, or generated content. All processing happens on your device, and closing the page clears all local data."
+  },
+  {
+    question: "How does the automatic keyframe detection work?",
+    answer: "For videos, our automatic keyframe detection analyzes your content to identify the most significant moments. You can set custom intervals for automatic capture, and the system will intelligently select frames that represent key scenes or transitions in your video."
+  },
+  {
+    question: "What are the system requirements?",
+    answer: "Snap Core works in any modern web browser. Since all processing happens locally, performance may vary based on your device's capabilities. For optimal results, we recommend using a device with at least 4GB of RAM and a modern processor."
+  }
+]
 
 export default function FAQSection() {
+  const [mounted, setMounted] = useState(false)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleClick = (index: number) => {
+    setActiveIndex(activeIndex === index ? null : index)
+  }
+
+  if (!mounted) {
+    return null
+  }
+
   return (
-    <section className="max-w-3xl mx-auto mb-24 px-4">
+    <section className="max-w-4xl mx-auto mb-24 px-4">
       <div className="text-center mb-12">
         <Badge variant="outline" className="mb-4">
           FAQ
         </Badge>
-        <WordPullUp text="Frequently Asked Questions" className="text-3xl md:text-4xl mb-4" />
+        <div className="min-h-[120px] flex items-center justify-center">
+          <WordPullUp text="Frequently Asked Questions" className="text-3xl md:text-4xl mb-4" />
+        </div>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Find answers to common questions about creating thumbnails from videos and images with Snap Core.
+        </p>
       </div>
 
-      <Accordion type="single" collapsible className="w-full">
+      <div className="h-fit border rounded-lg p-2 dark:bg-[#111111] bg-[#F2F2F2]">
         {faqs.map((faq, index) => (
-          <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-            <AccordionContent>{faq.answer}</AccordionContent>
-          </AccordionItem>
+          <motion.div
+            key={`faq-${index}`}
+            className={`overflow-hidden ${index !== faqs.length - 1 ? 'border-b' : ''}`}
+            onClick={() => handleClick(index)}
+          >
+            <button
+              className="p-3 px-2 w-full cursor-pointer sm:text-base text-xs items-center transition-all font-semibold dark:text-white text-black flex gap-2"
+            >
+              <Plus
+                className={`${activeIndex === index ? 'rotate-45' : 'rotate-0'} transition-transform ease-in-out w-5 h-5 dark:text-gray-200 text-gray-600`}
+              />
+              {faq.question}
+            </button>
+            <AnimatePresence mode="sync">
+              {activeIndex === index && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    ease: 'easeInOut',
+                    delay: 0.14,
+                  }}
+                >
+                  <p className="dark:text-white text-black p-3 xl:text-base sm:text-sm text-xs pt-0 w-[90%]">
+                    {faq.answer}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         ))}
-      </Accordion>
+      </div>
     </section>
   )
 }
