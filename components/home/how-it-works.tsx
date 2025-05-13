@@ -44,7 +44,7 @@ export default function HowItWorks() {
   const isInView = useInView(sectionRef, { amount: 0.3 })
 
   return (
-    <section ref={sectionRef} className="max-w-3xl mx-auto mb-24 px-4">
+    <section ref={sectionRef} id="how-it-works" className="max-w-3xl mx-auto mb-24 px-4">
       <div className="text-center mb-12">
         <Badge variant="outline" className="mb-4 text-xs sm:text-sm">
           How It Works

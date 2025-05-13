@@ -25,6 +25,13 @@ function HeroSection() {
   const heroRef = useRef(null)
   const isInView = useInView(heroRef, { amount: 0.3 })
 
+  const scrollToHowItWorks = () => {
+    const element = document.getElementById('how-it-works')
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <section ref={heroRef} className="min-h-[80vh] px-4 py-16 max-w-5xl mx-auto flex flex-col justify-center items-center text-center relative overflow-hidden rounded-3xl mb-24">
       <div className="min-h-[120px] flex items-center justify-center">
@@ -51,7 +58,10 @@ function HeroSection() {
         <button className="px-6 py-3 bg-primary text-primary-foreground rounded-md inline-flex items-center justify-center hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium">
           Start Creating <ArrowRight className="ml-2 h-4 w-4" />
         </button>
-        <button className="px-6 py-3 border border-input text-foreground hover:bg-accent hover:text-accent-foreground rounded-md inline-flex items-center justify-center transition-colors text-sm sm:text-base">
+        <button 
+          onClick={scrollToHowItWorks}
+          className="px-6 py-3 border border-input text-foreground hover:bg-accent hover:text-accent-foreground rounded-md inline-flex items-center justify-center transition-colors text-sm sm:text-base"
+        >
           Learn More
         </button>
       </motion.div>
