@@ -17,33 +17,42 @@ export const Cursor = () => (
 export const AnimatedCursor: React.FC<{
   className?: string;
   text: string;
-  type?: "video" | "image";
+  type?: "video" | "image" | "text";
 }> = ({ className, text, type = "video" }) => {
   // Define different animation paths based on cursor type with fewer points for slower movement
   const videoAnimation = {
-    x: ["0%", "5%", "10%", "5%", "0%"],
-    y: ["0%", "3%", "5%", "3%", "0%"],
+    x: ["0%", "8%", "0%", "-8%", "0%"],
+    y: ["0%", "8%", "0%", "8%", "0%"],
   };
 
   const imageAnimation = {
-    x: ["0%", "5%", "8%", "5%", "0%"],
-    y: ["0%", "4%", "3%", "4%", "0%"],
+    x: ["0%", "8%", "0%", "-8%", "0%"],
+    y: ["0%", "8%", "0%", "8%", "0%"],
   };
 
-  const animation = type === "video" ? videoAnimation : imageAnimation;
+  const textAnimation = {
+    x: ["0%", "8%", "0%", "-8%", "0%"],
+    y: ["0%", "8%", "0%", "8%", "0%"],
+  };
+
+  const animation = type === "video" 
+    ? videoAnimation 
+    : type === "image" 
+      ? imageAnimation 
+      : textAnimation;
 
   return (
     <div className="relative w-full">
       <motion.div
-        initial={{ translateX: "0", translateY: "0" }}
+        initial={{ x: 0, y: 0 }}
         animate={{
-          translateX: animation.x,
-          translateY: animation.y,
+          x: animation.x,
+          y: animation.y,
         }}
         transition={{
-          duration: 15,
+          duration: 3,
           repeat: Infinity,
-          ease: "linear",
+          ease: "easeInOut",
           repeatType: "reverse",
         }}
         className={"flex items-center gap-4"}

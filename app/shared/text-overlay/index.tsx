@@ -25,6 +25,7 @@ import {
   Eye,
 } from "lucide-react"
 import { toast } from "sonner"
+import AnimatedCursor from "@/components/figma-cursor"
 
 interface TextElement {
   id: string
@@ -515,6 +516,532 @@ export default function TextEditor({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="w-full space-y-4">
+          <div className="relative mb-4">
+            <AnimatedCursor
+              text="Text Editor"
+              className="absolute -top-4 left-4 z-10"
+              type="image"
+            />
+          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-4 mb-2">
+              <TabsTrigger value="text" className="flex items-center gap-1 text-xs md:text-sm">
+                <Type className="h-3 w-3 md:h-4 md:w-4" />
+                <span>Text</span>
+              </TabsTrigger>
+              <TabsTrigger value="style" className="flex items-center gap-1 text-xs md:text-sm">
+                <Palette className="h-3 w-3 md:h-4 md:w-4" />
+                <span>Style</span>
+              </TabsTrigger>
+              <TabsTrigger value="position" className="flex items-center gap-1 text-xs md:text-sm">
+                <Move className="h-3 w-3 md:h-4 md:w-4" />
+                <span>Position</span>
+              </TabsTrigger>
+              <TabsTrigger value="effects" className="flex items-center gap-1 text-xs md:text-sm">
+                <LayoutGrid className="h-3 w-3 md:h-4 md:w-4" />
+                <span>Effects</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="text" className="border p-4 rounded-md">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="text-content">Text Content</Label>
+                  <textarea
+                    id="text-content"
+                    value={textElements[selectedTextIndex]?.text || ""}
+                    onChange={(e) => updateTextElement(selectedTextIndex, { text: e.target.value })}
+                    className="font-bold w-full min-h-[80px] p-2 rounded border border-input bg-background"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Font Family</Label>
+                  <Select
+                    value={textElements[selectedTextIndex]?.fontFamily || "Arial"}
+                    onValueChange={(value) => updateTextElement(selectedTextIndex, { fontFamily: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select font" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POPULAR_FONTS.map((font) => (
+                        <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                          {font}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Font Size</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.fontSize || 72]}
+                      min={12}
+                      max={200}
+                      step={1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { fontSize: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min={12}
+                      max={200}
+                      value={textElements[selectedTextIndex]?.fontSize || 72}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { fontSize: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateTextElement(selectedTextIndex, { fontSize: 36 })}
+                    >
+                      36px
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateTextElement(selectedTextIndex, { fontSize: 72 })}
+                    >
+                      72px
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateTextElement(selectedTextIndex, { fontSize: 120 })}
+                    >
+                      120px
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Text Style</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={textElements[selectedTextIndex]?.bold ? "default" : "outline"}
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, { bold: !textElements[selectedTextIndex]?.bold })
+                      }
+                    >
+                      <Bold className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={textElements[selectedTextIndex]?.italic ? "default" : "outline"}
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, { italic: !textElements[selectedTextIndex]?.italic })
+                      }
+                    >
+                      <Italic className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={textElements[selectedTextIndex]?.underline ? "default" : "outline"}
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, { underline: !textElements[selectedTextIndex]?.underline })
+                      }
+                    >
+                      <Underline className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="style" className="border p-4 rounded-md">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Text Color</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="color"
+                      value={textElements[selectedTextIndex]?.color || "#ffffff"}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { color: e.target.value })}
+                      className="w-12 h-8 p-1"
+                    />
+                    <span className="text-sm text-muted-foreground">{textElements[selectedTextIndex]?.color}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {PRESET_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`w-6 h-6 rounded-full border ${textElements[selectedTextIndex]?.color === color ? "ring-2 ring-offset-2 ring-primary" : ""}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => updateTextElement(selectedTextIndex, { color })}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="text-background">Text Background</Label>
+                    <Switch
+                      id="text-background"
+                      checked={!!textElements[selectedTextIndex]?.backgroundEnabled}
+                      onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { backgroundEnabled: checked })}
+                    />
+                  </div>
+                  {textElements[selectedTextIndex]?.backgroundEnabled && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Input
+                        type="color"
+                        value={textElements[selectedTextIndex]?.backgroundColor || "#000000"}
+                        onChange={(e) => updateTextElement(selectedTextIndex, { backgroundColor: e.target.value })}
+                        className="w-12 h-8 p-1"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {textElements[selectedTextIndex]?.backgroundColor}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Opacity</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.opacity || 100]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { opacity: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={textElements[selectedTextIndex]?.opacity || 100}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { opacity: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Letter Spacing</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.letterSpacing || 0]}
+                      min={-5}
+                      max={10}
+                      step={0.1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { letterSpacing: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min={-5}
+                      max={10}
+                      step={0.1}
+                      value={textElements[selectedTextIndex]?.letterSpacing || 0}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { letterSpacing: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Line Height</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.lineHeight || 1.2]}
+                      min={0.5}
+                      max={3}
+                      step={0.1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { lineHeight: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min={0.5}
+                      max={3}
+                      step={0.1}
+                      value={textElements[selectedTextIndex]?.lineHeight || 1.2}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { lineHeight: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="position" className="border p-4 rounded-md">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Layer Order</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={textElements[selectedTextIndex]?.layerOrder === "front" ? "default" : "outline"}
+                      onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "front" })}
+                    >
+                      Front
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={textElements[selectedTextIndex]?.layerOrder === "back" ? "default" : "outline"}
+                      onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "back" })}
+                    >
+                      Back
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="x-position">X Position (%)</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[textElements[selectedTextIndex]?.x ?? 50]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(value) => updateTextElement(selectedTextIndex, { x: value[0] })}
+                        className="flex-1"
+                      />
+                      <Input
+                        id="x-position"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={textElements[selectedTextIndex]?.x ?? 50}
+                        onChange={(e) => updateTextElement(selectedTextIndex, { x: Number(e.target.value) })}
+                        className="w-20"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="y-position">Y Position (%)</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[textElements[selectedTextIndex]?.y ?? 50]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(value) => updateTextElement(selectedTextIndex, { y: value[0] })}
+                        className="flex-1"
+                      />
+                      <Input
+                        id="y-position"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={textElements[selectedTextIndex]?.y ?? 50}
+                        onChange={(e) => updateTextElement(selectedTextIndex, { y: Number(e.target.value) })}
+                        className="w-20"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Rotation</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.rotation || 0]}
+                      min={-180}
+                      max={180}
+                      step={1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { rotation: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min={-180}
+                      max={180}
+                      value={textElements[selectedTextIndex]?.rotation || 0}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { rotation: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                    <span className="text-sm text-muted-foreground">°</span>
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {[-45, -15, 0, 15, 45].map((deg) => (
+                      <Button
+                        key={deg}
+                        type="button"
+                        size="sm"
+                        variant={textElements[selectedTextIndex]?.rotation === deg ? "default" : "outline"}
+                        onClick={() => updateTextElement(selectedTextIndex, { rotation: deg })}
+                      >
+                        {deg}°
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max-width">Text Width (%)</Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[textElements[selectedTextIndex]?.maxWidth ?? 80]}
+                      min={10}
+                      max={100}
+                      step={1}
+                      onValueChange={(value) => updateTextElement(selectedTextIndex, { maxWidth: value[0] })}
+                      className="flex-1"
+                    />
+                    <Input
+                      id="max-width"
+                      type="number"
+                      min={10}
+                      max={100}
+                      value={textElements[selectedTextIndex]?.maxWidth ?? 80}
+                      onChange={(e) => updateTextElement(selectedTextIndex, { maxWidth: Number(e.target.value) })}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="effects" className="border p-4 rounded-md">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="text-shadow">Text Shadow</Label>
+                    <Switch
+                      id="text-shadow"
+                      checked={!!textElements[selectedTextIndex]?.shadow}
+                      onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { shadow: checked })}
+                    />
+                  </div>
+                  {textElements[selectedTextIndex]?.shadow && (
+                    <div className="space-y-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <Label className="min-w-[80px]">Shadow Size</Label>
+                        <Slider
+                          value={[textElements[selectedTextIndex]?.shadowBlur ?? 10]}
+                          min={0}
+                          max={50}
+                          step={1}
+                          onValueChange={(value) => updateTextElement(selectedTextIndex, { shadowBlur: value[0] })}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={textElements[selectedTextIndex]?.shadowBlur ?? 10}
+                          onChange={(e) => updateTextElement(selectedTextIndex, { shadowBlur: Number(e.target.value) })}
+                          className="w-20"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="min-w-[80px]">Shadow Color</Label>
+                        <Input
+                          type="color"
+                          value={textElements[selectedTextIndex]?.shadowColor || "#000000"}
+                          onChange={(e) => updateTextElement(selectedTextIndex, { shadowColor: e.target.value })}
+                          className="w-12 h-8 p-1"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {textElements[selectedTextIndex]?.shadowColor}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="text-curve">Curved Text</Label>
+                    <Switch
+                      id="text-curve"
+                      checked={!!textElements[selectedTextIndex]?.curve}
+                      onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { curve: checked })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-4">
+                  <Label>Text Presets</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, {
+                          color: "#ffffff",
+                          shadow: true,
+                          shadowBlur: 15,
+                          shadowColor: "#000000",
+                          bold: true,
+                          fontSize: 72,
+                        })
+                      }
+                    >
+                      White with Shadow
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, {
+                          color: "#ff0000",
+                          shadow: true,
+                          shadowBlur: 10,
+                          shadowColor: "#000000",
+                          bold: true,
+                          fontSize: 72,
+                        })
+                      }
+                    >
+                      Red with Shadow
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, {
+                          color: "#ffffff",
+                          backgroundEnabled: true,
+                          backgroundColor: "#000000",
+                          shadow: false,
+                          fontSize: 60,
+                        })
+                      }
+                    >
+                      White on Black
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        updateTextElement(selectedTextIndex, {
+                          color: "#000000",
+                          backgroundEnabled: true,
+                          backgroundColor: "#ffff00",
+                          shadow: false,
+                          fontSize: 60,
+                        })
+                      }
+                    >
+                      Black on Yellow
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <Select
@@ -596,524 +1123,6 @@ export default function TextEditor({
             </Button>
           </div>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 mb-2">
-            <TabsTrigger value="text" className="flex items-center gap-1 text-xs md:text-sm">
-              <Type className="h-3 w-3 md:h-4 md:w-4" />
-              <span>Text</span>
-            </TabsTrigger>
-            <TabsTrigger value="style" className="flex items-center gap-1 text-xs md:text-sm">
-              <Palette className="h-3 w-3 md:h-4 md:w-4" />
-              <span>Style</span>
-            </TabsTrigger>
-            <TabsTrigger value="position" className="flex items-center gap-1 text-xs md:text-sm">
-              <Move className="h-3 w-3 md:h-4 md:w-4" />
-              <span>Position</span>
-            </TabsTrigger>
-            <TabsTrigger value="effects" className="flex items-center gap-1 text-xs md:text-sm">
-              <LayoutGrid className="h-3 w-3 md:h-4 md:w-4" />
-              <span>Effects</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="text" className="border p-4 rounded-md">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="text-content">Text Content</Label>
-                <textarea
-                  id="text-content"
-                  value={textElements[selectedTextIndex]?.text || ""}
-                  onChange={(e) => updateTextElement(selectedTextIndex, { text: e.target.value })}
-                  className="font-bold w-full min-h-[80px] p-2 rounded border border-input bg-background"
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Font Family</Label>
-                <Select
-                  value={textElements[selectedTextIndex]?.fontFamily || "Arial"}
-                  onValueChange={(value) => updateTextElement(selectedTextIndex, { fontFamily: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select font" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POPULAR_FONTS.map((font) => (
-                      <SelectItem key={font} value={font} style={{ fontFamily: font }}>
-                        {font}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Font Size</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.fontSize || 72]}
-                    min={12}
-                    max={200}
-                    step={1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { fontSize: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    min={12}
-                    max={200}
-                    value={textElements[selectedTextIndex]?.fontSize || 72}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { fontSize: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                </div>
-                <div className="flex gap-1 mt-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateTextElement(selectedTextIndex, { fontSize: 36 })}
-                  >
-                    36px
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateTextElement(selectedTextIndex, { fontSize: 72 })}
-                  >
-                    72px
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateTextElement(selectedTextIndex, { fontSize: 120 })}
-                  >
-                    120px
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Text Style</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.bold ? "default" : "outline"}
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, { bold: !textElements[selectedTextIndex]?.bold })
-                    }
-                  >
-                    <Bold className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.italic ? "default" : "outline"}
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, { italic: !textElements[selectedTextIndex]?.italic })
-                    }
-                  >
-                    <Italic className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.underline ? "default" : "outline"}
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, { underline: !textElements[selectedTextIndex]?.underline })
-                    }
-                  >
-                    <Underline className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="style" className="border p-4 rounded-md">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Text Color</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="color"
-                    value={textElements[selectedTextIndex]?.color || "#ffffff"}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { color: e.target.value })}
-                    className="w-12 h-8 p-1"
-                  />
-                  <span className="text-sm text-muted-foreground">{textElements[selectedTextIndex]?.color}</span>
-                </div>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className={`w-6 h-6 rounded-full border ${textElements[selectedTextIndex]?.color === color ? "ring-2 ring-offset-2 ring-primary" : ""}`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => updateTextElement(selectedTextIndex, { color })}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="text-background">Text Background</Label>
-                  <Switch
-                    id="text-background"
-                    checked={!!textElements[selectedTextIndex]?.backgroundEnabled}
-                    onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { backgroundEnabled: checked })}
-                  />
-                </div>
-                {textElements[selectedTextIndex]?.backgroundEnabled && (
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Input
-                      type="color"
-                      value={textElements[selectedTextIndex]?.backgroundColor || "#000000"}
-                      onChange={(e) => updateTextElement(selectedTextIndex, { backgroundColor: e.target.value })}
-                      className="w-12 h-8 p-1"
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {textElements[selectedTextIndex]?.backgroundColor}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Opacity</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.opacity || 100]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { opacity: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={textElements[selectedTextIndex]?.opacity || 100}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { opacity: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">%</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Letter Spacing</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.letterSpacing || 0]}
-                    min={-5}
-                    max={10}
-                    step={0.1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { letterSpacing: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    min={-5}
-                    max={10}
-                    step={0.1}
-                    value={textElements[selectedTextIndex]?.letterSpacing || 0}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { letterSpacing: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Line Height</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.lineHeight || 1.2]}
-                    min={0.5}
-                    max={3}
-                    step={0.1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { lineHeight: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    min={0.5}
-                    max={3}
-                    step={0.1}
-                    value={textElements[selectedTextIndex]?.lineHeight || 1.2}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { lineHeight: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="position" className="border p-4 rounded-md">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Layer Order</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.layerOrder === "front" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "front" })}
-                  >
-                    Front
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={textElements[selectedTextIndex]?.layerOrder === "back" ? "default" : "outline"}
-                    onClick={() => updateTextElement(selectedTextIndex, { layerOrder: "back" })}
-                  >
-                    Back
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-2">
-                <div className="space-y-2">
-                  <Label htmlFor="x-position">X Position (%)</Label>
-                  <div className="flex items-center gap-2">
-                    <Slider
-                      value={[textElements[selectedTextIndex]?.x ?? 50]}
-                      min={0}
-                      max={100}
-                      step={1}
-                      onValueChange={(value) => updateTextElement(selectedTextIndex, { x: value[0] })}
-                      className="flex-1"
-                    />
-                    <Input
-                      id="x-position"
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={textElements[selectedTextIndex]?.x ?? 50}
-                      onChange={(e) => updateTextElement(selectedTextIndex, { x: Number(e.target.value) })}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="y-position">Y Position (%)</Label>
-                  <div className="flex items-center gap-2">
-                    <Slider
-                      value={[textElements[selectedTextIndex]?.y ?? 50]}
-                      min={0}
-                      max={100}
-                      step={1}
-                      onValueChange={(value) => updateTextElement(selectedTextIndex, { y: value[0] })}
-                      className="flex-1"
-                    />
-                    <Input
-                      id="y-position"
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={textElements[selectedTextIndex]?.y ?? 50}
-                      onChange={(e) => updateTextElement(selectedTextIndex, { y: Number(e.target.value) })}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Rotation</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.rotation || 0]}
-                    min={-180}
-                    max={180}
-                    step={1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { rotation: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    min={-180}
-                    max={180}
-                    value={textElements[selectedTextIndex]?.rotation || 0}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { rotation: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">°</span>
-                </div>
-                <div className="flex gap-1 mt-1">
-                  {[-45, -15, 0, 15, 45].map((deg) => (
-                    <Button
-                      key={deg}
-                      type="button"
-                      size="sm"
-                      variant={textElements[selectedTextIndex]?.rotation === deg ? "default" : "outline"}
-                      onClick={() => updateTextElement(selectedTextIndex, { rotation: deg })}
-                    >
-                      {deg}°
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max-width">Text Width (%)</Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[textElements[selectedTextIndex]?.maxWidth ?? 80]}
-                    min={10}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => updateTextElement(selectedTextIndex, { maxWidth: value[0] })}
-                    className="flex-1"
-                  />
-                  <Input
-                    id="max-width"
-                    type="number"
-                    min={10}
-                    max={100}
-                    value={textElements[selectedTextIndex]?.maxWidth ?? 80}
-                    onChange={(e) => updateTextElement(selectedTextIndex, { maxWidth: Number(e.target.value) })}
-                    className="w-20"
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="effects" className="border p-4 rounded-md">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="text-shadow">Text Shadow</Label>
-                  <Switch
-                    id="text-shadow"
-                    checked={!!textElements[selectedTextIndex]?.shadow}
-                    onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { shadow: checked })}
-                  />
-                </div>
-                {textElements[selectedTextIndex]?.shadow && (
-                  <div className="space-y-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <Label className="min-w-[80px]">Shadow Size</Label>
-                      <Slider
-                        value={[textElements[selectedTextIndex]?.shadowBlur ?? 10]}
-                        min={0}
-                        max={50}
-                        step={1}
-                        onValueChange={(value) => updateTextElement(selectedTextIndex, { shadowBlur: value[0] })}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        min={0}
-                        max={50}
-                        value={textElements[selectedTextIndex]?.shadowBlur ?? 10}
-                        onChange={(e) => updateTextElement(selectedTextIndex, { shadowBlur: Number(e.target.value) })}
-                        className="w-20"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="min-w-[80px]">Shadow Color</Label>
-                      <Input
-                        type="color"
-                        value={textElements[selectedTextIndex]?.shadowColor || "#000000"}
-                        onChange={(e) => updateTextElement(selectedTextIndex, { shadowColor: e.target.value })}
-                        className="w-12 h-8 p-1"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {textElements[selectedTextIndex]?.shadowColor}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="text-curve">Curved Text</Label>
-                  <Switch
-                    id="text-curve"
-                    checked={!!textElements[selectedTextIndex]?.curve}
-                    onCheckedChange={(checked) => updateTextElement(selectedTextIndex, { curve: checked })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-4">
-                <Label>Text Presets</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, {
-                        color: "#ffffff",
-                        shadow: true,
-                        shadowBlur: 15,
-                        shadowColor: "#000000",
-                        bold: true,
-                        fontSize: 72,
-                      })
-                    }
-                  >
-                    White with Shadow
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, {
-                        color: "#ff0000",
-                        shadow: true,
-                        shadowBlur: 10,
-                        shadowColor: "#000000",
-                        bold: true,
-                        fontSize: 72,
-                      })
-                    }
-                  >
-                    Red with Shadow
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, {
-                        color: "#ffffff",
-                        backgroundEnabled: true,
-                        backgroundColor: "#000000",
-                        shadow: false,
-                        fontSize: 60,
-                      })
-                    }
-                  >
-                    White on Black
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      updateTextElement(selectedTextIndex, {
-                        color: "#000000",
-                        backgroundEnabled: true,
-                        backgroundColor: "#ffff00",
-                        shadow: false,
-                        fontSize: 60,
-                      })
-                    }
-                  >
-                    Black on Yellow
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
       </CardContent>
       <CardFooter className="flex flex-col md:flex-row justify-between gap-4">
         <Button variant="outline" onClick={clearTextProperties} className="flex items-center gap-2 text-sm">
