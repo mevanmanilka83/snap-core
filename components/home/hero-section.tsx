@@ -1,20 +1,21 @@
 "use client"
 
-import { useRef } from "react"
-import { ArrowRight, ChevronsRight } from 'lucide-react'
+import { useRef, useCallback, memo } from "react"
+import { ChevronsRight } from 'lucide-react'
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
+import { cn } from "@/lib/utils"
 
-function HeroSection() {
-  const heroRef = useRef(null)
+const HeroSection = memo(function HeroSection() {
+  const heroRef = useRef<HTMLElement>(null)
 
-  const scrollToHowItWorks = () => {
+  const scrollToHowItWorks = useCallback(() => {
     const element = document.getElementById('how-it-works')
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }
+  }, [])
 
-  const scrollToMainSection = () => {
+  const scrollToMainSection = useCallback(() => {
     const elements = document.getElementsByClassName('text-xs sm:text-sm')
     const targetElement = Array.from(elements).find(el => 
       el.textContent?.includes('Create Thumbnails')
@@ -22,15 +23,28 @@ function HeroSection() {
 
     if (targetElement) {
       const rect = targetElement.getBoundingClientRect()
-      const absoluteTop = rect.top + window.pageYOffset
-      window.scrollTo(0, absoluteTop)
+      const absoluteTop = rect.top + window.scrollY
+      window.scrollTo({
+        top: absoluteTop,
+        behavior: 'smooth'
+      })
     }
-  }
+  }, [])
 
   return (
-    <section ref={heroRef} className="min-h-[80vh] px-4 py-16 max-w-5xl mx-auto flex flex-col justify-center items-center text-center relative overflow-hidden rounded-3xl mb-24">
+    <section 
+      ref={heroRef} 
+      className={cn(
+        "min-h-[80vh] px-4 py-16 max-w-5xl mx-auto",
+        "flex flex-col justify-center items-center text-center",
+        "relative overflow-hidden rounded-3xl mb-24"
+      )}
+    >
       <div className="min-h-[120px] flex items-center justify-center">
-        <WordPullUp text="Create Perfect Thumbnails from Videos or Images" className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-6 max-w-2xl" />
+        <WordPullUp 
+          text="Create Perfect Thumbnails from Videos or Images" 
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-6 max-w-2xl" 
+        />
       </div>
 
       <p className="text-muted-foreground mb-8 max-w-xl text-base sm:text-lg md:text-xl">
@@ -40,7 +54,13 @@ function HeroSection() {
       <div className="flex flex-col sm:flex-row gap-4">
         <button 
           onClick={scrollToMainSection}
-          className='group relative flex h-12 w-[170px] items-center justify-between border-2 dark:border-[#656fe2] border-[#394481] rounded-full bg-gradient-to-r dark:from-[#1a1f4b] dark:to-[#2d3a8c] from-[#f7f8ff] to-[#ffffff] font-medium dark:text-white text-black'
+          className={cn(
+            'group relative flex h-12 w-[170px] items-center justify-between',
+            'border-2 dark:border-[#656fe2] border-[#394481] rounded-full',
+            'bg-gradient-to-r dark:from-[#1a1f4b] dark:to-[#2d3a8c] from-[#f7f8ff] to-[#ffffff]',
+            'font-medium dark:text-white text-black',
+            'transition-all duration-200 hover:scale-105'
+          )}
         >
           <span className='pl-4'>Start Creating</span>
           <div className='relative h-9 w-9 overflow-hidden dark:bg-[#656fe2] bg-black rounded-full mr-1'>
@@ -78,7 +98,13 @@ function HeroSection() {
         </button>
         <button 
           onClick={scrollToHowItWorks}
-          className='flex gap-2 cursor-pointer px-4 py-3 dark:hover:bg-black bg-black hover:bg-white hover:text-black text-white border-black dark:hover:text-white transition-all border-2 dark:border-white dark:bg-white dark:text-black rounded-full font-semibold'
+          className={cn(
+            'flex gap-2 cursor-pointer px-4 py-3',
+            'dark:hover:bg-black bg-black hover:bg-white hover:text-black text-white',
+            'border-black dark:hover:text-white transition-all border-2',
+            'dark:border-white dark:bg-white dark:text-black rounded-full font-semibold',
+            'hover:scale-105'
+          )}
         >
           Learn More
           <ChevronsRight />
@@ -86,6 +112,6 @@ function HeroSection() {
       </div>
     </section>
   )
-}
+})
 
 export default HeroSection 
