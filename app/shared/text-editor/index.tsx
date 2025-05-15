@@ -21,7 +21,7 @@ import {
   LayoutGrid,
   Bold,
   Italic,
-  Underline,
+
   Eye,
 } from "lucide-react"
 import { toast } from "sonner"

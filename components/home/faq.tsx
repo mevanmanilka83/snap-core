@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, memo, useCallback } from 'react'
-import { AnimatePresence, motion, useInView } from 'framer-motion'
+import {  motion, useInView } from 'framer-motion'
 import { Badge } from "@/components/ui/badge"
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"

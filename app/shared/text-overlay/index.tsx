@@ -25,7 +25,8 @@ import {
   Eye,
 } from "lucide-react"
 import { toast } from "sonner"
-import AnimatedCursor from "@/components/figma-cursor"
+
+import { AnimatedCursor } from "@/components/figma-cursor"
 
 interface TextElement {
   id: string

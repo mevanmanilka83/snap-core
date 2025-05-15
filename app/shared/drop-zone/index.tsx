@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,6 @@ import {
   Type,
   RotateCw,
   ImageIcon,
-  Layers,
   Palette,
   Undo,
   Redo,
@@ -22,7 +21,6 @@ import {
   ZoomOut,
   Maximize,
   Minimize,
-  Sparkles,
 } from "lucide-react"
 import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
@@ -87,7 +85,57 @@ interface ImageFilter {
   sepia: number
 }
 
-export default function ImageUploader() {
+interface ImageUploaderProps {
+  maxFileSize?: number // in bytes
+  allowedFileTypes?: string[]
+  initialFilters?: Partial<ImageFilter>
+}
+
+// Add error boundary component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Error caught by boundary:", error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">Something went wrong</h2>
+          <p className="text-sm text-red-600 dark:text-red-300 mt-2">
+            {this.state.error?.message || "An unexpected error occurred"}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 rounded-md hover:bg-red-200 dark:hover:bg-red-700"
+          >
+            Try again
+          </button>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+export default function ImageUploader({
+  maxFileSize = 10 * 1024 * 1024, // 10MB default
+  allowedFileTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  initialFilters,
+}: ImageUploaderProps) {
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -105,15 +153,17 @@ export default function ImageUploader() {
   const [undoStack, setUndoStack] = useState<string[]>([])
   const [redoStack, setRedoStack] = useState<string[]>([])
   const [imageFilters, setImageFilters] = useState<ImageFilter>({
-    brightness: 100,
-    contrast: 100,
-    saturation: 100,
-    blur: 0,
-    hueRotate: 0,
-    grayscale: 0,
-    sepia: 0,
+    brightness: initialFilters?.brightness ?? 100,
+    contrast: initialFilters?.contrast ?? 100,
+    saturation: initialFilters?.saturation ?? 100,
+    blur: initialFilters?.blur ?? 0,
+    hueRotate: initialFilters?.hueRotate ?? 0,
+    grayscale: initialFilters?.grayscale ?? 0,
+    sepia: initialFilters?.sepia ?? 0,
   })
   const [showUpdateToast, setShowUpdateToast] = useState(false)
+  const [isLoadingBackground, setIsLoadingBackground] = useState(false)
+  const [isLoadingForeground, setIsLoadingForeground] = useState(false)
 
   const hiddenImageRef = useRef<HTMLImageElement>(null)
   const previewUrl = useRef<string | null>(null)
@@ -122,23 +172,23 @@ export default function ImageUploader() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pendingThumbnailUpdate = useRef<NodeJS.Timeout | null>(null)
 
-  // Default text element
-  const defaultTextElement: TextElement = {
+  // Remove unused defaultTextElement since it's only used once in the initial state
+  const [textElements, setTextElements] = useState<TextElement[]>([{
     id: "default-text",
-      text: "TTV", 
-      x: 50, 
-      y: 50, 
-      fontSize: 72, 
-      color: "#ffffff", 
-      rotation: 0, 
-      fontFamily: "Arial",
-      position: "center",
-      maxWidth: 80,
-      curve: false,
+    text: "TTV",
+    x: 50,
+    y: 50,
+    fontSize: 72,
+    color: "#ffffff",
+    rotation: 0,
+    fontFamily: "Arial",
+    position: "center",
+    maxWidth: 80,
+    curve: false,
     backgroundColor: "#000000",
-      backgroundEnabled: false,
-      shadow: true,
-      shadowBlur: 10,
+    backgroundEnabled: false,
+    shadow: true,
+    shadowBlur: 10,
     shadowColor: "#000000",
     textAlign: "center",
     bold: false,
@@ -149,47 +199,76 @@ export default function ImageUploader() {
     opacity: 100,
     visible: true,
     layerOrder: "back",
-  }
-
-  // Text editing states
-  const [textElements, setTextElements] = useState<TextElement[]>([{ ...defaultTextElement }])
-  const [selectedTextIndex, setSelectedTextIndex] = useState<number>(0)
+  }])
 
   useEffect(() => {
-    return () => {
-      // Clean up blob URLs on unmount
-      if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl.current)
-      }
-      if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
-        URL.revokeObjectURL(processedUrl.current)
-      }
-      if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
-        URL.revokeObjectURL(thumbnailUrl.current)
-      }
+    // Clean up blob URLs
+    const cleanup = () => {
+      [previewUrl, processedUrl, thumbnailUrl].forEach(url => {
+        if (url.current?.startsWith("blob:")) {
+          URL.revokeObjectURL(url.current)
+        }
+      })
       
-      // Clear any pending thumbnail updates
+      // Clear pending updates
       if (pendingThumbnailUpdate.current) {
         clearTimeout(pendingThumbnailUpdate.current)
       }
+    }
+
+    // Add event listener for beforeunload
+    window.addEventListener("beforeunload", cleanup)
+
+    // Add event listener for visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        cleanup()
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    // Add event listener for error handling
+    const handleError = (event: ErrorEvent) => {
+      console.error("Global error caught:", event.error)
+      toast.error("An unexpected error occurred")
+    }
+    window.addEventListener("error", handleError)
+
+    return () => {
+      cleanup()
+      window.removeEventListener("beforeunload", cleanup)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("error", handleError)
     }
   }, [])
 
   // Apply filters to the image
   const applyFilters = (ctx: CanvasRenderingContext2D) => {
-    const filters = []
+    try {
+      const filters = Object.entries(imageFilters)
+        .filter(([_, value]) => value !== 0 && value !== 100)
+        .map(([key, value]) => {
+          switch (key) {
+            case "brightness":
+            case "contrast":
+            case "saturation":
+            case "grayscale":
+            case "sepia":
+              return `${key}(${value}%)`
+            case "blur":
+              return `${key}(${value}px)`
+            case "hueRotate":
+              return `${key}(${value}deg)`
+            default:
+              return ""
+          }
+        })
+        .filter(Boolean)
 
-    if (imageFilters.brightness !== 100) filters.push(`brightness(${imageFilters.brightness}%)`)
-    if (imageFilters.contrast !== 100) filters.push(`contrast(${imageFilters.contrast}%)`)
-    if (imageFilters.saturation !== 100) filters.push(`saturate(${imageFilters.saturation}%)`)
-    if (imageFilters.blur > 0) filters.push(`blur(${imageFilters.blur}px)`)
-    if (imageFilters.hueRotate !== 0) filters.push(`hue-rotate(${imageFilters.hueRotate}deg)`)
-    if (imageFilters.grayscale > 0) filters.push(`grayscale(${imageFilters.grayscale}%)`)
-    if (imageFilters.sepia > 0) filters.push(`sepia(${imageFilters.sepia}%)`)
-
-    if (filters.length > 0) {
-      ctx.filter = filters.join(" ")
-    } else {
+      ctx.filter = filters.length > 0 ? filters.join(" ") : "none"
+    } catch (error) {
+      console.error("Error applying filters:", error)
+      toast.error("Failed to apply filters")
       ctx.filter = "none"
     }
   }
@@ -210,167 +289,179 @@ export default function ImageUploader() {
 
   // Apply a preset filter
   const applyPresetFilter = (preset: string) => {
-    switch (preset) {
-      case "grayscale":
-        setImageFilters({
-          ...imageFilters,
-          grayscale: 100,
-          saturation: 0,
-        })
-        break
-      case "sepia":
-        setImageFilters({
-          ...imageFilters,
-          sepia: 80,
-          saturation: 110,
-          contrast: 110,
-        })
-        break
-      case "vivid":
-        setImageFilters({
-          ...imageFilters,
-          saturation: 150,
-          contrast: 120,
-          brightness: 105,
-        })
-        break
-      case "cool":
-        setImageFilters({
-          ...imageFilters,
-          hueRotate: 180,
-          saturation: 90,
-        })
-        break
-      case "warm":
-        setImageFilters({
-          ...imageFilters,
-          hueRotate: 30,
-          saturation: 120,
-          brightness: 105,
-        })
-        break
-      default:
-        resetFilters()
+    const presets = {
+      grayscale: { grayscale: 100, saturation: 0 },
+      sepia: { sepia: 80, saturation: 110, contrast: 110 },
+      vivid: { saturation: 150, contrast: 120, brightness: 105 },
+      cool: { hueRotate: 180, saturation: 90 },
+      warm: { hueRotate: 30, saturation: 120, brightness: 105 },
     }
-    toast.success(`Applied ${preset} filter`)
+
+    if (preset in presets) {
+      setImageFilters(prev => ({ ...prev, ...presets[preset as keyof typeof presets] }))
+      toast.success(`Applied ${preset} filter`)
+    } else {
+      resetFilters()
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      setError("Please upload a valid image file (JPEG, PNG, GIF, or WebP)")
-      toast.error("Invalid file type. Please upload a valid image file.")
-      return
+      // Validate file type
+      if (!allowedFileTypes.includes(file.type)) {
+        toast.error(`Please upload a valid image file (${allowedFileTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')})`)
+        return
+      }
+
+      // Validate file size
+      if (file.size > maxFileSize) {
+        toast.error(`File size too large. Maximum size is ${(maxFileSize / (1024 * 1024)).toFixed(1)}MB`)
+        return
+      }
+
+      setError("")
+      setHasAttemptedLoad(true)
+      setIsLoading(true)
+
+      // Clean up old URL
+      if (previewUrl.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl.current)
+      }
+
+      // Create new URL and update state
+      previewUrl.current = URL.createObjectURL(file)
+      setImageSrc(previewUrl.current)
+      setProcessedImageSrc("")
+      setThumbnailSrc("")
+      setProcessingProgress(0)
+      resetFilters()
+
+      // Update image reference
+      const img = hiddenImageRef.current
+      if (img) {
+        img.src = previewUrl.current
+      }
+
+      setImageLoaded(false)
+      setImageInfo({
+        width: 0,
+        height: 0,
+        type: file.type,
+        size: file.size,
+      })
+
+      // Clear history
+      setUndoStack([])
+      setRedoStack([])
+    } catch (error) {
+      console.error("Error handling file change:", error)
+      toast.error("Failed to process the file. Please try again.")
+      handleCancel()
     }
-
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
-    if (file.size > maxSize) {
-      setError("File size too large. Maximum size is 10MB")
-      toast.error("File size too large. Maximum size is 10MB")
-      return
-    }
-
-    setError("")
-    setHasAttemptedLoad(true)
-    setIsLoading(true)
-
-    if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl.current)
-    }
-
-    previewUrl.current = URL.createObjectURL(file)
-
-    setImageSrc(previewUrl.current)
-    setProcessedImageSrc("") // Clear processed image
-    setThumbnailSrc("") // Clear thumbnail
-    setProcessingProgress(0)
-    resetFilters() // Reset filters for new image
-
-    const img = hiddenImageRef.current
-    if (img) {
-      img.src = previewUrl.current
-    }
-
-    setImageLoaded(false)
-
-    setImageInfo({
-      width: 0,
-      height: 0,
-      type: file.type,
-      size: file.size,
-    })
-
-    // Clear undo/redo stacks for new image
-    setUndoStack([])
-    setRedoStack([])
   }
 
   const handleURLLoad = () => {
-    const urlInput = document.getElementById("imageUrl") as HTMLInputElement
-    const url = urlInput.value.trim()
+    try {
+      const urlInput = document.getElementById("imageUrl") as HTMLInputElement
+      const url = urlInput.value.trim()
 
-    if (!url) {
-      setError("Please enter an image URL")
-      toast.error("Please enter an image URL")
-      return
+      if (!url) {
+        toast.error("Please enter an image URL")
+        return
+      }
+
+      // Validate URL format
+      try {
+        new URL(url)
+      } catch {
+        toast.error("Please enter a valid URL")
+        return
+      }
+
+      setError("")
+      setIsLoading(true)
+      setHasAttemptedLoad(true)
+
+      // Clean up old URL
+      if (previewUrl.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl.current)
+        previewUrl.current = null
+      }
+
+      // Update state
+      previewUrl.current = url
+      setImageSrc(url)
+      setProcessedImageSrc("")
+      setThumbnailSrc("")
+      setProcessingProgress(0)
+      resetFilters()
+
+      // Update image reference
+      const img = hiddenImageRef.current
+      if (img) {
+        img.src = url
+      }
+
+      setImageLoaded(false)
+      setUndoStack([])
+      setRedoStack([])
+    } catch (error) {
+      console.error("Error handling URL load:", error)
+      toast.error("Failed to load the image. Please try again.")
+      handleCancel()
     }
-
-    setError("")
-    setIsLoading(true)
-    setHasAttemptedLoad(true)
-
-    if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl.current)
-      previewUrl.current = null
-    }
-
-    previewUrl.current = url
-    setImageSrc(url)
-    setProcessedImageSrc("") // Clear processed image
-    setThumbnailSrc("") // Clear thumbnail
-    setProcessingProgress(0)
-    resetFilters() // Reset filters for new image
-
-    const img = hiddenImageRef.current
-    if (img) {
-      img.src = url
-    }
-
-    setImageLoaded(false)
-
-    // Clear undo/redo stacks for new image
-    setUndoStack([])
-    setRedoStack([])
   }
 
   const handleImageLoaded = () => {
     const img = hiddenImageRef.current
     if (!img) return
 
-    setImageInfo({
-      width: img.naturalWidth,
-      height: img.naturalHeight,
-      type: img.src.split(".").pop()?.toUpperCase() || "UNKNOWN",
-      size: 0,
-    })
-
-    setImageLoaded(true)
-    setIsLoading(false)
-    
-    // Draw the image to canvas after loading
-    const canvas = canvasRef.current
-    if (canvas) {
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        canvas.width = img.naturalWidth
-        canvas.height = img.naturalHeight
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+    try {
+      // Validate image dimensions
+      const maxDimension = 4096 // Maximum dimension in pixels
+      if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
+        setError(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
+        toast.error(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
+        handleCancel()
+        return
       }
+
+      // Validate minimum dimensions
+      const minDimension = 100 // Minimum dimension in pixels
+      if (img.naturalWidth < minDimension || img.naturalHeight < minDimension) {
+        setError(`Image dimensions too small. Minimum dimension is ${minDimension}px`)
+        toast.error(`Image dimensions too small. Minimum dimension is ${minDimension}px`)
+        handleCancel()
+        return
+      }
+
+      setImageInfo({
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        type: img.src.split(".").pop()?.toUpperCase() || "UNKNOWN",
+        size: 0,
+      })
+
+      setImageLoaded(true)
+      setIsLoading(false)
+      
+      // Draw the image to canvas after loading
+      const canvas = canvasRef.current
+      if (canvas) {
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          canvas.width = img.naturalWidth
+          canvas.height = img.naturalHeight
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
+      }
+    } catch (error) {
+      console.error("Error in image loading:", error)
+      setError("Failed to process image. Please try again.")
+      handleCancel()
     }
   }
 
@@ -433,69 +524,50 @@ export default function ImageUploader() {
     setRedoStack([])
   }
 
-  const handleSaveProcessedImage = () => {
-    if (!processedImageSrc) {
-      toast.error("No processed image to save")
-      return
-    }
-
-    // Create a download link
-    const link = document.createElement("a")
-    link.href = processedImageSrc
-    link.download = `processed-image-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    toast.success("Image saved successfully")
-  }
-
   const handleRemoveBackground = async () => {
-    if (!imageLoaded || !previewUrl.current) {
-      setError("Please select an image first")
-      toast.error("Please select an image first")
-      return
-    }
+    if (!imageSrc) return
+
+    setIsProcessing(true)
+    setThumbnailSrc("") // Clear thumbnail
 
     try {
-      setIsProcessing(true)
-      setThumbnailSrc("") // Clear any existing thumbnail
-      setProcessingProgress(0)
-
-      // Save current state to undo stack
+      // Save current processed image to undo stack if it exists
       if (processedImageSrc) {
         setUndoStack((prev) => [...prev, processedImageSrc])
-        setRedoStack([]) // Clear redo stack on new action
+        setRedoStack([]) // Clear redo stack
       }
 
-      // Use the current image source as input
-      const image_src = previewUrl.current
-
-      // Process the image with imgly background removal
-      const blob = await backgroundRemoval.removeBackground(image_src, {
+      const result = await backgroundRemoval.removeBackground(imageSrc, {
         progress: (message: string, progress: number) => {
-          // Update progress state
-          setProcessingProgress(progress)
+          toast.info(`Removing background... ${Math.round(progress * 100)}%`, {
+            duration: 2000,
+            position: "bottom-right",
+          })
         },
       })
-      
-      // Create a URL from the resulting blob
-      const processedImageUrl = URL.createObjectURL(blob)
-      
-      // Clean up old URL if it exists
-      if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
-        URL.revokeObjectURL(processedUrl.current)
+
+      if (result) {
+        const url = URL.createObjectURL(result)
+
+        // Revoke old blob URL if it exists
+        if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
+          URL.revokeObjectURL(processedUrl.current)
+        }
+
+        processedUrl.current = url
+        setProcessedImageSrc(url)
+
+        toast.success("Background removed successfully", {
+          duration: 2000,
+          position: "bottom-right",
+        })
       }
-      
-      // Save the transparent background image URL
-      processedUrl.current = processedImageUrl
-      setProcessedImageSrc(processedImageUrl)
-      
-      toast.success("Background removed successfully")
-    } catch (err) {
-      console.error("Error removing background:", err)
-      toast.error("Failed to remove background")
-      setError("Failed to remove background. Please try again.")
+    } catch (error) {
+      console.error("Error removing background:", error)
+      toast.error("Failed to remove background", {
+        duration: 2000,
+        position: "bottom-right",
+      })
     } finally {
       setIsProcessing(false)
     }
@@ -548,41 +620,11 @@ export default function ImageUploader() {
     createThumbnail(processedImageSrc)
   }
 
-  const handleSaveBackgroundRemoved = () => {
-    if (!processedImageSrc) return
-    
-    const link = document.createElement("a")
-    link.href = processedImageSrc
-    link.download = `background-removed-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    toast.success("Image saved successfully")
-  }
-
-  const handleSaveThumbnail = () => {
-    if (!thumbnailSrc) {
-      toast.error("No thumbnail to save")
-      return
-    }
-    
-    const link = document.createElement("a")
-    link.href = thumbnailSrc
-    link.download = `thumbnail-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    toast.success("Thumbnail saved successfully")
-  }
-
   // Calculate position based on the position property
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     let x = canvasWidth * (element.x / 100)
     let y = canvasHeight * (element.y / 100)
     
-    // Adjust position based on the position property
     switch (element.position) {
       case "left":
         x = 20
@@ -612,10 +654,143 @@ export default function ImageUploader() {
         x = canvasWidth - 20
         y = canvasHeight - 20
         break
-      // center is the default, already calculated
     }
     
     return { x, y }
+  }
+
+  // Function to render text on canvas
+  const renderTextOnCanvas = (
+    ctx: CanvasRenderingContext2D,
+    element: TextElement,
+    canvasWidth: number,
+    canvasHeight: number,
+    scaleFactor: number
+  ) => {
+    try {
+      ctx.save()
+      const position = calculatePosition(element, canvasWidth, canvasHeight)
+      ctx.translate(position.x, position.y)
+      if (element.rotation !== 0) {
+        ctx.rotate((element.rotation * Math.PI) / 180)
+      }
+      const scaledFontSize = element.fontSize * scaleFactor * 2
+
+      let fontStyle = ""
+      if (element.bold) fontStyle += "bold "
+      if (element.italic) fontStyle += "italic "
+      fontStyle += `${scaledFontSize}px ${element.fontFamily}`
+      ctx.font = fontStyle
+
+      ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+      ctx.textBaseline = "middle"
+      ctx.globalAlpha = (element.opacity || 100) / 100
+
+      if (element.backgroundEnabled && element.backgroundColor) {
+        const metrics = ctx.measureText(element.text)
+        const textHeight = scaledFontSize * 1.2
+        const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvasWidth)
+        let rectX = 0
+        if (ctx.textAlign === "center") rectX = -rectWidth / 2
+        if (ctx.textAlign === "right") rectX = -rectWidth
+        let rectY = 0
+        const baseline = ctx.textBaseline as CanvasTextBaseline
+        if (baseline === "middle") rectY = -textHeight / 2
+        if (baseline === "bottom") rectY = -textHeight
+        ctx.save()
+        ctx.shadowColor = "transparent"
+        ctx.fillStyle = element.backgroundColor
+        ctx.fillRect(rectX, rectY, rectWidth, textHeight)
+        ctx.restore()
+      }
+
+      if (element.shadow) {
+        ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
+        ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
+        ctx.shadowOffsetX = 2 * scaleFactor
+        ctx.shadowOffsetY = 2 * scaleFactor
+      } else {
+        ctx.shadowColor = "transparent"
+        ctx.shadowBlur = 0
+        ctx.shadowOffsetX = 0
+        ctx.shadowOffsetY = 0
+      }
+
+      ctx.fillStyle = element.color
+
+      if (element.curve) {
+        const text = element.text
+        const radius = Math.max(80, scaledFontSize * 2)
+        const angleStep = Math.PI / (text.length + 1)
+        const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i]
+          ctx.save()
+          ctx.rotate(startAngle + i * angleStep)
+          ctx.translate(0, -radius)
+          ctx.fillText(char, 0, 0)
+          ctx.restore()
+        }
+      } else {
+        const maxWidth = ((element.maxWidth ?? 80) / 100) * canvasWidth
+        ctx.fillText(element.text, 0, 0, maxWidth)
+
+        if (element.underline) {
+          const textMetrics = ctx.measureText(element.text)
+          const underlineY = element.fontSize * 0.15 * scaleFactor
+          ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
+          ctx.beginPath()
+          ctx.moveTo(-textMetrics.width / 2, underlineY)
+          ctx.lineTo(textMetrics.width / 2, underlineY)
+          ctx.stroke()
+        }
+      }
+
+      ctx.restore()
+    } catch (error) {
+      console.error("Error rendering text on canvas:", error)
+      toast.error("Failed to render text on canvas")
+      ctx.restore()
+    }
+  }
+
+  const handleSaveBackgroundRemoved = () => {
+    try {
+      if (!processedImageSrc) return
+      
+      const link = document.createElement("a")
+      link.href = processedImageSrc
+      link.download = `background-removed-${Date.now()}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success("Image saved successfully")
+    } catch (error) {
+      console.error("Error saving background removed image:", error)
+      toast.error("Failed to save image")
+    }
+  }
+
+  const handleSaveThumbnail = () => {
+    try {
+      if (!thumbnailSrc) {
+        toast.error("No thumbnail to save")
+        return
+      }
+      
+      const link = document.createElement("a")
+      link.href = thumbnailSrc
+      link.download = `thumbnail-${Date.now()}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success("Thumbnail saved successfully")
+    } catch (error) {
+      console.error("Error saving thumbnail:", error)
+      toast.error("Failed to save thumbnail")
+    }
   }
 
   // Separate function to create thumbnail with background and text
@@ -628,980 +803,307 @@ export default function ImageUploader() {
     
     setIsCreatingThumbnail(true)
     
-    // Create a new image for the background (use original image)
-    const bgImg = new window.Image()
-    bgImg.crossOrigin = "anonymous"
-    
-    // Create the foreground image with transparent background
-    const fgImg = new window.Image()
-    fgImg.crossOrigin = "anonymous"
-    
-    // Set up error handling for both images
-    const handleImageError = () => {
-      setIsCreatingThumbnail(false)
-      toast.error("Failed to load image for thumbnail")
-    }
-    
-    bgImg.onerror = handleImageError
-    fgImg.onerror = handleImageError
-    
-    bgImg.onload = () => {
-      // Set canvas dimensions based on the original image size
-      canvas.width = bgImg.width
-      canvas.height = bgImg.height
-
-      // Draw background image with filters
-      applyFilters(ctx)
-      ctx.drawImage(bgImg, 0, 0)
-      ctx.filter = "none" // Reset filters for text
-
-      // Draw text elements that should be behind the image
-      textElements
-        .filter((element) => element.visible && element.layerOrder === "back")
-        .forEach((element) => {
-          ctx.save()
-          const position = calculatePosition(element, canvas.width, canvas.height)
-          ctx.translate(position.x, position.y)
-          if (element.rotation !== 0) {
-            ctx.rotate((element.rotation * Math.PI) / 180)
-          }
-          const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-          const scaledFontSize = element.fontSize * scaleFactor * 2
-
-          // Set font style
-          let fontStyle = ""
-          if (element.bold) fontStyle += "bold "
-          if (element.italic) fontStyle += "italic "
-          fontStyle += `${scaledFontSize}px ${element.fontFamily}`
-          ctx.font = fontStyle
-
-          // Set text alignment
-          ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-          ctx.textBaseline = "middle"
-
-          // Set opacity
-          ctx.globalAlpha = (element.opacity || 100) / 100
-
-          // Draw background rectangle if enabled
-          if (element.backgroundEnabled && element.backgroundColor) {
-            const metrics = ctx.measureText(element.text)
-            const textHeight = scaledFontSize * 1.2
-            const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
-            let rectX = 0
-            if (ctx.textAlign === "center") rectX = -rectWidth / 2
-            if (ctx.textAlign === "right") rectX = -rectWidth
-            let rectY = 0
-            const baseline = ctx.textBaseline as CanvasTextBaseline
-            if (baseline === "middle") rectY = -textHeight / 2
-            if (baseline === "bottom") rectY = -textHeight
-            ctx.save()
-            ctx.shadowColor = "transparent"
-            ctx.fillStyle = element.backgroundColor
-            ctx.fillRect(rectX, rectY, rectWidth, textHeight)
-            ctx.restore()
-          }
-
-          // Set shadow if enabled
-          if (element.shadow) {
-            ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
-            ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
-            ctx.shadowOffsetX = 2 * scaleFactor
-            ctx.shadowOffsetY = 2 * scaleFactor
-          } else {
-            ctx.shadowColor = "transparent"
-            ctx.shadowBlur = 0
-            ctx.shadowOffsetX = 0
-            ctx.shadowOffsetY = 0
-          }
-
-          // Set text color
-          ctx.fillStyle = element.color
-
-          // Draw curved text if enabled
-          if (element.curve) {
-            const text = element.text
-            const radius = Math.max(80, scaledFontSize * 2)
-            const angleStep = Math.PI / (text.length + 1)
-            const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
-            for (let i = 0; i < text.length; i++) {
-              const char = text[i]
-              ctx.save()
-              ctx.rotate(startAngle + i * angleStep)
-              ctx.translate(0, -radius)
-              ctx.fillText(char, 0, 0)
-              ctx.restore()
-            }
-          } else {
-            // Draw regular text
-            const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
-            ctx.fillText(element.text, 0, 0, maxWidth)
-
-            // Draw underline if enabled
-            if (element.underline) {
-              const textMetrics = ctx.measureText(element.text)
-              const underlineY = element.fontSize * 0.15 * scaleFactor
-              ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
-              ctx.beginPath()
-              ctx.moveTo(-textMetrics.width / 2, underlineY)
-              ctx.lineTo(textMetrics.width / 2, underlineY)
-              ctx.stroke()
-            }
-          }
-
-          ctx.restore()
-        })
-
-      // Draw foreground image
-      fgImg.onload = () => {
-        // Clear any previous drawings
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        
-        // Draw background image with filters
-        applyFilters(ctx)
-        ctx.drawImage(bgImg, 0, 0)
-        ctx.filter = "none" // Reset filters for text
-        
-        // Draw text elements that should be behind the image
-        textElements
-          .filter((element) => element.visible && element.layerOrder === "back")
-          .forEach((element) => {
-            ctx.save()
-            const position = calculatePosition(element, canvas.width, canvas.height)
-            ctx.translate(position.x, position.y)
-          if (element.rotation !== 0) {
-              ctx.rotate((element.rotation * Math.PI) / 180)
-          }
-            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-            const scaledFontSize = element.fontSize * scaleFactor * 2
-
-            // Set font style
-            let fontStyle = ""
-            if (element.bold) fontStyle += "bold "
-            if (element.italic) fontStyle += "italic "
-            fontStyle += `${scaledFontSize}px ${element.fontFamily}`
-            ctx.font = fontStyle
-
-            // Set text alignment
-            ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-            ctx.textBaseline = "middle"
-
-            // Set opacity
-            ctx.globalAlpha = (element.opacity || 100) / 100
-
-            // Draw background rectangle if enabled
-            if (element.backgroundEnabled && element.backgroundColor) {
-              const metrics = ctx.measureText(element.text)
-              const textHeight = scaledFontSize * 1.2
-              const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
-              let rectX = 0
-              if (ctx.textAlign === "center") rectX = -rectWidth / 2
-              if (ctx.textAlign === "right") rectX = -rectWidth
-              let rectY = 0
-              const baseline = ctx.textBaseline as CanvasTextBaseline
-              if (baseline === "middle") rectY = -textHeight / 2
-              if (baseline === "bottom") rectY = -textHeight
-              ctx.save()
-              ctx.shadowColor = "transparent"
-              ctx.fillStyle = element.backgroundColor
-              ctx.fillRect(rectX, rectY, rectWidth, textHeight)
-              ctx.restore()
-            }
-
-            // Set shadow if enabled
-            if (element.shadow) {
-              ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
-              ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
-              ctx.shadowOffsetX = 2 * scaleFactor
-              ctx.shadowOffsetY = 2 * scaleFactor
-          } else {
-              ctx.shadowColor = "transparent"
-              ctx.shadowBlur = 0
-              ctx.shadowOffsetX = 0
-              ctx.shadowOffsetY = 0
-            }
-
-            // Set text color
-            ctx.fillStyle = element.color
-
-          // Draw curved text if enabled
-          if (element.curve) {
-              const text = element.text
-              const radius = Math.max(80, scaledFontSize * 2)
-              const angleStep = Math.PI / (text.length + 1)
-              const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i]
-                ctx.save()
-                ctx.rotate(startAngle + i * angleStep)
-                ctx.translate(0, -radius)
-                ctx.fillText(char, 0, 0)
-                ctx.restore()
-              }
-              } else {
-              // Draw regular text
-              const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
-              ctx.fillText(element.text, 0, 0, maxWidth)
-
-              // Draw underline if enabled
-              if (element.underline) {
-                const textMetrics = ctx.measureText(element.text)
-                const underlineY = element.fontSize * 0.15 * scaleFactor
-                ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
-                ctx.beginPath()
-                ctx.moveTo(-textMetrics.width / 2, underlineY)
-                ctx.lineTo(textMetrics.width / 2, underlineY)
-                ctx.stroke()
-              }
-            }
-
-            ctx.restore()
-          })
-
-        // Draw foreground image
-        ctx.drawImage(fgImg, 0, 0)
-
-        // Draw text elements that should be in front of the image
-        textElements
-          .filter((element) => element.visible && element.layerOrder === "front")
-          .forEach((element) => {
-            ctx.save()
-            const position = calculatePosition(element, canvas.width, canvas.height)
-            ctx.translate(position.x, position.y)
-            if (element.rotation !== 0) {
-              ctx.rotate((element.rotation * Math.PI) / 180)
-            }
-            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-            const scaledFontSize = element.fontSize * scaleFactor * 2
-
-            // Set font style
-            let fontStyle = ""
-            if (element.bold) fontStyle += "bold "
-            if (element.italic) fontStyle += "italic "
-            fontStyle += `${scaledFontSize}px ${element.fontFamily}`
-            ctx.font = fontStyle
-
-            // Set text alignment
-            ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-            ctx.textBaseline = "middle"
-
-            // Set opacity
-            ctx.globalAlpha = (element.opacity || 100) / 100
-
-            // Draw background rectangle if enabled
-            if (element.backgroundEnabled && element.backgroundColor) {
-              const metrics = ctx.measureText(element.text)
-              const textHeight = scaledFontSize * 1.2
-              const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvas.width)
-              let rectX = 0
-              if (ctx.textAlign === "center") rectX = -rectWidth / 2
-              if (ctx.textAlign === "right") rectX = -rectWidth
-              let rectY = 0
-              const baseline = ctx.textBaseline as CanvasTextBaseline
-              if (baseline === "middle") rectY = -textHeight / 2
-              if (baseline === "bottom") rectY = -textHeight
-              ctx.save()
-              ctx.shadowColor = "transparent"
-              ctx.fillStyle = element.backgroundColor
-              ctx.fillRect(rectX, rectY, rectWidth, textHeight)
-              ctx.restore()
-            }
-
-            // Set shadow if enabled
-            if (element.shadow) {
-              ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
-              ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
-              ctx.shadowOffsetX = 2 * scaleFactor
-              ctx.shadowOffsetY = 2 * scaleFactor
-            } else {
-              ctx.shadowColor = "transparent"
-              ctx.shadowBlur = 0
-              ctx.shadowOffsetX = 0
-              ctx.shadowOffsetY = 0
-            }
-
-            // Set text color
-            ctx.fillStyle = element.color
-
-            // Draw curved text if enabled
-            if (element.curve) {
-              const text = element.text
-              const radius = Math.max(80, scaledFontSize * 2)
-              const angleStep = Math.PI / (text.length + 1)
-              const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
-              for (let i = 0; i < text.length; i++) {
-                const char = text[i]
-                ctx.save()
-                ctx.rotate(startAngle + i * angleStep)
-                ctx.translate(0, -radius)
-                ctx.fillText(char, 0, 0)
-                ctx.restore()
-              }
-            } else {
-              // Draw regular text
-              const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
-              ctx.fillText(element.text, 0, 0, maxWidth)
-
-              // Draw underline if enabled
-              if (element.underline) {
-                const textMetrics = ctx.measureText(element.text)
-                const underlineY = element.fontSize * 0.15 * scaleFactor
-                ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
-                ctx.beginPath()
-                ctx.moveTo(-textMetrics.width / 2, underlineY)
-                ctx.lineTo(textMetrics.width / 2, underlineY)
-                ctx.stroke()
-              }
-            }
-
-            ctx.restore()
-          })
-        
-        // Convert canvas to data URL and update thumbnail
-        const finalImageUrl = canvas.toDataURL("image/png")
-        
-        // Revoke old thumbnail URL if it exists
-        if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
-          URL.revokeObjectURL(thumbnailUrl.current)
-        }
-        
-        // Update the thumbnail
-        thumbnailUrl.current = finalImageUrl
-        setThumbnailSrc(finalImageUrl)
+    try {
+      // Create a new image for the background (use original image)
+      const bgImg = new window.Image()
+      bgImg.crossOrigin = "anonymous"
+      
+      // Create the foreground image with transparent background
+      const fgImg = new window.Image()
+      fgImg.crossOrigin = "anonymous"
+      
+      // Set up error handling for both images
+      const handleImageError = () => {
         setIsCreatingThumbnail(false)
+        toast.error("Failed to load image for thumbnail")
+        // Clean up images
+        bgImg.src = ""
+        fgImg.src = ""
+      }
+      
+      bgImg.onerror = handleImageError
+      fgImg.onerror = handleImageError
+      
+      bgImg.onload = () => {
+        try {
+          // Set canvas dimensions based on the original image size
+          canvas.width = bgImg.width
+          canvas.height = bgImg.height
 
-        if (showUpdateToast) {
-          toast.success("Thumbnail updated")
-          setShowUpdateToast(false)
+          // Draw background image with filters
+          applyFilters(ctx)
+          ctx.drawImage(bgImg, 0, 0)
+          ctx.filter = "none" // Reset filters for text
+
+          // Draw text elements that should be behind the image
+          textElements
+            .filter((element) => element.visible && element.layerOrder === "back")
+            .forEach((element) => {
+              const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+              renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+            })
+
+          // Draw foreground image
+          fgImg.onload = () => {
+            try {
+              // Clear any previous drawings
+              ctx.clearRect(0, 0, canvas.width, canvas.height)
+              
+              // Draw background image with filters
+              applyFilters(ctx)
+              ctx.drawImage(bgImg, 0, 0)
+              ctx.filter = "none" // Reset filters for text
+              
+              // Draw text elements that should be behind the image
+              textElements
+                .filter((element) => element.visible && element.layerOrder === "back")
+                .forEach((element) => {
+                  const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+                })
+
+              // Draw foreground image
+              ctx.drawImage(fgImg, 0, 0)
+
+              // Draw text elements that should be in front of the image
+              textElements
+                .filter((element) => element.visible && element.layerOrder === "front")
+                .forEach((element) => {
+                  const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+                })
+              
+              // Convert canvas to data URL and update thumbnail
+              const finalImageUrl = canvas.toDataURL("image/png")
+              
+              // Revoke old thumbnail URL if it exists
+              if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+                URL.revokeObjectURL(thumbnailUrl.current)
+              }
+              
+              // Update the thumbnail
+              thumbnailUrl.current = finalImageUrl
+              setThumbnailSrc(finalImageUrl)
+              setIsCreatingThumbnail(false)
+
+              // Clean up images
+              bgImg.src = ""
+              fgImg.src = ""
+            } catch (error) {
+              console.error("Error in foreground image processing:", error)
+              toast.error("Failed to process foreground image")
+              handleImageError()
+            }
+          }
+          
+          // Load the transparent image
+          fgImg.src = transparentImageUrl
+        } catch (error) {
+          console.error("Error in background image processing:", error)
+          toast.error("Failed to process background image")
+          handleImageError()
         }
       }
       
-      // Load the transparent image
-      fgImg.src = transparentImageUrl
+      // Load the original image as background
+      bgImg.src = imageSrc
+    } catch (error) {
+      console.error("Error in thumbnail creation:", error)
+      toast.error("Failed to create thumbnail")
+      setIsCreatingThumbnail(false)
     }
-    
-    // Load the original image as background
-    bgImg.src = imageSrc
   }
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.currentTarget.classList.remove("border-primary")
+    
+    try {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const file = e.dataTransfer.files[0]
+        if (file.type.startsWith("image/")) {
+          // Create a synthetic change event
+          const fileInput = document.getElementById("file-upload") as HTMLInputElement
+          if (fileInput) {
+            // Create a DataTransfer object to set files
+            const dataTransfer = new DataTransfer()
+            dataTransfer.items.add(file)
+            fileInput.files = dataTransfer.files
+            
+            // Trigger the change handler
+            const event = new Event("change", { bubbles: true })
+            fileInput.dispatchEvent(event)
+          }
+        } else {
+          toast.error("Please drop an image file")
+        }
+      } else if (e.dataTransfer.getData("text/plain")) {
+        const data = e.dataTransfer.getData("text/plain")
+        if (data.startsWith("data:image")) {
+          setError("")
+          setHasAttemptedLoad(true)
+          setIsLoading(true)
+
+          if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
+            URL.revokeObjectURL(previewUrl.current)
+          }
+
+          previewUrl.current = data
+          setImageSrc(data)
+          setProcessedImageSrc("") // Clear processed image
+          setThumbnailSrc("") // Clear thumbnail
+
+          const img = hiddenImageRef.current
+          if (img) {
+            img.src = data
+          }
+
+          setImageLoaded(false)
+        } else {
+          toast.error("Please drop an image file or URL")
+        }
+      } else {
+        toast.error("Please drop an image file or URL")
+      }
+    } catch (error) {
+      console.error("Error handling drop:", error)
+      toast.error("Failed to process dropped file")
+      handleCancel()
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.currentTarget.classList.add("border-primary")
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.currentTarget.classList.remove("border-primary")
+  }
+
+  // Add cleanup for drag and drop events
+  useEffect(() => {
+    const handleDragEnd = () => {
+      const dropZone = document.querySelector(".drop-zone")
+      if (dropZone) {
+        dropZone.classList.remove("border-primary")
+      }
+    }
+
+    document.addEventListener("dragend", handleDragEnd)
+    return () => {
+      document.removeEventListener("dragend", handleDragEnd)
+    }
+  }, [])
+
+  // Wrap the main component with error boundary
   return (
-    <div className="space-y-6 w-full">
-      <canvas ref={canvasRef} className="hidden" />
-      <img
-        ref={hiddenImageRef}
-        src="/placeholder.svg"
-        alt="Hidden for metadata"
-        onLoad={handleImageLoaded}
-        onError={handleImageError}
-        className="hidden"
-        crossOrigin="anonymous"
-      />
+    <ErrorBoundary>
+      <div className="space-y-6 w-full">
+        <canvas ref={canvasRef} className="hidden" />
+        <img
+          ref={hiddenImageRef}
+          src="/placeholder.svg"
+          alt="Hidden for metadata"
+          onLoad={handleImageLoaded}
+          onError={handleImageError}
+          className="hidden"
+          crossOrigin="anonymous"
+        />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-          <TabsTrigger value="file" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <UploadIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span>Image from File</span>
-          </TabsTrigger>
-          <TabsTrigger value="url" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span>Image from URL</span>
-          </TabsTrigger>
-        </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
+            <TabsTrigger value="file" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
+              <UploadIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Image from File</span>
+            </TabsTrigger>
+            <TabsTrigger value="url" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
+              <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Image from URL</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="file" className="space-y-4">
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base">Upload Image File</CardTitle>
-              <CardDescription className="text-sm">Select an image file from your device or drag and drop</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <label htmlFor="file-upload">
-                <div
-                  className="flex flex-col items-center justify-center space-y-4 py-6 px-4 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer"
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    e.currentTarget.classList.add("border-primary")
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    e.currentTarget.classList.remove("border-primary")
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    e.currentTarget.classList.remove("border-primary")
-                    
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      const file = e.dataTransfer.files[0]
-                      if (file.type.startsWith("image/")) {
-                        // Create a synthetic change event
-                        const fileInput = document.getElementById("file-upload") as HTMLInputElement
-                        if (fileInput) {
-                          // Create a DataTransfer object to set files
-                          const dataTransfer = new DataTransfer()
-                          dataTransfer.items.add(file)
-                          fileInput.files = dataTransfer.files
-                          
-                          // Trigger the change handler
-                          const event = new Event("change", { bubbles: true })
-                          fileInput.dispatchEvent(event)
-                        }
-                      } else {
-                        toast.error("Please drop an image file")
-                      }
-                    } else if (e.dataTransfer.getData("text/plain")) {
-                      const data = e.dataTransfer.getData("text/plain")
-                      if (data.startsWith("data:image")) {
-                        setError("")
-                        setHasAttemptedLoad(true)
-                        setIsLoading(true)
-
-                        if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
-                          URL.revokeObjectURL(previewUrl.current)
-                        }
-
-                        previewUrl.current = data
-                        setImageSrc(data)
-                        setProcessedImageSrc("") // Clear processed image
-                        setThumbnailSrc("") // Clear thumbnail
-                        setProcessingProgress(0)
-
-                        const img = hiddenImageRef.current
-                        if (img) {
-                          img.src = data
-                        }
-
-                        setImageLoaded(false)
-                      }
-                    }
-                  }}
-                >
-                  <UploadIcon className="h-8 w-8 text-gray-400" />
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Drop image here or click to browse</div>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                  />
-                </div>
-              </label>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="url" className="space-y-4">
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base">Upload from URL</CardTitle>
-              <CardDescription className="text-sm">Enter the URL of an image you want to upload</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2 space-y-4">
-              <div className="grid grid-cols-4 gap-4">
-                <Input type="url" placeholder="https://example.com/image.jpg" className="col-span-3" id="imageUrl" />
-                <Button onClick={handleURLLoad} disabled={isLoading} size="default">
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                      Loading
-                    </span>
-                  ) : (
-                    "Load"
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="w-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Image Preview</CardTitle>
-            {error && hasAttemptedLoad && <p className="text-sm text-red-500 mt-1">{error}</p>}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2">
-                <Info className="h-4 w-4 flex-shrink-0" />
-                <div>
-                  <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
-                  {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                </div>
-              </div>
-            )}
-
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              {imageSrc && imageLoaded ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={imageSrc || "/placeholder.svg"}
-                    alt="Preview"
-                    className="object-contain w-full h-full"
-                    style={{
-                      objectFit: "contain",
-                      width: "100%",
-                      height: "100%",
-                      position: "absolute",
-                      inset: 0,
-                      transform: `scale(${zoomLevel / 100})`,
-                      filter: `
-                        brightness(${imageFilters.brightness}%) 
-                        contrast(${imageFilters.contrast}%) 
-                        saturate(${imageFilters.saturation}%) 
-                        blur(${imageFilters.blur}px) 
-                        hue-rotate(${imageFilters.hueRotate}deg)
-                        grayscale(${imageFilters.grayscale}%)
-                        sepia(${imageFilters.sepia}%)
-                      `,
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                </div>
-              ) : (
-                <>
-                  {!isLoading && !error && (
-                    <div className="text-center p-4">
-                      <UploadIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No image selected</p>
-                    </div>
-                  )}
-                  {isLoading && (
-                    <div className="flex justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {imageLoaded && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 md:gap-2">
-            <Button
-              variant="outline"
-                    size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
-                    onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
-                    disabled={zoomLevel <= 50}
+          <TabsContent value="file" className="space-y-4">
+            <Card>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-base">Upload Image File</CardTitle>
+                <CardDescription className="text-sm">Select an image file from your device or drag and drop</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <label htmlFor="file-upload">
+                  <div
+                    className="flex flex-col items-center justify-center space-y-4 py-6 px-4 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer drop-zone"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                   >
-                    <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                  <span className="text-xs md:text-sm">{zoomLevel}%</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
-                    onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
-                    disabled={zoomLevel >= 200}
-                  >
-                    <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-1 md:gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
-                    onClick={() => setZoomLevel(100)}
-                    disabled={zoomLevel === 100}
-                  >
-                    <Maximize className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
-                    onClick={() => setZoomLevel(50)}
-                    disabled={zoomLevel === 50}
-                  >
-                    <Minimize className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
-            <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRemoveBackground}
-              disabled={!imageLoaded || isProcessing}
-              size="default"
-              className="flex-1"
-            >
-              {isProcessing ? (
-                <span className="flex items-center">
-                  <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                  Processing...
-                </span>
-              ) : (
-                "Remove Background"
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-base">Background Removed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2 mb-4">
-                <Info className="h-4 w-4 flex-shrink-0" />
-                <div>
-                  <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
-                  {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                </div>
-              </div>
-            )}
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              <div className="relative w-full h-full">
-                {processedImageSrc ? (
-                  <img
-                    src={processedImageSrc || "/placeholder.svg"}
-                    alt="Background Removed"
-                    className="object-contain w-full h-full"
-                    style={{
-                      objectFit: "contain",
-                      width: "100%",
-                      height: "100%",
-                      position: "absolute",
-                      inset: 0,
-                      transform: `scale(${zoomLevel / 100})`,
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : isProcessing ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-sm text-gray-500">Removing background...</p>
+                    <UploadIcon className="h-8 w-8 text-gray-400" />
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Drop image here or click to browse</div>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleFileChange}
+                    />
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {processedImageSrc
-                        ? "Click 'Apply' in the text editor to generate preview"
-                        : ""}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {processedImageSrc && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0}>
-                    <Undo className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0}>
-                    <Redo className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
-            <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveBackgroundRemoved}
-              disabled={!processedImageSrc}
-              variant="default"
-              size="default"
-              className="flex-1 bg-black hover:bg-black/90 text-white"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
-      <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
-        <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-3">
-          <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Type className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden xs:inline">Text Editor</span>
-            <span className="xs:hidden">Text</span>
-          </TabsTrigger>
-          <TabsTrigger value="filters" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Palette className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden xs:inline">Image Filters</span>
-            <span className="xs:hidden">Filters</span>
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden xs:inline">Final Preview</span>
-            <span className="xs:hidden">Preview</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="text" className="space-y-4">
-      <Card className="w-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base">Customize Text</CardTitle>
-              <CardDescription className="text-sm">Add and customize text for your thumbnail</CardDescription>
-        </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <TextEditor
-                onApply={() => {
-                  setShowUpdateToast(true)
-                  handleCreateThumbnail()
-                }}
-                isCreatingThumbnail={isCreatingThumbnail}
-                processedImageSrc={processedImageSrc}
-                textElements={textElements}
-                onTextElementsChange={(elements) => {
-                  setTextElements(elements)
-                }}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="filters" className="space-y-4">
-      <Card className="w-full">
-        <CardHeader className="p-4 md:p-6">
-              <CardTitle>Image Filters</CardTitle>
-              <CardDescription>Adjust image appearance with filters</CardDescription>
-        </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-          <div className="flex items-center justify-between">
-                    <Label htmlFor="brightness">Brightness ({imageFilters.brightness}%)</Label>
-              <Button 
-                      variant="ghost"
-                size="sm" 
-                      onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
-                      disabled={imageFilters.brightness === 100}
-              >
-                      Reset
-              </Button>
-            </div>
-                  <Slider
-                    id="brightness"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.brightness]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
-                  />
-            </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="contrast">Contrast ({imageFilters.contrast}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
-                      disabled={imageFilters.contrast === 100}
-                    >
-                      Reset
-                    </Button>
-                </div>
-                  <Slider
-                    id="contrast"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.contrast]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, contrast: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="saturation">Saturation ({imageFilters.saturation}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
-                      disabled={imageFilters.saturation === 100}
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="saturation"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.saturation]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, saturation: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="blur">Blur ({imageFilters.blur}px)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
-                      disabled={imageFilters.blur === 0}
-                    >
-                      Reset
-                    </Button>
-              </div>
-                  <Slider
-                    id="blur"
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    value={[imageFilters.blur]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
-                />
-            </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="hueRotate">Hue Rotate ({imageFilters.hueRotate}°)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
-                      disabled={imageFilters.hueRotate === 0}
-                    >
-                      Reset
-                    </Button>
-              </div>
-                <Slider
-                    id="hueRotate"
-                    min={0}
-                    max={360}
-                  step={1}
-                    value={[imageFilters.hueRotate]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="grayscale">Grayscale ({imageFilters.grayscale}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
-                      disabled={imageFilters.grayscale === 0}
-                    >
-                      Reset
-                    </Button>
-                </div>
-                  <Slider
-                    id="grayscale"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[imageFilters.grayscale]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
-                  />
-            </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sepia">Sepia ({imageFilters.sepia}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
-                      disabled={imageFilters.sepia === 0}
-                    >
-                      Reset
-                    </Button>
-            </div>
-                  <Slider
-                    id="sepia"
-                  min={0}
-                    max={100}
-                    step={1}
-                    value={[imageFilters.sepia]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
-                />
-                </div>
-            </div>
-
-              <div className="space-y-2">
-                <Label>Filter Presets</Label>
-                <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant="outline"
-                    onClick={() => applyPresetFilter("grayscale")}
-                    className="flex-1 text-sm md:text-base"
-              >
-                    Grayscale
-              </Button>
-              <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("sepia")}
-                    className="flex-1 text-sm md:text-base"
-                  >
-                    Sepia
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("vivid")}
-                    className="flex-1 text-sm md:text-base"
-                  >
-                    Vivid
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("cool")}
-                    className="flex-1 text-sm md:text-base"
-                  >
-                    Cool
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("warm")}
-                    className="flex-1 text-sm md:text-base"
-                  >
-                    Warm
-                  </Button>
-                  <Button variant="outline" onClick={resetFilters} className="flex-1 text-sm md:text-base">
-                    <RotateCw className="h-4 w-4 mr-2" />
-                    Reset All
+                </label>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="url" className="space-y-4">
+            <Card>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-base">Upload from URL</CardTitle>
+                <CardDescription className="text-sm">Enter the URL of an image you want to upload</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2 space-y-4">
+                <div className="grid grid-cols-4 gap-4">
+                  <Input type="url" placeholder="https://example.com/image.jpg" className="col-span-3" id="imageUrl" />
+                  <Button onClick={handleURLLoad} disabled={isLoading} size="default">
+                    {isLoading ? (
+                      <span className="flex items-center">
+                        <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
+                        Loading
+                      </span>
+                    ) : (
+                      "Load"
+                    )}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                onClick={handleCreateThumbnail}
-                disabled={!processedImageSrc || isCreatingThumbnail}
-                className="flex-1 text-sm md:text-base"
-              >
-                Apply Filters
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
-        <TabsContent value="preview" className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="w-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle>Final Preview</CardTitle>
-              <CardDescription>Preview your thumbnail with text and effects</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Image Preview</CardTitle>
+              {error && hasAttemptedLoad && <p className="text-sm text-red-500 mt-1">{error}</p>}
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {imageInfo && imageLoaded && (
+                <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2">
+                  <Info className="h-4 w-4 flex-shrink-0" />
+                  <div>
+                    <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
+                    {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
+                  </div>
+                </div>
+              )}
+
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                <div className="relative w-full h-full">
-                  {thumbnailSrc ? (
+                {imageSrc && imageLoaded ? (
+                  <div className="relative w-full h-full">
                     <img
-                      src={thumbnailSrc || "/placeholder.svg"}
-                      alt="Thumbnail"
+                      src={imageSrc || "/placeholder.svg"}
+                      alt="Preview"
                       className="object-contain w-full h-full"
                       style={{
                         objectFit: "contain",
@@ -1609,6 +1111,7 @@ export default function ImageUploader() {
                         height: "100%",
                         position: "absolute",
                         inset: 0,
+                        transform: `scale(${zoomLevel / 100})`,
                         filter: `
                           brightness(${imageFilters.brightness}%) 
                           contrast(${imageFilters.contrast}%) 
@@ -1621,12 +1124,129 @@ export default function ImageUploader() {
                       }}
                       crossOrigin="anonymous"
                     />
-                  ) : isCreatingThumbnail ? (
+                  </div>
+                ) : (
+                  <>
+                    {!isLoading && !error && (
+                      <div className="text-center p-4">
+                        <UploadIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No image selected</p>
+                      </div>
+                    )}
+                    {isLoading && (
+                      <div className="flex justify-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {imageLoaded && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10"
+                      onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
+                      disabled={zoomLevel <= 50}
+                    >
+                      <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                    <span className="text-xs md:text-sm">{zoomLevel}%</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10"
+                      onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
+                      disabled={zoomLevel >= 200}
+                    >
+                      <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10"
+                      onClick={() => setZoomLevel(100)}
+                      disabled={zoomLevel === 100}
+                    >
+                      <Maximize className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10"
+                      onClick={() => setZoomLevel(50)}
+                      disabled={zoomLevel === 50}
+                    >
+                      <Minimize className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-wrap gap-2">
+              <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRemoveBackground}
+                disabled={!imageLoaded || isProcessing}
+                size="default"
+                className="flex-1"
+              >
+                {isProcessing ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
+                    Processing...
+                  </span>
+                ) : (
+                  "Remove Background"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-base">Background Removed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {imageInfo && imageLoaded && (
+                <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2 mb-4">
+                  <Info className="h-4 w-4 flex-shrink-0" />
+                  <div>
+                    <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
+                    {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
+                  </div>
+                </div>
+              )}
+              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                <div className="relative w-full h-full">
+                  {processedImageSrc ? (
+                    <img
+                      src={processedImageSrc || "/placeholder.svg"}
+                      alt="Background Removed"
+                      className="object-contain w-full h-full"
+                      style={{
+                        objectFit: "contain",
+                        width: "100%",
+                        height: "100%",
+                        position: "absolute",
+                        inset: 0,
+                        transform: `scale(${zoomLevel / 100})`,
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                  ) : isProcessing ? (
                     <div className="flex flex-col items-center justify-center h-full">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                      <p className="text-sm text-gray-500">Creating thumbnail...</p>
+                      <p className="text-sm text-gray-500">Removing background...</p>
                     </div>
-                ) : (
+                  ) : (
                     <div className="flex flex-col items-center justify-center h-full">
                       <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
                       <p className="text-gray-500 dark:text-gray-400">
@@ -1636,23 +1256,367 @@ export default function ImageUploader() {
                       </p>
                     </div>
                   )}
-            </div>
-          </div>
-        </CardContent>
-            <CardFooter className="flex justify-end">
+                </div>
+              </div>
+
+              {processedImageSrc && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0}>
+                      <Undo className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0}>
+                      <Redo className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+              <Button onClick={handleCancel} variant="outline" size="default" className="flex-1">
+                Cancel
+              </Button>
               <Button
-                onClick={handleSaveThumbnail}
-                disabled={!thumbnailSrc}
+                onClick={handleSaveBackgroundRemoved}
+                disabled={!processedImageSrc}
+                variant="default"
                 size="default"
-                className="flex-1"
+                className="flex-1 bg-black hover:bg-black/90 text-white"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download Thumbnail
+                Save
               </Button>
             </CardFooter>
-      </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+          </Card>
+        </div>
+
+        <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
+          <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-3">
+            <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Type className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden xs:inline">Text Editor</span>
+              <span className="xs:hidden">Text</span>
+            </TabsTrigger>
+            <TabsTrigger value="filters" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Palette className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden xs:inline">Image Filters</span>
+              <span className="xs:hidden">Filters</span>
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden xs:inline">Final Preview</span>
+              <span className="xs:hidden">Preview</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="text" className="space-y-4">
+            <Card className="w-full">
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-base">Customize Text</CardTitle>
+                <CardDescription className="text-sm">Add and customize text for your thumbnail</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6">
+                <TextEditor
+                  onApply={() => {
+                    handleCreateThumbnail()
+                  }}
+                  isCreatingThumbnail={isCreatingThumbnail}
+                  processedImageSrc={processedImageSrc}
+                  textElements={textElements}
+                  onTextElementsChange={(elements) => {
+                    setTextElements(elements)
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="filters" className="space-y-4">
+            <Card className="w-full">
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle>Image Filters</CardTitle>
+                <CardDescription>Adjust image appearance with filters</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="brightness">Brightness ({imageFilters.brightness}%)</Label>
+                      <Button 
+                        variant="ghost"
+                        size="sm" 
+                        onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
+                        disabled={imageFilters.brightness === 100}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="brightness"
+                      min={0}
+                      max={200}
+                      step={1}
+                      value={[imageFilters.brightness]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="contrast">Contrast ({imageFilters.contrast}%)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
+                        disabled={imageFilters.contrast === 100}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="contrast"
+                      min={0}
+                      max={200}
+                      step={1}
+                      value={[imageFilters.contrast]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, contrast: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="saturation">Saturation ({imageFilters.saturation}%)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
+                        disabled={imageFilters.saturation === 100}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="saturation"
+                      min={0}
+                      max={200}
+                      step={1}
+                      value={[imageFilters.saturation]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, saturation: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="blur">Blur ({imageFilters.blur}px)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
+                        disabled={imageFilters.blur === 0}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="blur"
+                      min={0}
+                      max={10}
+                      step={0.1}
+                      value={[imageFilters.blur]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="hueRotate">Hue Rotate ({imageFilters.hueRotate}°)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
+                        disabled={imageFilters.hueRotate === 0}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="hueRotate"
+                      min={0}
+                      max={360}
+                      step={1}
+                      value={[imageFilters.hueRotate]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="grayscale">Grayscale ({imageFilters.grayscale}%)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
+                        disabled={imageFilters.grayscale === 0}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="grayscale"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={[imageFilters.grayscale]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="sepia">Sepia ({imageFilters.sepia}%)</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
+                        disabled={imageFilters.sepia === 0}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                    <Slider
+                      id="sepia"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={[imageFilters.sepia]}
+                      onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Filter Presets</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("grayscale")}
+                      className="flex-1 text-sm md:text-base"
+                    >
+                      Grayscale
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("sepia")}
+                      className="flex-1 text-sm md:text-base"
+                    >
+                      Sepia
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("vivid")}
+                      className="flex-1 text-sm md:text-base"
+                    >
+                      Vivid
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("cool")}
+                      className="flex-1 text-sm md:text-base"
+                    >
+                      Cool
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => applyPresetFilter("warm")}
+                      className="flex-1 text-sm md:text-base"
+                    >
+                      Warm
+                    </Button>
+                    <Button variant="outline" onClick={resetFilters} className="flex-1 text-sm md:text-base">
+                      <RotateCw className="h-4 w-4 mr-2" />
+                      Reset All
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button
+                  onClick={handleCreateThumbnail}
+                  disabled={!processedImageSrc || isCreatingThumbnail}
+                  className="flex-1 text-sm md:text-base"
+                >
+                  Apply Filters
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="preview" className="space-y-4">
+            <Card className="w-full">
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle>Final Preview</CardTitle>
+                <CardDescription>Preview your thumbnail with text and effects</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                  <div className="relative w-full h-full">
+                    {thumbnailSrc ? (
+                      <img
+                        src={thumbnailSrc || "/placeholder.svg"}
+                        alt="Thumbnail"
+                        className="object-contain w-full h-full"
+                        style={{
+                          objectFit: "contain",
+                          width: "100%",
+                          height: "100%",
+                          position: "absolute",
+                          inset: 0,
+                          filter: `
+                            brightness(${imageFilters.brightness}%) 
+                            contrast(${imageFilters.contrast}%) 
+                            saturate(${imageFilters.saturation}%) 
+                            blur(${imageFilters.blur}px) 
+                            hue-rotate(${imageFilters.hueRotate}deg)
+                            grayscale(${imageFilters.grayscale}%)
+                            sepia(${imageFilters.sepia}%)
+                          `,
+                        }}
+                        crossOrigin="anonymous"
+                      />
+                    ) : isCreatingThumbnail ? (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                        <p className="text-sm text-gray-500">Creating thumbnail...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400">
+                          {processedImageSrc
+                            ? "Click 'Apply' in the text editor to generate preview"
+                            : ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button
+                  onClick={handleSaveThumbnail}
+                  disabled={!thumbnailSrc}
+                  size="default"
+                  className="flex-1"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Thumbnail
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ErrorBoundary>
   )
 }
+
