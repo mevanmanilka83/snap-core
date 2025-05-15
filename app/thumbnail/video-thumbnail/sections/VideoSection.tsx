@@ -44,7 +44,7 @@ const VideoSection = ({
       onTimeUpdate={handleTimeUpdate}
       onSnapshot={handleSnapshot}
     />
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden mb-6">
       <CardHeader className="pb-2 px-4 sm:px-6">
         <CardTitle className="text-base sm:text-lg">
           Snapshot Controls

@@ -28,35 +28,43 @@ const faqVariants = {
 const faqs: FAQ[] = [
   {
     question: "What is Snap Core and how does it work?",
-    answer: "Snap Core is a powerful browser-based thumbnail generator that lets you create professional thumbnails from both videos and images. You can upload images directly or capture frames from videos, remove backgrounds, and add text overlays - all processed locally in your browser for maximum privacy and speed."
+    answer: "Snap Core is a browser-based thumbnail generator. Upload images or capture video frames, remove backgrounds, and add text - all processed locally in your browser."
   },
   {
     question: "Can I use both videos and images?",
-    answer: "Yes! Snap Core supports both workflows. You can either upload images directly using drag and drop, or load videos to capture specific frames. Both methods provide instant preview and processing capabilities."
+    answer: "Yes! You can use either videos or images, but not at the same time. Choose one type per thumbnail."
+  },
+  {
+    question: "Can I create image and video thumbnails simultaneously?",
+    answer: "No, work with one type at a time. Complete your current thumbnail before starting a new one."
   },
   {
     question: "What file formats are supported?",
-    answer: "Snap Core supports all major video formats (MP4, WebM, MOV) and image formats (JPG, PNG). For videos, you can capture frames instantly, and for images, you can upload them directly through our drag-and-drop interface."
+    answer: "Videos: MP4, WebM, MOV. Images: JPG, PNG."
   },
   {
     question: "How does the background removal work?",
-    answer: "Our AI-powered background removal works on both captured video frames and uploaded images. It automatically detects and removes backgrounds with pixel-perfect precision, maintaining fine details like hair and transparent elements. The process happens in real-time with instant preview."
+    answer: "AI-powered removal works on both video frames and images. It detects and removes backgrounds instantly with high precision."
   },
   {
     question: "Can I customize my thumbnails?",
-    answer: "Yes! After capturing a frame or uploading an image, you can add text overlays with various fonts and styles, apply image filters, and customize every aspect of your thumbnail. All changes are previewed in real-time."
+    answer: "Yes! Add text, apply filters, and customize everything. All changes preview in real-time."
   },
   {
     question: "Is my content private?",
-    answer: "Yes, Snap Core processes everything locally in your browser. We don't store any of your videos, images, or generated content. All processing happens on your device, and closing the page clears all local data."
+    answer: "Yes, everything processes locally in your browser. We don't store any of your content."
   },
   {
     question: "How does the automatic keyframe detection work?",
-    answer: "For videos, our automatic keyframe detection analyzes your content to identify the most significant moments. You can set custom intervals for automatic capture, and the system will intelligently select frames that represent key scenes or transitions in your video."
+    answer: "It analyzes your video to find important moments. Set custom intervals for automatic capture."
   },
   {
     question: "What are the system requirements?",
-    answer: "Snap Core works in any modern web browser. Since all processing happens locally, performance may vary based on your device's capabilities. For optimal results, we recommend using a device with at least 4GB of RAM and a modern processor."
+    answer: "Works in any modern browser. For best results, use a device with 4GB+ RAM."
+  },
+  {
+    question: "Is Snap Core optimized for mobile devices?", 
+    answer: "Works on mobile but best on desktop. Advanced editing features need larger screens for optimal use."
   }
 ]
 
@@ -128,7 +136,7 @@ const FAQSection = memo(function FAQSection() {
               <AccordionItem value={`item-${index}`}>
                 <AccordionTrigger
                   className={cn(
-                    "text-left text-xs sm:text-sm font-display font-medium",
+                    "text-left text-sm sm:text-base font-display font-medium",
                     "hover:no-underline"
                   )}
                   onClick={() => handleAccordionClick(index)}

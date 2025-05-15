@@ -16,6 +16,8 @@
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.3",
+    "@heroicons/react": "^2.2.0",
     "@imgly/background-removal": "^1.6.0",
     "@motionone/utils": "^10.18.0",
     "@radix-ui/react-accordion": "^1.2.10",

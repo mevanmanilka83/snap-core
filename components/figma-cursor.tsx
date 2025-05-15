@@ -21,41 +21,43 @@ export const AnimatedCursor: React.FC<{
 }> = ({ className, text, type = "video" }) => {
   // Define different animation paths based on cursor type with fewer points for slower movement
   const videoAnimation = {
-    x: ["0%", "15%", "30%", "45%", "30%", "15%", "0%"],
-    y: ["0%", "10%", "20%", "10%", "5%", "0%"],
+    x: ["0%", "5%", "10%", "5%", "0%"],
+    y: ["0%", "3%", "5%", "3%", "0%"],
   };
 
   const imageAnimation = {
-    x: ["0%", "20%", "40%", "20%", "0%"],
-    y: ["0%", "15%", "5%", "10%", "0%"],
+    x: ["0%", "5%", "8%", "5%", "0%"],
+    y: ["0%", "4%", "3%", "4%", "0%"],
   };
 
   const animation = type === "video" ? videoAnimation : imageAnimation;
 
   return (
-    <motion.div
-      initial={{ translateX: "0", translateY: "0" }}
-      animate={{
-        translateX: animation.x,
-        translateY: animation.y,
-      }}
-      transition={{
-        duration: 15,
-        repeat: Infinity,
-        ease: "linear",
-        repeatType: "reverse",
-      }}
-      className={"flex items-center gap-4"}
-    >
-      <div
-        className={cn(
-          "w-fit rounded-full py-1 px-2 bg-sky-600 border border-sky-400 text-white",
-          className
-        )}
+    <div className="relative w-full">
+      <motion.div
+        initial={{ translateX: "0", translateY: "0" }}
+        animate={{
+          translateX: animation.x,
+          translateY: animation.y,
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "linear",
+          repeatType: "reverse",
+        }}
+        className={"flex items-center gap-4"}
       >
-        {text}
-      </div>
-      <Cursor />
-    </motion.div>
+        <div
+          className={cn(
+            "w-fit rounded-full py-1 px-2 bg-sky-600 border border-sky-400 text-white",
+            className
+          )}
+        >
+          {text}
+        </div>
+        <Cursor />
+      </motion.div>
+    </div>
   );
 };

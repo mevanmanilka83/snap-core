@@ -259,6 +259,22 @@ export default function ImageUploader() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      setError("Please upload a valid image file (JPEG, PNG, GIF, or WebP)")
+      toast.error("Invalid file type. Please upload a valid image file.")
+      return
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+    if (file.size > maxSize) {
+      setError("File size too large. Maximum size is 10MB")
+      toast.error("File size too large. Maximum size is 10MB")
+      return
+    }
+
     setError("")
     setHasAttemptedLoad(true)
     setIsLoading(true)
@@ -1312,18 +1328,21 @@ export default function ImageUploader() {
       </div>
 
       <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-3">
           <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
             <Type className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Text Editor</span>
+            <span className="hidden xs:inline">Text Editor</span>
+            <span className="xs:hidden">Text</span>
           </TabsTrigger>
           <TabsTrigger value="filters" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
             <Palette className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Image Filters</span>
+            <span className="hidden xs:inline">Image Filters</span>
+            <span className="xs:hidden">Filters</span>
           </TabsTrigger>
           <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
             <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Final Preview</span>
+            <span className="hidden xs:inline">Final Preview</span>
+            <span className="xs:hidden">Preview</span>
           </TabsTrigger>
         </TabsList>
 

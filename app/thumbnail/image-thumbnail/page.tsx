@@ -510,7 +510,7 @@ export default function ImageUploader() {
       // Process the image with imgly background removal
       const blob = await backgroundRemoval.removeBackground(image_src, {
         progress: (message: string, progress: number) => {
-          // Just update the progress state without displaying percentage
+          // Update progress state
           setProcessingProgress(progress)
         },
       })
@@ -518,7 +518,7 @@ export default function ImageUploader() {
       // Create a URL from the resulting blob
       const processedImageUrl = URL.createObjectURL(blob)
       
-      // Revoke the old processed URL if it was a blob
+      // Clean up old URL if it exists
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
@@ -528,7 +528,10 @@ export default function ImageUploader() {
       setProcessedImageSrc(processedImageUrl)
       
       // Automatically switch to text tab after successful background removal
-      setActiveTab("text")
+      setActiveEditorTab("text")
+      
+      // Create thumbnail immediately after background removal
+      handleCreateThumbnail()
       
       toast.success("Background removed successfully")
     } catch (err) {

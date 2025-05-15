@@ -21,7 +21,7 @@ const ImageTabSelection = ({
         <div className="relative mb-4">
           <AnimatedCursor
             text="Create Image Thumbnail Here"
-            className="absolute -top-6 left-4 z-10"
+            className="absolute -top-4 left-4 z-10 animate-float"
             type="image"
           />
         </div>

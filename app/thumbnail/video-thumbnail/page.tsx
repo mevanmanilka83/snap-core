@@ -1007,16 +1007,22 @@ export default function VideoThumbnailGenerator() {
     // Set opacity
     ctx.globalAlpha = (element.opacity || 100) / 100;
 
+    // Split text into lines
+    const lines = element.text.split('\n');
+    const lineHeight = scaledFontSize * (element.lineHeight || 1.2);
+    const totalHeight = lineHeight * lines.length;
+    const startY = -(totalHeight / 2) + (lineHeight / 2);
+
     // Draw background if enabled
     if (element.backgroundEnabled && element.backgroundColor) {
-      const metrics = ctx.measureText(element.text);
+      const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
       const padding = scaledFontSize * 0.2;
       ctx.fillStyle = element.backgroundColor;
       ctx.fillRect(
-        -metrics.width / 2 - padding,
-        -scaledFontSize / 2 - padding,
-        metrics.width + padding * 2,
-        scaledFontSize + padding * 2
+        -maxWidth / 2 - padding,
+        -totalHeight / 2 - padding,
+        maxWidth + padding * 2,
+        totalHeight + padding * 2
       );
     }
 
@@ -1031,9 +1037,12 @@ export default function VideoThumbnailGenerator() {
     // Set text color
     ctx.fillStyle = element.color;
 
-    // Draw text
+    // Draw each line
     const maxWidth = ((element.maxWidth || 80) / 100) * canvasWidth;
-    ctx.fillText(element.text, 0, 0, maxWidth);
+    lines.forEach((line, index) => {
+      const y = startY + (index * lineHeight);
+      ctx.fillText(line, 0, y, maxWidth);
+    });
 
     ctx.restore();
   };

@@ -1,7 +1,7 @@
 import VideoSection from "./video-thumbnail/sections/VideoSection";
+import SimpleVideoTabSelection from "./video-thumbnail/sections/SimpleVideoTabSelection";
 import ImageTabSelection from "./image-thumbnail/sections/ImageTabSelection";
 import ImageSection from "./image-thumbnail/sections/ImageSection";
-import { AnimatedCursor } from "@/components/figma-cursor";
 
 const MainSection = ({
   videoRef,
@@ -21,7 +21,8 @@ const MainSection = ({
   return (
     <div id="main-section" className="space-y-4 sm:space-y-6">
       <div className="relative">
-        <VideoSection
+        <SimpleVideoTabSelection
+          VideoSection={VideoSection}
           videoRef={videoRef}
           videoLoaded={videoLoaded}
           videoInfo={videoInfo}

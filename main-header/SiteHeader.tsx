@@ -1,11 +1,5 @@
-import MainNav from "./MainNav"
+import { Navbar } from "@/components/eldoraui/header"
 
 export default function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
-        <MainNav />
-      </div>
-    </header>
-  )
+  return <Navbar />
 } 
