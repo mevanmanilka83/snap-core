@@ -26,7 +26,6 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
   compress: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -36,9 +35,9 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
     serverActions: {
       bodySizeLimit: '2mb',
-    },
-    serverComponentsExternalPackages: ['critters'],
+    }
   },
+  serverExternalPackages: ['critters'],
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size
     if (!dev && !isServer) {
