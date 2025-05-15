@@ -10,6 +10,8 @@ import FinalPreviewSection from "./FinalPreviewSection"
 import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab"
 import SmoothScroll from "@/components/smooth-scroll"
 import { useMediaQuery } from "@/components/useMediaQuery"
+import { Badge } from "@/components/ui/badge"
+import { WordPullUp } from "@/components/eldoraui/wordpullup"
 
 interface VideoTabSelectionProps {
   activeTab: string
@@ -140,6 +142,21 @@ export default function VideoTabSelection({
   return (
     <TabsProvider defaultValue="video" wobbly={!isMobile}>
       <div className="flex flex-col gap-4">
+        <div id="transform-content" className="text-center mb-8">
+          <Badge variant="outline" className="mb-4 text-xs sm:text-sm">
+            Create Thumbnails
+          </Badge>
+          <div className="min-h-[80px] flex items-center justify-center">
+            <WordPullUp 
+              text="Transform Your Content into Eye-Catching Thumbnails" 
+              className="text-2xl sm:text-3xl md:text-4xl mb-4" 
+            />
+          </div>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
+            Choose between video frame capture or direct image upload. Our powerful tools help you create professional thumbnails with ease.
+          </p>
+        </div>
+
         <SmoothScroll className="w-full">
           <div className="flex items-center justify-center gap-1 sm:gap-2 p-[3px] min-w-fit">
             <TabsBtn 

@@ -14,6 +14,14 @@ export default function SmoothScroll({ children, className = '' }: SmoothScrollP
     const container = containerRef.current;
     if (!container) return;
 
+    // Add a global method for instant scrolling
+    window.instantScrollTo = (position: number) => {
+      window.scrollTo({
+        top: position,
+        behavior: 'auto'
+      });
+    };
+
     const handleWheel = (e: WheelEvent) => {
       // Only handle horizontal scrolling if content is wider than container
       if (container.scrollWidth > container.clientWidth) {
@@ -30,7 +38,10 @@ export default function SmoothScroll({ children, className = '' }: SmoothScrollP
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      delete window.instantScrollTo;
+    };
   }, []);
 
   return (
@@ -38,4 +49,11 @@ export default function SmoothScroll({ children, className = '' }: SmoothScrollP
       {children}
     </div>
   );
+}
+
+// Add TypeScript declaration for the global method
+declare global {
+  interface Window {
+    instantScrollTo: (position: number) => void;
+  }
 } 
