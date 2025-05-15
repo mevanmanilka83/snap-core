@@ -720,7 +720,7 @@ export default function TextEditor({
                 {textElements.map((element) => (
                   <div key={element.id} className="flex gap-2 items-start">
                     <div className="flex-1 space-y-2">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Input
                           value={element.text}
                           onChange={(e) => handleTextElementChange(element.id, { text: e.target.value })}
@@ -732,7 +732,7 @@ export default function TextEditor({
                           size="sm"
                           onClick={() => handleRemoveTextElement(element.id)}
                           disabled={textElements.length <= 1}
-                          className="h-10"
+                          className="h-10 px-2"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

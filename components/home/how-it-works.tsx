@@ -57,7 +57,7 @@ const HowItWorks = memo(function HowItWorks() {
       ref={sectionRef} 
       id="how-it-works" 
       className={cn(
-        "max-w-3xl mx-auto mb-24 px-4",
+        "max-w-3xl mx-auto mb-24 px-4 pt-16",
         "scroll-mt-24"
       )}
     >
