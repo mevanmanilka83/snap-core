@@ -1,9 +1,21 @@
 import { VideoPlayer } from "@/app/shared/video-player";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Clock, Layers } from "lucide-react";
 
 const VideoSection = ({
@@ -19,7 +31,7 @@ const VideoSection = ({
   handleAutoCaptureKeyFrames,
   autoSnapInterval,
   setAutoSnapInterval,
-  toggleAutoSnap
+  toggleAutoSnap,
 }: any) => (
   <div className="space-y-4 sm:space-y-6">
     <VideoPlayer
@@ -34,14 +46,18 @@ const VideoSection = ({
     />
     <Card className="overflow-hidden">
       <CardHeader className="pb-2 px-4 sm:px-6">
-        <CardTitle className="text-base sm:text-lg">Snapshot Controls</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">Capture frames from the video</CardDescription>
+        <CardTitle className="text-base sm:text-lg">
+          Snapshot Controls
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Capture frames from the video
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-4 sm:px-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
-          <Button 
-            onClick={captureSnapshot} 
-            disabled={!videoLoaded} 
+          <Button
+            onClick={captureSnapshot}
+            disabled={!videoLoaded}
             className="w-full h-auto min-h-[44px] text-sm sm:text-base"
             size="default"
           >
@@ -66,14 +82,20 @@ const VideoSection = ({
               disabled={!videoLoaded}
               className="h-5 w-9"
             />
-            <Label htmlFor="auto-snap" className="text-sm sm:text-base">Auto Snapshot</Label>
+            <Label htmlFor="auto-snap" className="text-sm sm:text-base">
+              Auto Snapshot
+            </Label>
           </div>
           {autoSnapInterval && (
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Label htmlFor="interval" className="text-sm sm:text-base">Every</Label>
+              <Label htmlFor="interval" className="text-sm sm:text-base">
+                Every
+              </Label>
               <Select
                 value={autoSnapInterval.toString()}
-                onValueChange={(value: string) => setAutoSnapInterval(Number(value))}
+                onValueChange={(value: string) =>
+                  setAutoSnapInterval(Number(value))
+                }
               >
                 <SelectTrigger className="w-24 sm:w-28 h-9 sm:h-10 text-sm sm:text-base">
                   <SelectValue placeholder="Interval" />
@@ -95,4 +117,4 @@ const VideoSection = ({
   </div>
 );
 
-export default VideoSection; 
+export default VideoSection;

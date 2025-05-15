@@ -4,6 +4,7 @@ import { useRef, useCallback, memo } from "react"
 import { ChevronsRight } from 'lucide-react'
 import { WordPullUp } from "@/components/eldoraui/wordpullup"
 import { cn } from "@/lib/utils"
+import { Lights } from "@/components/BackgroundLights"
 
 const HeroSection = memo(function HeroSection() {
   const heroRef = useRef<HTMLElement>(null)
@@ -37,21 +38,24 @@ const HeroSection = memo(function HeroSection() {
       className={cn(
         "min-h-[80vh] px-4 py-16 max-w-5xl mx-auto",
         "flex flex-col justify-center items-center text-center",
-        "relative overflow-hidden rounded-3xl mb-24"
+        "relative overflow-hidden rounded-3xl mb-24",
+        "border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-black"
       )}
     >
-      <div className="min-h-[120px] flex items-center justify-center">
+      <Lights className="absolute inset-0 z-0" />
+      
+      <div className="min-h-[120px] flex items-center justify-center relative z-10">
         <WordPullUp 
           text="Create Perfect Thumbnails from Videos or Images" 
           className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-6 max-w-2xl" 
         />
       </div>
 
-      <p className="text-muted-foreground mb-8 max-w-xl text-base sm:text-lg md:text-xl">
+      <p className="text-muted-foreground mb-8 max-w-xl text-base sm:text-lg md:text-xl relative z-10">
         Upload images directly or capture frames from videos. Remove backgrounds, add text, and create stunning thumbnails - all processed locally in your browser for maximum privacy and speed.
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 relative z-10">
         <button 
           onClick={scrollToMainSection}
           className={cn(
@@ -114,4 +118,4 @@ const HeroSection = memo(function HeroSection() {
   )
 })
 
-export default HeroSection 
+export default HeroSection

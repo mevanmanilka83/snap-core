@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --blue-500: #3b82f6;
+  --cyan-400: #06b6d4;
+  --yellow-400: #facc15;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

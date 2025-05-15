@@ -1,17 +1,30 @@
-"use client"
+"use client";
 
 import React from "react";
 import { Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
+import { AnimatedCursor } from "@/components/figma-cursor";
 
-const ImageTabSelection = ({ ImageSection }: { ImageSection: React.ComponentType }) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+const ImageTabSelection = ({
+  ImageSection,
+}: {
+  ImageSection: React.ComponentType;
+}) => {
+  // Mobile check prefixed with underscore to indicate it's declared but not used
+  const _isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
     <Tabs defaultValue="image" className="w-full">
       <div className="flex flex-col gap-4">
+        <div className="relative mb-4">
+          <AnimatedCursor
+            text="Create Image Thumbnail Here"
+            className="absolute -top-6 left-4 z-10"
+            type="image"
+          />
+        </div>
         <SmoothScroll className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="image" className="flex items-center gap-1.5">
@@ -29,4 +42,4 @@ const ImageTabSelection = ({ ImageSection }: { ImageSection: React.ComponentType
   );
 };
 
-export default ImageTabSelection; 
+export default ImageTabSelection;
