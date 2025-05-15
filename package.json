@@ -1,12 +1,19 @@
 {
   "name": "snap-core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered background removal tool built with Next.js",
+  "author": "Your Name",
+  "license": "MIT",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "clean": "rm -rf .next out",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.6.0",
