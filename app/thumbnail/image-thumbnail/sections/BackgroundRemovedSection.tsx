@@ -1,8 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 
 const BackgroundRemovedSection = (props: any) => {
-  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing, backgroundRemoved } = props;
+  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing, backgroundRemoved, onSave } = props;
+  const [localProcessedImage, setLocalProcessedImage] = useState<string | null>(null);
+  const [isImageProcessed, setIsImageProcessed] = useState(false);
+
+  // Maintain local state of processed image
+  useEffect(() => {
+    if (processedImageSrc) {
+      setLocalProcessedImage(processedImageSrc);
+      setIsImageProcessed(true);
+    }
+  }, [processedImageSrc]);
+
+  // Handle save
+  const handleSave = useCallback(() => {
+    if (localProcessedImage && onSave) {
+      onSave(localProcessedImage);
+    }
+  }, [localProcessedImage, onSave]);
 
   return (
     <Card className="w-full">
@@ -13,7 +31,7 @@ const BackgroundRemovedSection = (props: any) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {backgroundRemoved ? (
+        {isImageProcessed ? (
           <div className="flex flex-col items-center justify-center py-8 text-green-600">
             <CheckCircle2 className="h-10 w-10 mb-2" />
             <div className="text-sm font-medium">Background removed! You can now proceed to text editing.</div>
@@ -33,9 +51,9 @@ const BackgroundRemovedSection = (props: any) => {
             )}
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
               <div className="relative w-full h-full">
-                {processedImageSrc ? (
+                {localProcessedImage ? (
                   <img
-                    src={processedImageSrc || "/placeholder.svg"}
+                    src={localProcessedImage}
                     alt="Background Removed"
                     className="object-contain w-full h-full"
                     style={{
@@ -62,7 +80,7 @@ const BackgroundRemovedSection = (props: any) => {
                 )}
               </div>
             </div>
-            {processedImageSrc && (
+            {localProcessedImage && (
               <div data-slot="card-footer" className="items-center [.border-t]:pt-6 flex flex-wrap gap-2 p-4 md:p-6">
                 <button 
                   data-slot="button" 
@@ -72,6 +90,7 @@ const BackgroundRemovedSection = (props: any) => {
                 </button>
                 <button 
                   data-slot="button" 
+                  onClick={handleSave}
                   className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs h-9 px-4 py-2 has-[>svg]:px-3 flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-download h-4 w-4 mr-2" aria-hidden="true">

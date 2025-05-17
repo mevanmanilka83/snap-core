@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -76,36 +76,21 @@ interface TextEditorProps {
 }
 
 const POPULAR_FONTS = [
-  "Poppins",
+  "var(--font-poppins)",
+  "var(--font-inter)",
+  "var(--font-roboto)",
+  "var(--font-open-sans)",
+  "var(--font-montserrat)",
+  "var(--font-lato)",
+  "var(--font-geist-sans)",
   "Arial",
   "Helvetica",
   "Times New Roman",
-  "Courier New",
   "Georgia",
   "Verdana",
   "Impact",
   "Comic Sans MS",
   "Trebuchet MS",
-  "Roboto",
-  "Open Sans",
-  "Montserrat",
-  "Lato",
-  "Playfair Display",
-  "Source Sans Pro",
-  "Raleway",
-  "Ubuntu",
-  "Nunito",
-  "Inter",
-  "Quicksand",
-  "Oswald",
-  "Merriweather",
-  "PT Sans",
-  "Noto Sans",
-  "Work Sans",
-  "Rubik",
-  "Mukta",
-  "Fira Sans",
-  "IBM Plex Sans",
 ]
 
 const PRESET_COLORS = [
@@ -130,74 +115,62 @@ export default function TextEditor({
   textElements: initialTextElements,
   onTextElementsChange,
 }: TextEditorProps) {
-  const [textElements, setTextElements] = useState<TextElement[]>([
-    {
-      id: "default-text",
-      text: "TTV",
-      x: 50,
-      y: 50,
-      fontSize: 72,
-      color: "#ffffff",
-      rotation: 0,
-      fontFamily: "Arial",
-      position: "center",
-      maxWidth: 80,
-      curve: false,
-      backgroundColor: "#000000",
-      backgroundEnabled: true,
-      shadow: true,
-      shadowBlur: 10,
-      shadowColor: "#000000",
-      textAlign: "center",
-      bold: true,
-      italic: false,
-      underline: false,
-      letterSpacing: 0,
-      lineHeight: 1.2,
-      opacity: 100,
-      visible: true,
-      layerOrder: "front"
-    },
-  ])
-
-  const [activeTextElementId, setActiveTextElementId] = useState<string>("default-text")
-  const [activeTab, setActiveTab] = useState<string>("text")
+  const [textElements, setTextElements] = useState<TextElement[]>(initialTextElements || [])
+  const [activeTab, setActiveTab] = useState("text")
+  const [activeTextElementId, setActiveTextElementId] = useState<string>("")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
+  const isInitialMount = useRef(true)
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  // Initialize with provided text elements if available
+  // Initialize text elements when initialTextElements changes
   useEffect(() => {
     if (initialTextElements && initialTextElements.length > 0) {
-      // Ensure all text elements have required properties
-      const formattedElements = initialTextElements.map(element => ({
-        ...element,
-        text: element.text || "",
-        fontSize: element.fontSize || 72,
-        color: element.color || "#ffffff",
-        fontFamily: element.fontFamily || "Arial",
-        x: element.x || 50,
-        y: element.y || 50,
-        rotation: element.rotation || 0,
-        opacity: element.opacity || 100,
-        visible: element.visible ?? true,
-        layerOrder: element.layerOrder || "front",
-        backgroundEnabled: element.backgroundEnabled || false,
-        backgroundColor: element.backgroundColor || "#000000",
-        shadow: element.shadow || false,
-        shadowBlur: element.shadowBlur || 10,
-        shadowColor: element.shadowColor || "#000000",
-        textAlign: element.textAlign || "center",
-        bold: element.bold || false,
-        italic: element.italic || false,
-        maxWidth: element.maxWidth || 80,
-      }))
-      setTextElements(formattedElements)
-      // Set the first text element as active if none is selected
-      if (!activeTextElementId || !formattedElements.find(e => e.id === activeTextElementId)) {
-        setActiveTextElementId(formattedElements[0].id)
+      setTextElements(initialTextElements)
+      if (!activeTextElementId || !initialTextElements.find(e => e.id === activeTextElementId)) {
+        setActiveTextElementId(initialTextElements[0].id)
       }
     }
-  }, [initialTextElements])
+  }, [initialTextElements, activeTextElementId])
+
+  // Memoize the text element change handler
+  const handleTextElementChange = useCallback((id: string, updates: Partial<TextElement>) => {
+    setTextElements(prev => {
+      const newElements = prev.map(element =>
+        element.id === id ? { ...element, ...updates } : element
+      )
+      
+      // Debounce the parent notification
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current)
+      }
+      
+      updateTimeoutRef.current = setTimeout(() => {
+        if (onTextElementsChange) {
+          onTextElementsChange(newElements)
+        }
+      }, 300)
+      
+      return newElements
+    })
+  }, [onTextElementsChange])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Remove the separate debounced effect since we're handling it in handleTextElementChange
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+  }, [])
 
   const handleAddTextElement = () => {
     const newId = `text-${Date.now()}`
@@ -239,15 +212,114 @@ export default function TextEditor({
     }
   }
 
-  const handleTextElementChange = (id: string, updates: Partial<TextElement>) => {
-    setTextElements(prev =>
-      prev.map(element =>
-        element.id === id ? { ...element, ...updates } : element
-      )
-    )
+  const activeTextElement = textElements.find(element => element.id === activeTextElementId)
+
+  // Add a function to handle text element selection
+  const handleTextElementSelect = (id: string) => {
+    setActiveTextElementId(id)
   }
 
-  const activeTextElement = textElements.find(element => element.id === activeTextElementId)
+  // Calculate position based on the position property
+  const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
+    const x = canvasWidth * (element.x / 100)
+    const y = canvasHeight * (element.y / 100)
+    return { x, y }
+  }
+
+  // Function to render text on canvas
+  const renderTextOnCanvas = (
+    ctx: CanvasRenderingContext2D,
+    element: TextElement,
+    canvasWidth: number,
+    canvasHeight: number,
+    scaleFactor: number
+  ) => {
+    try {
+      ctx.save()
+      const position = calculatePosition(element, canvasWidth, canvasHeight)
+      ctx.translate(position.x, position.y)
+      if (element.rotation !== 0) {
+        ctx.rotate((element.rotation * Math.PI) / 180)
+      }
+      const scaledFontSize = element.fontSize * (canvasWidth / 1280)
+
+      let fontStyle = ""
+      if (element.bold) fontStyle += "bold "
+      if (element.italic) fontStyle += "italic "
+      fontStyle += `${scaledFontSize}px ${element.fontFamily}`
+      ctx.font = fontStyle
+
+      ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
+      ctx.textBaseline = "middle"
+      ctx.globalAlpha = (element.opacity || 100) / 100
+
+      if (element.backgroundEnabled && element.backgroundColor) {
+        const metrics = ctx.measureText(element.text)
+        const textHeight = scaledFontSize * 1.2
+        const rectWidth = Math.min(metrics.width, ((element.maxWidth ?? 80) / 100) * canvasWidth)
+        let rectX = 0
+        if (ctx.textAlign === "center") rectX = -rectWidth / 2
+        if (ctx.textAlign === "right") rectX = -rectWidth
+        let rectY = 0
+        const baseline = ctx.textBaseline as CanvasTextBaseline
+        if (baseline === "middle") rectY = -textHeight / 2
+        if (baseline === "bottom") rectY = -textHeight
+        ctx.save()
+        ctx.shadowColor = "transparent"
+        ctx.fillStyle = element.backgroundColor
+        ctx.fillRect(rectX, rectY, rectWidth, textHeight)
+        ctx.restore()
+      }
+
+      if (element.shadow) {
+        ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
+        ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
+        ctx.shadowOffsetX = 2 * scaleFactor
+        ctx.shadowOffsetY = 2 * scaleFactor
+      } else {
+        ctx.shadowColor = "transparent"
+        ctx.shadowBlur = 0
+        ctx.shadowOffsetX = 0
+        ctx.shadowOffsetY = 0
+      }
+
+      ctx.fillStyle = element.color
+
+      if (element.curve) {
+        const text = element.text
+        const radius = Math.max(80, scaledFontSize * 2)
+        const angleStep = Math.PI / (text.length + 1)
+        const startAngle = -Math.PI / 2 - (angleStep * (text.length - 1)) / 2
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i]
+          ctx.save()
+          ctx.rotate(startAngle + i * angleStep)
+          ctx.translate(0, -radius)
+          ctx.fillText(char, 0, 0)
+          ctx.restore()
+        }
+      } else {
+        const maxWidth = ((element.maxWidth ?? 80) / 100) * canvasWidth
+        ctx.fillText(element.text, 0, 0, maxWidth)
+
+        if (element.underline) {
+          const textMetrics = ctx.measureText(element.text)
+          const underlineY = element.fontSize * 0.15 * scaleFactor
+          ctx.lineWidth = element.fontSize * 0.05 * scaleFactor
+          ctx.beginPath()
+          ctx.moveTo(-textMetrics.width / 2, underlineY)
+          ctx.lineTo(textMetrics.width / 2, underlineY)
+          ctx.stroke()
+        }
+      }
+
+      ctx.restore()
+    } catch (error) {
+      console.error("Error rendering text on canvas:", error)
+      toast.error("Failed to render text on canvas")
+      ctx.restore()
+    }
+  }
 
   // Draw preview on canvas
   useEffect(() => {
@@ -265,68 +337,57 @@ export default function TextEditor({
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     // Draw background image if available
-    if (previewImageRef.current && previewImageRef.current.complete) {
-      ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
+    if (previewImageRef.current) {
+      // Check if the image is actually loaded and not broken
+      if (previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
+        try {
+          ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
+        } catch (error) {
+          console.error("Error drawing image to canvas:", error)
+          // Draw a placeholder or error state
+          ctx.fillStyle = "#f0f0f0"
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          ctx.fillStyle = "#666"
+          ctx.font = "14px Arial"
+          ctx.textAlign = "center"
+          ctx.fillText("Image failed to load", canvas.width / 2, canvas.height / 2)
+        }
+      } else {
+        // Image is not loaded yet or is broken
+        ctx.fillStyle = "#f0f0f0"
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = "#666"
+        ctx.font = "14px Arial"
+        ctx.textAlign = "center"
+        ctx.fillText("Loading image...", canvas.width / 2, canvas.height / 2)
+      }
     }
 
     // Draw text elements
     const elements = textElements.filter(element => element.visible)
     elements.forEach((element) => {
-      // Save context state
-      ctx.save()
-
-      // Set font properties
-      let fontStyle = ""
-      if (element.bold) fontStyle += "bold "
-      if (element.italic) fontStyle += "italic "
-      fontStyle += `${(element.fontSize * canvas.width) / 1280}px ${element.fontFamily}`
-      ctx.font = fontStyle
-
-      // Set text alignment
-      ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
-      ctx.textBaseline = "middle"
-
-      // Calculate position
-      const x = (element.x * canvas.width) / 100
-      const y = (element.y * canvas.height) / 100
-
-      // Apply rotation
-      ctx.translate(x, y)
-      ctx.rotate((element.rotation * Math.PI) / 180)
-
-      // Set text color and opacity
-      ctx.fillStyle = element.color
-      ctx.globalAlpha = (element.opacity || 100) / 100
-
-      // Draw text background if enabled
-      if (element.backgroundEnabled && element.backgroundColor) {
-        const textMetrics = ctx.measureText(element.text)
-        const padding = element.fontSize * 0.2
-        ctx.fillStyle = element.backgroundColor
-        ctx.fillRect(
-          -textMetrics.width / 2 - padding,
-          -element.fontSize / 2 - padding,
-          textMetrics.width + padding * 2,
-          element.fontSize + padding * 2
-        )
-        ctx.fillStyle = element.color
+      try {
+        renderTextOnCanvas(ctx, element, canvas.width, canvas.height, 1)
+      } catch (error) {
+        console.error("Error rendering text element:", error)
       }
-
-      // Draw text shadow if enabled
-      if (element.shadow && element.shadowBlur && element.shadowColor) {
-        ctx.shadowColor = element.shadowColor
-        ctx.shadowBlur = (element.shadowBlur * canvas.width) / 1280
-        ctx.shadowOffsetX = 2
-        ctx.shadowOffsetY = 2
-      }
-
-      // Draw text
-      ctx.fillText(element.text, 0, 0)
-
-      // Restore context state
-      ctx.restore()
     })
   }, [processedImageSrc, textElements])
+
+  // Add error handling for the preview image
+  const handlePreviewImageError = () => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d")
+      if (ctx) {
+        ctx.fillStyle = "#f0f0f0"
+        ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        ctx.fillStyle = "#666"
+        ctx.font = "14px Arial"
+        ctx.textAlign = "center"
+        ctx.fillText("Image failed to load", canvasRef.current.width / 2, canvasRef.current.height / 2)
+      }
+    }
+  }
 
   // Handle apply button click
   const handleApply = () => {
@@ -363,8 +424,10 @@ export default function TextEditor({
       onTextElementsChange(formattedElements)
     }
 
-    // Call the onApply callback
-    onApply()
+    // Use setTimeout to ensure state updates are processed before calling onApply
+    setTimeout(() => {
+      onApply()
+    }, 0)
   }
 
   // Generate unique ID for new text elements
@@ -498,19 +561,66 @@ export default function TextEditor({
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value)
-    // Force a re-render of the canvas when switching tabs
-    if (canvasRef.current && previewImageRef.current) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
-      }
-    }
   }
 
+  // Add useEffect to handle resize events
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current && previewImageRef.current) {
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          try {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            
+            // Check if the image is actually loaded and not broken
+            if (previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
+              // Draw the background image
+              ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
+              
+              // Draw all text elements
+              textElements.forEach(element => {
+                if (element.visible) {
+                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, 1)
+                }
+              })
+            } else {
+              // Image is not loaded yet or is broken
+              ctx.fillStyle = "#f0f0f0"
+              ctx.fillRect(0, 0, canvas.width, canvas.height)
+              ctx.fillStyle = "#666"
+              ctx.font = "14px Arial"
+              ctx.textAlign = "center"
+              ctx.fillText("Loading image...", canvas.width / 2, canvas.height / 2)
+            }
+          } catch (error) {
+            console.error("Error in handleResize:", error)
+            // Draw error state
+            ctx.fillStyle = "#f0f0f0"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = "#666"
+            ctx.font = "14px Arial"
+            ctx.textAlign = "center"
+            ctx.fillText("Failed to load image", canvas.width / 2, canvas.height / 2)
+          }
+        }
+      }
+    }
+
+    // Add resize event listener
+    window.addEventListener('resize', handleResize)
+    
+    // Initial render
+    handleResize()
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [textElements])
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4" data-text-editor>
       {processedImageSrc && (
         <div className="relative border rounded-md overflow-hidden w-full md:w-auto">
           <canvas ref={canvasRef} className="w-full md:w-[160px] h-[90px]" />
@@ -523,11 +633,18 @@ export default function TextEditor({
               if (canvasRef.current && previewImageRef.current) {
                 const canvas = canvasRef.current
                 const ctx = canvas.getContext("2d")
-                if (ctx) {
-                  ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
+                if (ctx && previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
+                  try {
+                    ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
+                  } catch (error) {
+                    console.error("Error drawing image to canvas:", error)
+                    handlePreviewImageError()
+                  }
                 }
               }
             }}
+            onError={handlePreviewImageError}
+            crossOrigin="anonymous"
           />
           <Button
             variant="ghost"
@@ -544,7 +661,7 @@ export default function TextEditor({
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <Select
             value={activeTextElementId}
-            onValueChange={(value) => setActiveTextElementId(value)}
+            onValueChange={handleTextElementSelect}
           >
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Select text" />
@@ -718,7 +835,11 @@ export default function TextEditor({
               
               <div className="space-y-2">
                 {textElements.map((element) => (
-                  <div key={element.id} className="flex gap-2 items-start">
+                  <div 
+                    key={element.id} 
+                    className={`flex gap-2 items-start p-2 rounded-md ${element.id === activeTextElementId ? 'bg-accent' : ''}`}
+                    onClick={() => handleTextElementSelect(element.id)}
+                  >
                     <div className="flex-1 space-y-2">
                       <div className="flex gap-2 items-center">
                         <Input
@@ -748,9 +869,9 @@ export default function TextEditor({
                             <SelectValue placeholder="Font" />
                           </SelectTrigger>
                           <SelectContent>
-                            {POPULAR_FONTS.slice(0, 5).map((font) => (
+                            {POPULAR_FONTS.map((font) => (
                               <SelectItem key={font} value={font} style={{ fontFamily: font }}>
-                                {font}
+                                {font.replace("var(--font-", "").replace(")", "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
                               </SelectItem>
                             ))}
                           </SelectContent>

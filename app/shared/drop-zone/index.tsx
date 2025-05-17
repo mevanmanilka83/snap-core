@@ -374,10 +374,48 @@ export default function ImageUploader({
       }
 
       // Validate URL format
+      let parsedUrl: URL
       try {
-        new URL(url)
+        parsedUrl = new URL(url)
       } catch {
         toast.error("Please enter a valid URL")
+        return
+      }
+
+      // Silently reject CloudFront URLs
+      if (parsedUrl.hostname.includes('cloudfront.net')) {
+        setError("Failed to load image. Please try a different URL.")
+        toast.error("Failed to load image. Please try a different URL.")
+        return
+      }
+
+      // Validate URL protocol
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        toast.error("URL must start with http:// or https://")
+        return
+      }
+
+      // Check for common image URL patterns
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff']
+      const hasValidExtension = validExtensions.some(ext => 
+        parsedUrl.pathname.toLowerCase().endsWith(ext)
+      )
+
+      // Check for common image URL patterns in query parameters
+      const hasImageQueryParam = parsedUrl.searchParams.toString().toLowerCase().includes('image') ||
+                               parsedUrl.searchParams.toString().toLowerCase().includes('img') ||
+                               parsedUrl.searchParams.toString().toLowerCase().includes('photo')
+
+      // Check for common image hosting domains
+      const commonImageHosts = [
+        'imgur.com', 'images.unsplash.com', 'picsum.photos',
+        'amazonaws.com', 'googleusercontent.com', 'fbcdn.net', 'instagram.com',
+        'twimg.com', 'cdn.discordapp.com', 'media.giphy.com'
+      ]
+      const isCommonImageHost = commonImageHosts.some(host => parsedUrl.hostname.includes(host))
+
+      if (!hasValidExtension && !hasImageQueryParam && !isCommonImageHost) {
+        toast.error("URL must point to a valid image file or image hosting service")
         return
       }
 
@@ -391,23 +429,66 @@ export default function ImageUploader({
         previewUrl.current = null
       }
 
-      // Update state
-      previewUrl.current = url
-      setImageSrc(url)
-      setProcessedImageSrc("")
-      setThumbnailSrc("")
-      setProcessingProgress(0)
-      resetFilters()
+      // Create a new image to test loading
+      const testImg = new window.Image()
+      testImg.crossOrigin = "anonymous"
+      
+      // Set a timeout for the image loading
+      const timeoutId = setTimeout(() => {
+        testImg.src = "" // Cancel the image loading
+        setIsLoading(false)
+        setError("Failed to load image. The URL may be invalid or the server may be too slow.")
+        toast.error("Failed to load image. Please try a different URL.")
+      }, 15000) // 15 second timeout
+      
+      testImg.onload = () => {
+        clearTimeout(timeoutId) // Clear the timeout since image loaded successfully
+        
+        // Check if the image is actually loaded and not broken
+        if (!testImg.complete || testImg.naturalWidth === 0) {
+          setIsLoading(false)
+          setError("Failed to load image. The image may be inaccessible or the URL may be invalid.")
+          toast.error("Failed to load image. Please check the URL and try again.")
+          return
+        }
 
-      // Update image reference
-      const img = hiddenImageRef.current
-      if (img) {
-        img.src = url
+        // Validate image dimensions
+        const maxDimension = 8192 // Maximum dimension in pixels
+        if (testImg.naturalWidth > maxDimension || testImg.naturalHeight > maxDimension) {
+          setIsLoading(false)
+          setError(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
+          toast.error(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
+          return
+        }
+
+        // Update state only after successful load
+        previewUrl.current = url
+        setImageSrc(url)
+        setProcessedImageSrc("")
+        setThumbnailSrc("")
+        setProcessingProgress(0)
+        resetFilters()
+
+        // Update image reference
+        const img = hiddenImageRef.current
+        if (img) {
+          img.src = url
+        }
+
+        setImageLoaded(false)
+        setUndoStack([])
+        setRedoStack([])
       }
 
-      setImageLoaded(false)
-      setUndoStack([])
-      setRedoStack([])
+      testImg.onerror = () => {
+        clearTimeout(timeoutId) // Clear the timeout since we got an error
+        setIsLoading(false)
+        setError("Failed to load image. The image may be inaccessible or the URL may be invalid.")
+        toast.error("Failed to load image. Please try a different URL.")
+      }
+
+      // Start loading the test image
+      testImg.src = url
     } catch (error) {
       console.error("Error handling URL load:", error)
       toast.error("Failed to load the image. Please try again.")
@@ -420,6 +501,14 @@ export default function ImageUploader({
     if (!img) return
 
     try {
+      // Check if the image is actually loaded and not broken
+      if (!img.complete || img.naturalWidth === 0) {
+        setError("Image failed to load properly")
+        toast.error("Image failed to load properly")
+        handleCancel()
+        return
+      }
+
       // Validate image dimensions
       const maxDimension = 4096 // Maximum dimension in pixels
       if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
@@ -456,6 +545,13 @@ export default function ImageUploader({
           canvas.width = img.naturalWidth
           canvas.height = img.naturalHeight
           ctx.clearRect(0, 0, canvas.width, canvas.height)
+          try {
+            ctx.drawImage(img, 0, 0)
+          } catch (error) {
+            console.error("Error drawing image to canvas:", error)
+            setError("Failed to process image")
+            handleCancel()
+          }
         }
       }
     } catch (error) {
@@ -466,8 +562,10 @@ export default function ImageUploader({
   }
 
   const handleImageError = () => {
-    if (hasAttemptedLoad) {
+    // Only show error if we've actually attempted to load an image
+    if (hasAttemptedLoad && imageSrc) {
       setError("Failed to load image. Please check the URL or file and try again.")
+      toast.error("Failed to load image. Please try again.")
     }
     setImageLoaded(false)
     setIsLoading(false)
@@ -525,50 +623,134 @@ export default function ImageUploader({
   }
 
   const handleRemoveBackground = async () => {
-    if (!imageSrc) return
+    if (!imageSrc) {
+      toast.error("No image selected")
+      return
+    }
 
     setIsProcessing(true)
     setThumbnailSrc("") // Clear thumbnail
 
     try {
+      // Validate image source before processing
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      
+      await new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Image loading timed out"))
+        }, 15000) // 15 second timeout
+
+        img.onload = () => {
+          clearTimeout(timeoutId)
+          // Verify the image loaded successfully
+          if (!img.complete || img.naturalWidth === 0) {
+            reject(new Error("Image failed to load properly"))
+            return
+          }
+          resolve(true)
+        }
+        img.onerror = () => {
+          clearTimeout(timeoutId)
+          reject(new Error("Failed to load image. Please try again."))
+        }
+        img.src = imageSrc
+      })
+
+      // Show toast once at the start
+      toast.info("Removing background...", {
+        duration: 2000,
+        position: "bottom-right",
+      });
+
       // Save current processed image to undo stack if it exists
       if (processedImageSrc) {
         setUndoStack((prev) => [...prev, processedImageSrc])
         setRedoStack([]) // Clear redo stack
       }
 
-      const result = await backgroundRemoval.removeBackground(imageSrc, {
-        progress: (message: string, progress: number) => {
-          toast.info(`Removing background... ${Math.round(progress * 100)}%`, {
-            duration: 2000,
-            position: "bottom-right",
-          })
-        },
-      })
+      // Create a new worker with proper error handling
+      let worker: Worker | null = null;
+      try {
+        worker = new Worker(new URL('../workers/background-removal.worker.ts', import.meta.url), {
+          type: 'module'
+        });
+      } catch (error) {
+        console.error("Failed to create worker:", error);
+        throw new Error("Failed to initialize background removal process");
+      }
 
-      if (result) {
-        const url = URL.createObjectURL(result)
+      // Set up worker message handling
+      worker.onmessage = (event) => {
+        const { type, data } = event.data
 
-        // Revoke old blob URL if it exists
-        if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
-          URL.revokeObjectURL(processedUrl.current)
+        switch (type) {
+          case 'progress':
+            setProcessingProgress(data)
+            break
+          case 'complete':
+            if (data) {
+              // Validate the blob before creating URL
+              if (!(data instanceof Blob)) {
+                throw new Error("Invalid image data received from worker")
+              }
+              
+              // Verify the blob is not empty
+              if (data.size === 0) {
+                throw new Error("Received empty image data from worker")
+              }
+
+              // Verify the blob is a valid image
+              if (!data.type.startsWith('image/')) {
+                throw new Error("Invalid image format received from worker")
+              }
+              
+              const url = URL.createObjectURL(data)
+              // Revoke old blob URL if it exists
+              if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
+                URL.revokeObjectURL(processedUrl.current)
+              }
+              processedUrl.current = url
+              setProcessedImageSrc(url)
+              toast.success("Background removed successfully", {
+                duration: 2000,
+                position: "bottom-right",
+              })
+            }
+            worker?.terminate()
+            setIsProcessing(false)
+            break
+          case 'error':
+            console.error("Worker error:", data)
+            toast.error(data || "Failed to remove background", {
+              duration: 2000,
+              position: "bottom-right",
+            })
+            worker?.terminate()
+            setIsProcessing(false)
+            break
         }
+      }
 
-        processedUrl.current = url
-        setProcessedImageSrc(url)
-
-        toast.success("Background removed successfully", {
+      // Handle worker errors
+      worker.onerror = (error) => {
+        console.error("Worker error:", error)
+        toast.error("Failed to remove background. Please try again.", {
           duration: 2000,
           position: "bottom-right",
         })
+        worker?.terminate()
+        setIsProcessing(false)
       }
+
+      // Start the background removal process
+      worker.postMessage({ imageSrc })
     } catch (error) {
       console.error("Error removing background:", error)
-      toast.error("Failed to remove background", {
+      toast.error(error instanceof Error ? error.message : "Failed to remove background", {
         duration: 2000,
         position: "bottom-right",
       })
-    } finally {
       setIsProcessing(false)
     }
   }
@@ -611,13 +793,208 @@ export default function ImageUploader({
     toast.info("Redo successful")
   }
 
-  const handleCreateThumbnail = () => {
+  const handleCreateThumbnail = async () => {
     if (!processedImageSrc) {
       toast.error("Please process the image first")
       return
     }
+
+    // Prevent multiple simultaneous thumbnail creation attempts
+    if (isCreatingThumbnail) {
+      return
+    }
+
     setIsCreatingThumbnail(true)
-    createThumbnail(processedImageSrc)
+    
+    try {
+      // Create a new image for the background
+      const bgImg = new window.Image()
+      bgImg.crossOrigin = "anonymous"
+      
+      // Create the foreground image with transparent background
+      const fgImg = new window.Image()
+      fgImg.crossOrigin = "anonymous"
+
+      // Load background image (original image)
+      await new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Background image loading timed out"))
+        }, 15000) // 15 second timeout
+
+        bgImg.onload = () => {
+          clearTimeout(timeoutId)
+          // Verify the image loaded successfully
+          if (!bgImg.complete || bgImg.naturalWidth === 0) {
+            reject(new Error("Background image failed to load properly"))
+            return
+          }
+          resolve(true)
+        }
+        bgImg.onerror = () => {
+          clearTimeout(timeoutId)
+          reject(new Error("Failed to load background image. Please try again."))
+        }
+        bgImg.src = imageSrc // Use original image as background
+      })
+
+      // Load foreground image (processed image with removed background)
+      await new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Foreground image loading timed out"))
+        }, 15000) // 15 second timeout
+
+        // Log the processed image source for debugging
+        console.log("Processing foreground image:", {
+          sourceType: processedImageSrc.substring(0, 50) + "...",
+          length: processedImageSrc.length
+        })
+
+        fgImg.onload = () => {
+          clearTimeout(timeoutId)
+          // Verify the image loaded successfully
+          if (!fgImg.complete || fgImg.naturalWidth === 0) {
+            reject(new Error("Foreground image failed to load properly"))
+            return
+          }
+
+          // Log successful image load
+          console.log("Foreground image loaded successfully:", {
+            width: fgImg.naturalWidth,
+            height: fgImg.naturalHeight,
+            complete: fgImg.complete
+          })
+
+          resolve(true)
+        }
+
+        fgImg.onerror = () => {
+          clearTimeout(timeoutId)
+          
+          // Check if the processed image source is valid
+          if (!processedImageSrc || processedImageSrc === '') {
+            reject(new Error("No processed image available. Please remove background first."))
+            return
+          }
+
+          // Check if the image source is corrupted
+          if (processedImageSrc.startsWith('data:image/') && !processedImageSrc.includes('base64,')) {
+            reject(new Error("Invalid image data. Please try removing the background again."))
+            return
+          }
+
+          // Check if the image source is a valid URL
+          try {
+            new URL(processedImageSrc)
+          } catch {
+            reject(new Error("Invalid image URL. Please try removing the background again."))
+            return
+          }
+
+          // If we get here, it's a general loading error
+          reject(new Error("Failed to load foreground image. Please try removing the background again."))
+        }
+
+        // Ensure the processed image source is valid before loading
+        if (!processedImageSrc || processedImageSrc === '') {
+          reject(new Error("No processed image available. Please remove background first."))
+          return
+        }
+
+        // Add error handling for the image source
+        try {
+          // Check if the image source is a blob URL
+          if (processedImageSrc.startsWith('blob:')) {
+            // Verify the blob URL is still valid
+            fetch(processedImageSrc)
+              .then(response => {
+                if (!response.ok) {
+                  reject(new Error("Image data is no longer available. Please try removing the background again."))
+                  return
+                }
+                fgImg.src = processedImageSrc
+              })
+              .catch(() => {
+                reject(new Error("Failed to access image data. Please try removing the background again."))
+              })
+          } else {
+            fgImg.src = processedImageSrc
+          }
+        } catch (error) {
+          console.error("Error setting image source:", error)
+          reject(new Error("Failed to process image. Please try again."))
+        }
+      })
+
+      const canvas = canvasRef.current
+      if (!canvas) {
+        throw new Error("Canvas not found")
+      }
+      
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        throw new Error("Could not get canvas context")
+      }
+
+      // Set canvas dimensions based on the original image size
+      canvas.width = bgImg.width
+      canvas.height = bgImg.height
+
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Draw background image with filters
+      applyFilters(ctx)
+      ctx.drawImage(bgImg, 0, 0)
+      ctx.filter = "none" // Reset filters for text
+
+      // Draw text elements that should be behind the image
+      const backElements = textElements.filter((element) => element.visible && element.layerOrder === "back")
+      const frontElements = textElements.filter((element) => element.visible && element.layerOrder === "front")
+      const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+
+      // Draw back elements
+      backElements.forEach((element) => {
+        renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+      })
+
+      // Draw foreground image with transparency
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.drawImage(fgImg, 0, 0)
+
+      // Draw front elements
+      frontElements.forEach((element) => {
+        renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+      })
+      
+      // Convert canvas to data URL and update thumbnail
+      const finalImageUrl = canvas.toDataURL("image/png")
+      
+      // Revoke old thumbnail URL if it exists
+      if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+        URL.revokeObjectURL(thumbnailUrl.current)
+      }
+      
+      // Update the thumbnail
+      thumbnailUrl.current = finalImageUrl
+      setThumbnailSrc(finalImageUrl)
+      toast.success("Thumbnail created successfully")
+
+      // Clean up images
+      bgImg.src = ""
+      fgImg.src = ""
+    } catch (error) {
+      console.error("Error creating thumbnail:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to create thumbnail")
+      
+      // Reset state on error
+      setThumbnailSrc("")
+      if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
+        URL.revokeObjectURL(thumbnailUrl.current)
+        thumbnailUrl.current = null
+      }
+    } finally {
+      setIsCreatingThumbnail(false)
+    }
   }
 
   // Calculate position based on the position property
@@ -674,7 +1051,7 @@ export default function ImageUploader({
       if (element.rotation !== 0) {
         ctx.rotate((element.rotation * Math.PI) / 180)
       }
-      const scaledFontSize = element.fontSize * scaleFactor * 2
+      const scaledFontSize = element.fontSize * (canvasWidth / 1280)
 
       let fontStyle = ""
       if (element.bold) fontStyle += "bold "
@@ -793,127 +1170,6 @@ export default function ImageUploader({
     }
   }
 
-  // Separate function to create thumbnail with background and text
-  const createThumbnail = (transparentImageUrl: string) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-    
-    setIsCreatingThumbnail(true)
-    
-    try {
-      // Create a new image for the background (use original image)
-      const bgImg = new window.Image()
-      bgImg.crossOrigin = "anonymous"
-      
-      // Create the foreground image with transparent background
-      const fgImg = new window.Image()
-      fgImg.crossOrigin = "anonymous"
-      
-      // Set up error handling for both images
-      const handleImageError = () => {
-        setIsCreatingThumbnail(false)
-        toast.error("Failed to load image for thumbnail")
-        // Clean up images
-        bgImg.src = ""
-        fgImg.src = ""
-      }
-      
-      bgImg.onerror = handleImageError
-      fgImg.onerror = handleImageError
-      
-      bgImg.onload = () => {
-        try {
-          // Set canvas dimensions based on the original image size
-          canvas.width = bgImg.width
-          canvas.height = bgImg.height
-
-          // Draw background image with filters
-          applyFilters(ctx)
-          ctx.drawImage(bgImg, 0, 0)
-          ctx.filter = "none" // Reset filters for text
-
-          // Draw text elements that should be behind the image
-          textElements
-            .filter((element) => element.visible && element.layerOrder === "back")
-            .forEach((element) => {
-              const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-              renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
-            })
-
-          // Draw foreground image
-          fgImg.onload = () => {
-            try {
-              // Clear any previous drawings
-              ctx.clearRect(0, 0, canvas.width, canvas.height)
-              
-              // Draw background image with filters
-              applyFilters(ctx)
-              ctx.drawImage(bgImg, 0, 0)
-              ctx.filter = "none" // Reset filters for text
-              
-              // Draw text elements that should be behind the image
-              textElements
-                .filter((element) => element.visible && element.layerOrder === "back")
-                .forEach((element) => {
-                  const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
-                })
-
-              // Draw foreground image
-              ctx.drawImage(fgImg, 0, 0)
-
-              // Draw text elements that should be in front of the image
-              textElements
-                .filter((element) => element.visible && element.layerOrder === "front")
-                .forEach((element) => {
-                  const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
-                })
-              
-              // Convert canvas to data URL and update thumbnail
-              const finalImageUrl = canvas.toDataURL("image/png")
-              
-              // Revoke old thumbnail URL if it exists
-              if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
-                URL.revokeObjectURL(thumbnailUrl.current)
-              }
-              
-              // Update the thumbnail
-              thumbnailUrl.current = finalImageUrl
-              setThumbnailSrc(finalImageUrl)
-              setIsCreatingThumbnail(false)
-
-              // Clean up images
-              bgImg.src = ""
-              fgImg.src = ""
-            } catch (error) {
-              console.error("Error in foreground image processing:", error)
-              toast.error("Failed to process foreground image")
-              handleImageError()
-            }
-          }
-          
-          // Load the transparent image
-          fgImg.src = transparentImageUrl
-        } catch (error) {
-          console.error("Error in background image processing:", error)
-          toast.error("Failed to process background image")
-          handleImageError()
-        }
-      }
-      
-      // Load the original image as background
-      bgImg.src = imageSrc
-    } catch (error) {
-      console.error("Error in thumbnail creation:", error)
-      toast.error("Failed to create thumbnail")
-      setIsCreatingThumbnail(false)
-    }
-  }
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -1000,6 +1256,65 @@ export default function ImageUploader({
     }
   }, [])
 
+  const handleTabChange = (newTab: string) => {
+    // For edit tab, require an image to be loaded
+    if (newTab === "edit") {
+      if (!imageLoaded) {
+        toast.error("Please upload an image first");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // Strictly prevent moving to text tab without background removal
+    if (newTab === "text") {
+      // Check if we're coming from edit tab
+      if (activeTab === "edit") {
+        if (!processedImageSrc) {
+          toast.error("You must remove the background before proceeding to text editing");
+          return;
+        }
+        // Double check that the background was actually removed
+        if (!processedImageSrc.includes('data:image/png;base64')) {
+          toast.error("Background removal is required before proceeding to text editing");
+          return;
+        }
+      } else {
+        // For other tabs, still require background removal
+        if (!processedImageSrc) {
+          toast.error("Please remove background before adding text");
+          return;
+        }
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    // For preview tab, require background removal
+    if (newTab === "preview") {
+      if (!processedImageSrc) {
+        toast.error("Please remove background first to see the preview");
+        return;
+      }
+      setActiveTab(newTab);
+      return;
+    }
+
+    setActiveTab(newTab);
+  };
+
+  // Add useEffect to handle text editor state preservation
+  useEffect(() => {
+    if (activeTab === "text" && processedImageSrc) {
+      // Force a re-render of the text editor when switching to text tab
+      const textEditorElement = document.querySelector('[data-text-editor]');
+      if (textEditorElement) {
+        textEditorElement.dispatchEvent(new Event('resize'));
+      }
+    }
+  }, [activeTab, processedImageSrc]);
+
   // Wrap the main component with error boundary
   return (
     <ErrorBoundary>
@@ -1015,7 +1330,7 @@ export default function ImageUploader({
           crossOrigin="anonymous"
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-auto p-1">
             <TabsTrigger value="file" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
               <UploadIcon className="h-3 w-3 sm:h-4 sm:w-4" />

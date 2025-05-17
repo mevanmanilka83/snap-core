@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Inter, Poppins, Roboto, Open_Sans, Montserrat, Lato } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import ThemeProvider from "@/main-header/ThemeProvider"
@@ -18,6 +18,51 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const roboto = Roboto({
+  variable: "--font-roboto",
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const openSans = Open_Sans({
+  variable: "--font-open-sans",
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+})
+
+const lato = Lato({
+  variable: "--font-lato",
+  weight: ["400", "700"],
   subsets: ["latin"],
   display: 'swap',
   preload: true,
@@ -95,6 +140,12 @@ export default function RootLayout({
         className={cn(
           geistSans.variable,
           geistMono.variable,
+          inter.variable,
+          poppins.variable,
+          roboto.variable,
+          openSans.variable,
+          montserrat.variable,
+          lato.variable,
           "antialiased min-h-screen bg-background text-foreground"
         )}
       >

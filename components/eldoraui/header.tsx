@@ -1,18 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
 import { Disclosure } from "@headlessui/react"
-import { motion } from "framer-motion"
-import { Menu, X } from "lucide-react"
 import { Link } from "@/components/ui/link"
 import { PlusGrid, PlusGridItem, PlusGridRow } from "@/components/eldoraui/plusgrid"
 import { Logo } from "@/components/logo"
 import { siteConfig } from "@/config/site"
 import ModeToggle from "@/main-header/ModeToggle"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 
 function DesktopNav() {
   return (

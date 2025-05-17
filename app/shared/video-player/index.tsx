@@ -496,9 +496,36 @@ export function VideoPlayer({
               onSeeking={handleTimeUpdate}
               onEnded={handleVideoEnd}
               onError={(e) => {
-                console.error("Video error:", e);
-                setError("Error playing video");
-                toast.error("Error playing video");
+                const video = e.target as HTMLVideoElement;
+                const error = video.error;
+                let errorMessage = "Error playing video";
+                
+                if (error) {
+                  switch (error.code) {
+                    case MediaError.MEDIA_ERR_ABORTED:
+                      errorMessage = "Video playback was aborted";
+                      break;
+                    case MediaError.MEDIA_ERR_NETWORK:
+                      errorMessage = "Network error occurred while loading video";
+                      break;
+                    case MediaError.MEDIA_ERR_DECODE:
+                      errorMessage = "Video decoding failed. The video format may not be supported";
+                      break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                      errorMessage = "Video format not supported";
+                      break;
+                    default:
+                      errorMessage = `Video error: ${error.message || "Unknown error"}`;
+                  }
+                }
+                
+                console.error("Video error:", {
+                  code: error?.code,
+                  message: error?.message
+                });
+                
+                setError(errorMessage);
+                toast.error(errorMessage);
               }}
               controls={false}
               playsInline
