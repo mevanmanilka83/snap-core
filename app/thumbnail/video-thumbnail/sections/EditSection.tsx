@@ -34,7 +34,9 @@ const EditSection = ({
   handleRemoveBackground,
   snapshots,
   selectedSnapshotIndex,
-  onNext
+  onNext,
+  backgroundRemoved,
+  setCanGoToTextAndPreview
 }: any) => {
   // Get the selected snapshot
   const selectedSnapshot = selectedSnapshotIndex >= 0 && snapshots[selectedSnapshotIndex] ? snapshots[selectedSnapshotIndex] : null;
@@ -150,7 +152,15 @@ const EditSection = ({
           <button
             type="button"
             className="px-6 py-2 rounded bg-primary text-white font-semibold disabled:bg-gray-300 disabled:text-gray-500 transition-all w-full sm:w-auto"
-            onClick={() => onNext && onNext()}
+            onClick={() => {
+              if (!processedImageSrc) {
+                toast.error("Please remove the background before proceeding to text editing.");
+                return;
+              }
+              setCanGoToTextAndPreview(true);
+              onNext();
+            }}
+            disabled={!processedImageSrc}
           >
             Next
           </button>

@@ -354,7 +354,7 @@ export default function VideoThumbnailGenerator() {
       try {
         // Create canvas matching video dimensions
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
         if (!ctx) {
           reject(new Error('Failed to get canvas context'));
@@ -368,15 +368,15 @@ export default function VideoThumbnailGenerator() {
         // Draw current video frame
         ctx.drawImage(video, 0, 0);
 
-        // Convert to data URL
-        const dataUrl = canvas.toDataURL('image/png');
-        
-        if (!dataUrl || dataUrl === 'data:,') {
-          reject(new Error('Failed to capture frame'));
-          return;
-        }
-
-        resolve(dataUrl);
+        // Convert to blob instead of data URL to avoid CORS issues
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create image blob'));
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          resolve(url);
+        }, 'image/png', 1.0);
       } catch (err) {
         reject(err);
       }
@@ -394,7 +394,7 @@ export default function VideoThumbnailGenerator() {
 
     // Verify video is ready
     if (!video.videoWidth || !video.videoHeight) {
-      toast.error("Video dimensions not available. Please wait for video to load.");
+      toast.error("Video is still loading. Please wait a moment and try again.");
       return;
     }
 
@@ -410,15 +410,6 @@ export default function VideoThumbnailGenerator() {
 
       // Capture the frame
       const snapshotUrl = await createVideoSnapshot(video);
-
-      // Verify the captured image
-      await new Promise<void>((resolve, reject) => {
-        const img = new window.Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to verify captured image'));
-        img.src = snapshotUrl;
-      });
 
       // Update all states
       setSnapshots(prev => [...prev, snapshotUrl]);
@@ -442,9 +433,11 @@ export default function VideoThumbnailGenerator() {
 
     } catch (error) {
       console.error('Snapshot error:', error);
-      toast.error("Failed to capture snapshot", {
-        description: "Please ensure the video is fully loaded and try again"
-      });
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to capture snapshot");
+      }
     } finally {
       // Restore video state
       if (wasPlaying) {
@@ -654,57 +647,108 @@ export default function VideoThumbnailGenerator() {
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
 
-      img.onload = async () => {
-        try {
-          // Process the image with imgly background removal
-          const response = await backgroundRemoval.removeBackground(img.src, {
-            progress: (_message: string, progress: number) => {
-              setProcessingProgress(Math.round(progress * 100));
-            },
-          });
+      // First load the image to ensure it's accessible
+      await new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Image loading timed out"));
+        }, 15000); // 15 second timeout
 
-          // Convert blob to URL
-          const processedImageUrl = URL.createObjectURL(response);
-
-          // Save current state to undo stack
-          if (processedFrame) {
-            setUndoStack((prev) => [...prev, processedFrame]);
-            setRedoStack([]); // Clear redo stack on new action
+        img.onload = () => {
+          clearTimeout(timeoutId);
+          // Verify the image loaded successfully
+          if (!img.complete || img.naturalWidth === 0) {
+            reject(new Error("Image failed to load properly"));
+            return;
           }
+          resolve(true);
+        };
 
-          // Update states
-          setProcessedFrame(processedImageUrl);
-          setProcessedImageSrc(processedImageUrl);
-          setBackgroundRemoved(true);
+        img.onerror = () => {
+          clearTimeout(timeoutId);
+          reject(new Error("Failed to load image. Please try again."));
+        };
 
-          // Update final preview
-          updateFinalPreview();
+        img.src = processedFrame;
+      });
 
-          toast.success("Background removed successfully");
-          // Switch to text tab after state is updated
-          // setTimeout(() => setActiveTab("text"), 0); // Remove auto navigation
-        } catch (error) {
-          console.error("Error removing background:", error);
-          toast.error("Failed to remove background. Please try again.");
-        } finally {
-          setIsProcessing(false);
-          setProcessingProgress(0);
+      // Create a new worker with proper error handling
+      let worker: Worker | null = null;
+      try {
+        worker = new Worker(new URL('../../shared/workers/background-removal.worker.ts', import.meta.url), {
+          type: 'module'
+        });
+      } catch (error) {
+        console.error("Failed to create worker:", error);
+        throw new Error("Failed to initialize background removal process");
+      }
+
+      // Set up worker message handling with debounced progress updates
+      let lastProgressUpdate = 0;
+      worker.onmessage = (event) => {
+        const { type, data } = event.data;
+
+        switch (type) {
+          case 'progress':
+            // Debounce progress updates to reduce re-renders
+            const now = Date.now();
+            if (now - lastProgressUpdate > 100) { // Only update every 100ms
+              setProcessingProgress(data);
+              lastProgressUpdate = now;
+            }
+            break;
+          case 'complete':
+            if (data) {
+              // Validate the blob before creating URL
+              if (!(data instanceof Blob)) {
+                throw new Error("Invalid image data received from worker");
+              }
+              
+              // Verify the blob is not empty
+              if (data.size === 0) {
+                throw new Error("Received empty image data from worker");
+              }
+
+              // Verify the blob is a valid image
+              if (!data.type.startsWith('image/')) {
+                throw new Error("Invalid image format received from worker");
+              }
+              
+              const url = URL.createObjectURL(data);
+              // Revoke old blob URL if it exists
+              if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
+                URL.revokeObjectURL(processedImageSrc);
+              }
+              setProcessedImageSrc(url);
+              setProcessedFrame(url);
+              setBackgroundRemoved(true);
+              toast.success("Background removed successfully");
+            }
+            worker?.terminate();
+            setIsProcessing(false);
+            break;
+          case 'error':
+            console.error("Worker error:", data);
+            toast.error(data || "Failed to remove background");
+            worker?.terminate();
+            setIsProcessing(false);
+            break;
         }
       };
 
-      img.onerror = () => {
+      // Handle worker errors
+      worker.onerror = (error) => {
+        console.error("Worker error:", error);
+        toast.error("Failed to remove background. Please try again.");
+        worker?.terminate();
         setIsProcessing(false);
-        setProcessingProgress(0);
-        console.error("Error loading image for background removal");
-        toast.error("Failed to load image for background removal");
       };
 
-      img.src = processedFrame;
+      // Start the background removal process
+      worker.postMessage({ imageSrc: processedFrame });
     } catch (error) {
+      console.error("Error removing background:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to remove background. Please try again.");
       setIsProcessing(false);
-      setProcessingProgress(0);
-      console.error("Error in background removal:", error);
-      toast.error("Failed to remove background");
     }
   };
 
@@ -1160,10 +1204,10 @@ export default function VideoThumbnailGenerator() {
       return;
     }
 
-    // For text and preview tabs, require canGoToTextAndPreview
+    // For text and preview tabs, require processed image and navigation permission
     if (newTab === "text" || newTab === "preview") {
-      if (!canGoToTextAndPreview) {
-        toast.error('Please remove the background and click Next in the Edit tab before proceeding.');
+      if (!processedImageSrc || !canGoToTextAndPreview) {
+        toast.error("Please remove the background and click Next in the Edit tab before proceeding.");
         return;
       }
       setActiveTab(newTab);

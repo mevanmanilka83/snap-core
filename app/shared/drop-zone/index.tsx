@@ -680,13 +680,19 @@ export default function ImageUploader({
         throw new Error("Failed to initialize background removal process");
       }
 
-      // Set up worker message handling
+      // Set up worker message handling with debounced progress updates
+      let lastProgressUpdate = 0;
       worker.onmessage = (event) => {
         const { type, data } = event.data
 
         switch (type) {
           case 'progress':
-            setProcessingProgress(data)
+            // Debounce progress updates to reduce re-renders
+            const now = Date.now();
+            if (now - lastProgressUpdate > 100) { // Only update every 100ms
+              setProcessingProgress(data)
+              lastProgressUpdate = now;
+            }
             break
           case 'complete':
             if (data) {

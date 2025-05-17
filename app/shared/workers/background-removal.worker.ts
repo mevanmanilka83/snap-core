@@ -5,22 +5,29 @@ self.onmessage = async (e) => {
   try {
     const { imageSrc } = e.data
 
-    // Configure background removal with more precise parameters
+    // Validate image source
+    if (!imageSrc) {
+      throw new Error("No image source provided")
+    }
+
+    // Configure background removal with optimized parameters
     const options = {
-      // Remove publicPath as it's causing issues with URL construction
       model: "isnet" as const,
       progress: (key: string, current: number, total: number) => {
+        // Only send progress updates every 5%
         const progress = Math.round((current / total) * 100)
-        self.postMessage({ type: 'progress', data: progress })
+        if (progress % 5 === 0) {
+          self.postMessage({ type: 'progress', data: progress })
+        }
       },
-      // Add more precise parameters
+      // Optimize parameters for better performance
       alphaMatting: true,
       alphaMattingForegroundThreshold: 240,
       alphaMattingBackgroundThreshold: 10,
       alphaMattingErodeSize: 10,
       debug: false,
       proxyToWorker: true,
-      // Add more precise segmentation parameters
+      // Optimize segmentation parameters
       segmentation: {
         threshold: 0.5,
         minSize: 100,
@@ -28,18 +35,37 @@ self.onmessage = async (e) => {
       }
     }
 
-    // Validate image source
-    if (!imageSrc) {
-      throw new Error("No image source provided")
+    // Fetch the image data
+    const response = await fetch(imageSrc)
+    if (!response.ok) {
+      throw new Error("Failed to fetch image")
     }
 
-    // Process the image
-    const blob = await backgroundRemoval.removeBackground(imageSrc, options)
-    
-    // Send the result back
-    self.postMessage({ type: 'complete', data: blob })
+    // Get the image as a blob
+    const blob = await response.blob()
+    if (!blob || blob.size === 0) {
+      throw new Error("Invalid image data received")
+    }
+
+    // Create a blob URL for the image
+    const blobUrl = URL.createObjectURL(blob)
+
+    try {
+      // Process the image with imgly background removal
+      const processedBlob = await backgroundRemoval.removeBackground(blobUrl, options)
+
+      // Clean up the blob URL
+      URL.revokeObjectURL(blobUrl)
+
+      // Send the processed image back to the main thread
+      self.postMessage({ type: 'complete', data: processedBlob })
+    } catch (error) {
+      // Clean up the blob URL in case of error
+      URL.revokeObjectURL(blobUrl)
+      throw error
+    }
   } catch (error) {
-    console.error("Background removal error:", error)
+    console.error("Worker error:", error)
     self.postMessage({ 
       type: 'error', 
       data: error instanceof Error ? error.message : "Failed to remove background" 

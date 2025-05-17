@@ -276,15 +276,11 @@ export default function VideoTabSelection({
             snapshots={snapshots}
             selectedSnapshotIndex={selectedSnapshotIndex}
             onNext={() => {
-              if (!backgroundRemoved) {
-                toast.error(
-                  "Please remove the background before proceeding to text editing. Background removal is important for text placement."
-                );
-                return;
-              }
               setCanGoToTextAndPreview(true);
               handleTabChange("text");
             }}
+            backgroundRemoved={backgroundRemoved}
+            setCanGoToTextAndPreview={setCanGoToTextAndPreview}
           />
         </TabsContent>
 

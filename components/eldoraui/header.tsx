@@ -52,7 +52,7 @@ export function Navbar({ banner }: { banner?: React.ReactNode }) {
               <PlusGridRow className="relative flex justify-between">
                 <div className="relative flex gap-6">
                   <PlusGridItem className="py-1">
-                    <Link href="/" title="Home">
+                    <Link href="/" title="Home" onClick={() => window.location.reload()}>
                       <div className="flex items-center space-x-2">
                         <div className="-mt-1">
                           <Logo className="mr-2 size-6" />
