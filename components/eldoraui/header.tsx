@@ -4,9 +4,9 @@ import type React from "react"
 import { Disclosure } from "@headlessui/react"
 import { Link } from "@/components/ui/link"
 import { PlusGrid, PlusGridItem, PlusGridRow } from "@/components/eldoraui/plusgrid"
-import { Logo } from "@/components/logo"
 import { siteConfig } from "@/config/site"
 import ModeToggle from "@/main-header/ModeToggle"
+import Image from "next/image"
 
 
 function DesktopNav() {
@@ -55,7 +55,14 @@ export function Navbar({ banner }: { banner?: React.ReactNode }) {
                     <Link href="/" title="Home" onClick={() => window.location.reload()}>
                       <div className="flex items-center space-x-2">
                         <div className="-mt-1">
-                          <Logo className="mr-2 size-6" />
+                          <Image
+                            src="/logo.jpeg"
+                            alt="Logo"
+                            width={32}
+                            height={32}
+                            className="mr-2 rounded"
+                            priority
+                          />
                         </div>
                         <span className="font-bold">{siteConfig.name}</span>
                       </div>

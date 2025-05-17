@@ -17,23 +17,23 @@ interface ImageData {
 const images: ImageData[] = [
   {
     id: 1,
-    src: 'https://images.unsplash.com/photo-1682806816936-c3ac11f65112?q=80&w=1274&auto=format&fit=crop',
-    alt: 'Image Mousetrail',
+    src: '/img/formula.png',
+    alt: 'Formula 1',
   },
   {
     id: 2,
-    src: 'https://images.unsplash.com/photo-1681063762354-d542c03bbfc5?q=80&w=1274&auto=format&fit=crop',
-    alt: 'Spotlight Cards',
+    src: '/img/sanfrancisco.png',
+    alt: 'San Francisco',
   },
   {
     id: 3,
-    src: 'https://images.unsplash.com/photo-1679640034489-a6db1f096b70?q=80&w=1274&auto=format&fit=crop',
-    alt: 'Sparkles Effects',
+    src: '/img/motogp.png',
+    alt: 'Motogp 2025',
   },
   {
     id: 4,
-    src: 'https://images.unsplash.com/photo-1679482451632-b2e126da7142?q=80&w=1274&auto=format&fit=crop',
-    alt: 'Horizontal Scroll',
+    src: '/img/morocco.png',
+    alt: 'Morocco',
   },
 ];
 
@@ -194,15 +194,21 @@ const ImageReveal2: React.FC = () => {
           </div>
         ))}
         {isDesktop && activeImage && (
-          <img
+          <motion.img
             src={activeImage.src}
             alt={activeImage.alt}
-            className={`fixed dark:bg-gray-950 bg-white object-cover pointer-events-none z-10 w-[300px] h-[400px] rounded-lg`}
+            className={`fixed dark:bg-gray-950 bg-white object-cover pointer-events-none z-10 w-[400px] h-[500px] rounded-lg shadow-2xl`}
             style={{
               left: `${cursorPosition.x}px`,
               top: `${cursorPosition.y}px`,
               transform: `translate(-50%, -50%) scale(${scale})`,
               opacity: opacity,
+              transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
+            }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ 
+              opacity: opacity,
+              scale: scale,
             }}
           />
         )}
