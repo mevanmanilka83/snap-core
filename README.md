@@ -1,6 +1,6 @@
 # Snap Core
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-purple?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
@@ -112,19 +112,6 @@ yarn dev
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000)
-
-### Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run type-check` | Run TypeScript checks |
-| `npm run format` | Format code |
-| `npm run clean` | Clean build artifacts |
-| `npm run analyze` | Analyze bundle size |
 
 ## Acknowledgments
 
