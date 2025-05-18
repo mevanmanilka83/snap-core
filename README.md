@@ -13,10 +13,15 @@ A modern web application built with Next.js for creating thumbnails from videos 
   - Automatic keyframe detection for videos
   - Manual frame selection
   - Custom interval settings for video frames
+  - Multiple snapshot management
 
 - **Image Processing**
-  - Background removal
-  - Text overlay capabilities
+  - Background removal using AI
+  - Advanced text overlay capabilities
+    - Multiple text layers
+    - Custom fonts and styles
+    - Text effects (shadow, curve, background)
+    - Layer management
   - Real-time preview of changes
   - Local browser-based processing
 
@@ -25,13 +30,18 @@ A modern web application built with Next.js for creating thumbnails from videos 
   - Dark/Light mode support
   - Smooth animations and transitions
   - Privacy-first approach (all processing done locally)
+  - Undo/Redo functionality
+  - Image filters and presets
 
 ## Tech Stack
 
-- **Framework**: Next.js 15.3.1
-- **UI Library**: React 19
+- **Framework**: Next.js 14
+- **UI Library**: React 18
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: 
+  - Tailwind CSS
+  - CSS Modules
+  - CSS Variables
 - **UI Components**: 
   - Radix UI for accessible components
   - Custom UI components
@@ -39,10 +49,36 @@ A modern web application built with Next.js for creating thumbnails from videos 
 - **Image Processing**: 
   - ONNX Runtime for AI processing
   - Background removal capabilities
+  - Canvas API for image manipulation
 - **Development Tools**:
   - ESLint for code quality
   - TypeScript for type safety
   - Prettier for code formatting
+
+## Project Structure
+
+```
+snap-core/
+├── app/                    # Next.js app directory
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx          # Home page
+│   ├── globals.css       # Global styles
+│   ├── thumbnail/        # Thumbnail creation features
+│   │   ├── image-thumbnail/  # Image processing
+│   │   ├── video-thumbnail/  # Video processing
+│   │   └── main-section.tsx  # Shared components
+│   ├── shared/           # Shared components
+│   └── terms/            # Terms of service
+├── components/           # React components
+│   ├── ui/              # Reusable UI components
+│   ├── eldoraui/        # Custom UI components
+│   └── home/            # Home page components
+├── lib/                 # Utility functions
+├── hooks/              # Custom React hooks
+├── types/              # TypeScript type definitions
+├── public/             # Static assets
+└── config/             # Configuration files
+```
 
 ## Prerequisites
 
@@ -88,22 +124,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `npm run format` - Format code with Prettier
 - `npm run clean` - Clean build artifacts
 - `npm run analyze` - Analyze bundle size
-
-## Project Structure
-
-```
-snap-core/
-├── app/                # Next.js app directory
-│   ├── page.tsx       # Main page
-│   ├── layout.tsx     # Root layout
-│   └── globals.css    # Global styles
-├── components/        # React components
-│   ├── home/         # Home page components
-│   ├── ui/           # Reusable UI components
-│   └── eldoraui/     # Custom UI components
-├── public/           # Static assets
-└── lib/             # Utility functions
-```
 
 ## Contributing
 
