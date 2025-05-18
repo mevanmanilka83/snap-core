@@ -27,13 +27,6 @@ Snap Core is a modern, privacy-focused application that enables content creators
   - Non-destructive editing
   - Image enhancement tools
 
-### User Interface
-- **Modern Design**
-  - Responsive layout
-  - Dark/Light mode
-  - Real-time preview
-  - Intuitive controls
-
 - **Performance**
   - Web Worker-based processing
   - Optimized rendering
