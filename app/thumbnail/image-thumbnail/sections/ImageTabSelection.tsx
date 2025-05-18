@@ -5,7 +5,6 @@ import { Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
-import { AnimatedCursor } from "@/components/figma-cursor";
 
 const ImageTabSelection = ({
   ImageSection,
@@ -19,11 +18,6 @@ const ImageTabSelection = ({
     <Tabs defaultValue="image" className="w-full">
       <div className="flex flex-col gap-4">
         <div className="relative mb-4">
-          <AnimatedCursor
-            text="Create Image Thumbnail Here"
-            className="absolute -top-4 left-4 z-10 animate-float"
-            type="image"
-          />
         </div>
         <SmoothScroll className="w-full">
           <TabsList className="w-full">

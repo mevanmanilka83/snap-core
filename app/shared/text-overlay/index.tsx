@@ -26,8 +26,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { AnimatedCursor } from "@/components/figma-cursor"
-
 interface TextElement {
   id: string
   text: string
@@ -519,11 +517,6 @@ export default function TextEditor({
       <CardContent className="space-y-4">
         <div className="w-full space-y-4">
           <div className="relative mb-4">
-            <AnimatedCursor
-              text="Text Editor"
-              className="absolute -top-4 left-4 z-10"
-              type="image"
-            />
           </div>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 mb-2">

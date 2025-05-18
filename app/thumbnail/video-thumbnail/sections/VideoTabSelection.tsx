@@ -7,7 +7,6 @@ import SnapshotsSection from "./SnapshotsSection";
 import EditSection from "./EditSection";
 import TextSection from "./TextSection";
 import FinalPreviewSection from "./FinalPreviewSection";
-import { AnimatedCursor } from "@/components/figma-cursor";
 import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
@@ -163,11 +162,6 @@ export default function VideoTabSelection({
         </div>
 
         <div className="relative mb-4">
-          <AnimatedCursor
-            text="Create Video Thumbnail Here"
-            className="absolute top-0 left-4 z-10"
-            type="video"
-          />
         </div>
 
         <SmoothScroll className="w-full">
