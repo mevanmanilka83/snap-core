@@ -15,42 +15,43 @@ Snap Core is a modern, privacy-focused application that enables content creators
 ## Key Features
 
 ### Media Processing
-- **Video Frame Extraction**
-  - Intelligent keyframe detection
-  - Custom interval capture
-  - Multi-frame snapshot management
+- **Video Processing**
+  - Frame extraction with custom intervals
+  - Multiple snapshot management
   - Real-time preview
+  - Frame-by-frame navigation
 
-- **Image Enhancement**
-  - AI-powered background removal
-  - Advanced image filters
-  - Custom presets
+- **Image Processing**
+  - AI-powered background removal using ISNET model
+  - Image filters (brightness, contrast, saturation, blur)
   - Non-destructive editing
+  - Image enhancement tools
 
 ### Text Overlay System
+- **Advanced Typography**
+  - 30+ professional fonts
+  - Text styling (bold, italic, underline)
+  - Custom text effects (shadow, curve)
+  - Text background with opacity control
+
 - **Layer Management**
   - Multiple text layers
-  - Z-index control
   - Layer visibility toggle
+  - Z-index control
   - Layer duplication
-
-- **Typography Controls**
-  - Extensive font library
-  - Custom styling options
-  - Text effects (shadow, curve)
-  - Background customization
+  - Position presets (center, corners, edges)
 
 ### User Interface
 - **Modern Design**
   - Responsive layout
   - Dark/Light mode
-  - Intuitive controls
   - Real-time preview
+  - Intuitive controls
 
 - **Performance**
-  - Local processing
+  - Web Worker-based processing
   - Optimized rendering
-  - Undo/Redo support
+  - Local processing
   - Instant feedback
 
 ## Project Structure
@@ -112,11 +113,3 @@ yarn dev
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000)
-
-## Acknowledgments
-
-- [Next.js](https://nextjs.org) - React framework
-- [Tailwind CSS](https://tailwindcss.com) - CSS framework
-- [Radix UI](https://www.radix-ui.com) - UI components
-- [Framer Motion](https://www.framer.com/motion/) - Animations
-- [ONNX Runtime](https://onnxruntime.ai) - AI processing
