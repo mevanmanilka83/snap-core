@@ -1,5 +1,11 @@
 # Snap Core
 
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-purple?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
 A professional-grade web application for creating and editing video and image thumbnails with advanced AI-powered features.
 
 ## Overview
@@ -46,35 +52,6 @@ Snap Core is a modern, privacy-focused application that enables content creators
   - Optimized rendering
   - Undo/Redo support
   - Instant feedback
-
-## Technical Architecture
-
-### Core Technologies
-- **Frontend Framework**
-  - Next.js 14
-  - React 18
-  - TypeScript
-
-- **Styling**
-  - Tailwind CSS
-  - CSS Modules
-  - CSS Variables
-
-- **UI Components**
-  - Radix UI
-  - Custom components
-  - Framer Motion
-
-### Processing Engine
-- **Image Processing**
-  - ONNX Runtime
-  - Canvas API
-  - Web Workers
-
-- **Development Tools**
-  - ESLint
-  - TypeScript
-  - Prettier
 
 ## Project Structure
 
