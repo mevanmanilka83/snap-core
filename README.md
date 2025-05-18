@@ -27,20 +27,6 @@ Snap Core is a modern, privacy-focused application that enables content creators
   - Non-destructive editing
   - Image enhancement tools
 
-### Text Overlay System
-- **Advanced Typography**
-  - 30+ professional fonts
-  - Text styling (bold, italic, underline)
-  - Custom text effects (shadow, curve)
-  - Text background with opacity control
-
-- **Layer Management**
-  - Multiple text layers
-  - Layer visibility toggle
-  - Z-index control
-  - Layer duplication
-  - Position presets (center, corners, edges)
-
 ### User Interface
 - **Modern Design**
   - Responsive layout
@@ -80,10 +66,6 @@ snap-core/
 ```
 
 ## Getting Started
-
-### Prerequisites
-- Node.js 18.x or later
-- npm or yarn
 
 ### Installation
 
