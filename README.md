@@ -10,13 +10,13 @@
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
 
-## Key Features
+## 🚀 Key Features
 
-- Create image and video thumbnails easily
-- AI-powered background removal for clean, professional results
-- Apply filters and enhancements to images and video frames
-- Add and customize text overlays
-- All processing happens locally in your browser—no uploads required
+- 🎬 Effortlessly create stunning image and video thumbnails
+- ✨ Instantly remove backgrounds with smart AI technology
+- 🎨 Enhance visuals with powerful filters and adjustments
+- 📝 Add and style text overlays to make your thumbnails pop
+- 🔒 100% privacy — all editing happens locally in your browser
 
 ## Project Structure
 
