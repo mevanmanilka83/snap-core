@@ -12,24 +12,11 @@ Snap Core is a modern, privacy-focused application that enables content creators
 
 ## Key Features
 
-### Media Processing
-- **Video Processing**
-  - Frame extraction with custom intervals
-  - Multiple snapshot management
-  - Real-time preview
-  - Frame-by-frame navigation
-
-- **Image Processing**
-  - AI-powered background removal using ISNET model
-  - Image filters (brightness, contrast, saturation, blur)
-  - Non-destructive editing
-  - Image enhancement tools
-
-- **Performance**
-  - Web Worker-based processing
-  - Optimized rendering
-  - Local processing
-  - Instant feedback
+- Create image and video thumbnails easily
+- AI-powered background removal for clean, professional results
+- Apply filters and enhancements to images and video frames
+- Add and customize text overlays
+- All processing happens locally in your browser—no uploads required
 
 ## Project Structure
 
