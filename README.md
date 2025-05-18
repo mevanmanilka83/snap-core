@@ -18,6 +18,24 @@ Snap Core is a modern, privacy-focused application that enables content creators
 - 📝 Add and style text overlays to make your thumbnails pop
 - 🔒 100% privacy — all editing happens locally in your browser
 
+## 🛠️ How to Use
+
+1. **Upload Your Media**
+   - Click “Upload” to select an image or video from your device.
+
+2. **Remove the Background**
+   - Use the “Remove Background” button to instantly erase backgrounds with AI.
+
+3. **Edit & Enhance**
+   - Apply filters and adjustments to improve your image or video frame.
+   - Add and customize text overlays to make your thumbnail stand out.
+
+4. **Preview Your Thumbnail**
+   - See real-time previews as you edit.
+
+5. **Download**
+   - Click “Download” to save your finished thumbnail to your device.
+
 ## Project Structure
 
 ```
@@ -73,21 +91,3 @@ yarn dev
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000)
-
-## 🛠️ How to Use
-
-1. **Upload Your Media**
-   - Click “Upload” to select an image or video from your device.
-
-2. **Remove the Background**
-   - Use the “Remove Background” button to instantly erase backgrounds with AI.
-
-3. **Edit & Enhance**
-   - Apply filters and adjustments to improve your image or video frame.
-   - Add and customize text overlays to make your thumbnail stand out.
-
-4. **Preview Your Thumbnail**
-   - See real-time previews as you edit.
-
-5. **Download**
-   - Click “Download” to save your finished thumbnail to your device.
