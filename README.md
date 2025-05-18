@@ -12,29 +12,19 @@ Snap Core is a modern, privacy-focused application that enables content creators
 
 ## 🚀 Key Features
 
-- 🎬 Effortlessly create stunning image and video thumbnails
-- ✨ Instantly remove backgrounds with smart AI technology
-- 🎨 Enhance visuals with powerful filters and adjustments
-- 📝 Add and style text overlays to make your thumbnails pop
-- 🔒 100% privacy — all editing happens locally in your browser
+Create image and video thumbnails easily.
+AI-powered background removal for clean, professional results.
+Apply filters and enhancements to images and video frames.
+Add and customize text overlays.
+All processing happens locally in your browser—no uploads required.
 
 ## 🛠️ How to Use
 
-1. **Upload Your Media**
-   - Click “Upload” to select an image or video from your device.
-
-2. **Remove the Background**
-   - Use the “Remove Background” button to instantly erase backgrounds with AI.
-
-3. **Edit & Enhance**
-   - Apply filters and adjustments to improve your image or video frame.
-   - Add and customize text overlays to make your thumbnail stand out.
-
-4. **Preview Your Thumbnail**
-   - See real-time previews as you edit.
-
-5. **Download**
-   - Click “Download” to save your finished thumbnail to your device.
+1. Upload Your Media: Click “Upload” to select an image or video from your device.
+2. Remove the Background: Use the “Remove Background” button to instantly erase backgrounds with AI.
+3. Edit & Enhance: Apply filters and adjustments to improve your image or video frame. Add and customize text overlays to make your thumbnail stand out.
+4. Preview Your Thumbnail: See real-time previews as you edit.
+5. Download: Click “Download” to save your finished thumbnail to your device.
 
 ## Project Structure
 
