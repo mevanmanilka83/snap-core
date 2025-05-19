@@ -372,8 +372,8 @@ export default function VideoThumbnailGenerator() {
         canvas.toBlob((blob) => {
           if (!blob) {
             reject(new Error('Failed to create image blob'));
-            return;
-          }
+          return;
+        }
           const url = URL.createObjectURL(blob);
           resolve(url);
         }, 'image/png', 1.0);
@@ -720,11 +720,11 @@ export default function VideoThumbnailGenerator() {
               }
               setProcessedImageSrc(url);
               setProcessedFrame(url);
-              setBackgroundRemoved(true);
-              toast.success("Background removed successfully");
+          setBackgroundRemoved(true);
+          toast.success("Background removed successfully");
             }
             worker?.terminate();
-            setIsProcessing(false);
+          setIsProcessing(false);
             break;
           case 'error':
             console.error("Worker error:", data);

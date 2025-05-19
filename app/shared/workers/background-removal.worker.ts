@@ -17,7 +17,7 @@ self.onmessage = async (e) => {
         // Only send progress updates every 5%
         const progress = Math.round((current / total) * 100)
         if (progress % 5 === 0) {
-          self.postMessage({ type: 'progress', data: progress })
+        self.postMessage({ type: 'progress', data: progress })
         }
       },
       // Optimize parameters for better performance
@@ -56,7 +56,7 @@ self.onmessage = async (e) => {
 
       // Clean up the blob URL
       URL.revokeObjectURL(blobUrl)
-
+    
       // Send the processed image back to the main thread
       self.postMessage({ type: 'complete', data: processedBlob })
     } catch (error) {

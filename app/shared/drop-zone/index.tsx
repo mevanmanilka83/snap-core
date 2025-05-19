@@ -690,7 +690,7 @@ export default function ImageUploader({
             // Debounce progress updates to reduce re-renders
             const now = Date.now();
             if (now - lastProgressUpdate > 100) { // Only update every 100ms
-              setProcessingProgress(data)
+            setProcessingProgress(data)
               lastProgressUpdate = now;
             }
             break
