@@ -159,8 +159,7 @@ export default function VideoTabSelection({
             />
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-            Choose between video frame capture or direct image upload. Our
-            powerful tools help you create professional thumbnails with ease.
+            Capture frames from your video and transform them into eye-catching thumbnails with ease.
           </p>
         </div>
 
