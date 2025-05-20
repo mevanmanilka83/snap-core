@@ -509,6 +509,25 @@ export default function ImageUploader({
         return
       }
 
+      // Check for CORS errors
+      try {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          canvas.width = img.naturalWidth
+          canvas.height = img.naturalHeight
+          ctx.drawImage(img, 0, 0)
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'SecurityError') {
+          setError("Cannot load image due to CORS restrictions. Please ensure the image server allows cross-origin requests.")
+          toast.error("CORS error: Cannot load image from this source")
+          handleCancel()
+          return
+        }
+        throw error
+      }
+
       // Validate image dimensions
       const maxDimension = 4096 // Maximum dimension in pixels
       if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
@@ -1320,6 +1339,13 @@ export default function ImageUploader({
       }
     }
   }, [activeTab, processedImageSrc]);
+
+  // Add this after the hiddenImageRef declaration
+  useEffect(() => {
+    if (hiddenImageRef.current) {
+      hiddenImageRef.current.crossOrigin = "anonymous"
+    }
+  }, [])
 
   // Wrap the main component with error boundary
   return (

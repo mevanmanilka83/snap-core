@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { WordPullUp } from "@/components/eldoraui/wordpullup";
 import ImageSection from "../../image-thumbnail/sections/ImageSection";
 import { useState, useEffect } from "react";
+import VideoSection from "./VideoSection";
 
 interface VideoTabSelectionProps {
   activeTab: string;
@@ -318,9 +319,7 @@ export default function VideoTabSelection({
         </TabsContent>
 
         <TabsContent value="create-image-thumbnail" className="space-y-4 sm:space-y-6 mt-4">
-          
-            <ImageSection />
-       
+          <ImageSection />
         </TabsContent>
       </div>
     </TabsProvider>

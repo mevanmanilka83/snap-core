@@ -546,15 +546,27 @@ export default function TextEditor({
     if (!canvasRef.current) return
 
     try {
-      const dataUrl = canvasRef.current.toDataURL("image/png")
-      const link = document.createElement("a")
-      link.href = dataUrl
-      link.download = "thumbnail-preview.png"
-      link.click()
-      toast.success("Preview image downloaded")
+      // First try to get the canvas data as a blob
+      canvasRef.current.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = "thumbnail-preview.png"
+          link.click()
+          URL.revokeObjectURL(url)
+          toast.success("Preview image downloaded")
+        } else {
+          throw new Error("Failed to create blob from canvas")
+        }
+      }, "image/png")
     } catch (error) {
-      toast.error("Failed to download preview")
       console.error("Export error:", error)
+      if (error instanceof DOMException && error.name === 'SecurityError') {
+        toast.error("Cannot export image due to CORS restrictions")
+      } else {
+        toast.error("Failed to download preview")
+      }
     }
   }
 
@@ -635,15 +647,27 @@ export default function TextEditor({
                 const ctx = canvas.getContext("2d")
                 if (ctx && previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
                   try {
+                    // Set canvas dimensions
+                    canvas.width = previewImageRef.current.naturalWidth
+                    canvas.height = previewImageRef.current.naturalHeight
                     ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
                   } catch (error) {
                     console.error("Error drawing image to canvas:", error)
+                    if (error instanceof DOMException && error.name === 'SecurityError') {
+                      toast.error("Cannot load image due to CORS restrictions")
+                    }
                     handlePreviewImageError()
                   }
                 }
               }
             }}
-            onError={handlePreviewImageError}
+            onError={(e) => {
+              console.error("Image load error:", e)
+              if (e instanceof ErrorEvent && e.error instanceof DOMException && e.error.name === 'SecurityError') {
+                toast.error("Cannot load image due to CORS restrictions")
+              }
+              handlePreviewImageError()
+            }}
             crossOrigin="anonymous"
           />
           <Button

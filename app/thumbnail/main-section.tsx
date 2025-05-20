@@ -1,7 +1,5 @@
 import VideoSection from "./video-thumbnail/sections/VideoSection";
 import SimpleVideoTabSelection from "./video-thumbnail/sections/SimpleVideoTabSelection";
-import ImageTabSelection from "./image-thumbnail/sections/ImageTabSelection";
-import ImageSection from "./image-thumbnail/sections/ImageSection";
 
 const MainSection = ({
   videoRef,
@@ -37,9 +35,6 @@ const MainSection = ({
           setAutoSnapInterval={setAutoSnapInterval}
           toggleAutoSnap={toggleAutoSnap}
         />
-      </div>
-      <div className="relative">
-        <ImageTabSelection ImageSection={ImageSection} />
       </div>
     </div>
   );
