@@ -10,59 +10,6 @@
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
 
-## 🛠️ Features
-
-### Video Thumbnail Creation
-1. **Video Frame Selection**
-   - Upload video files or paste video URLs
-   - Capture frames manually or use auto-capture for key frames
-   - Preview and select the perfect frame for your thumbnail
-
-2. **Background Removal**
-   - AI-powered background removal
-   - Real-time preview of the processed image
-   - Undo/redo functionality for background removal
-
-3. **Text & Styling**
-   - Add multiple text elements
-   - Customize text style, size, and position
-   - Apply various text effects and animations
-
-4. **Final Preview**
-   - Preview your thumbnail before saving
-   - Download in high quality
-   - Share directly to social media
-
-### Image Thumbnail Creation
-- Direct image upload support
-- Same powerful editing features as video thumbnails
-- Quick and efficient processing
-
-## Project Structure
-
-```
-snap-core/
-├── app/                    # Next.js application
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx          # Home page
-│   ├── globals.css       # Global styles
-│   ├── thumbnail/        # Thumbnail features
-│   │   ├── image-thumbnail/  # Image processing
-│   │   ├── video-thumbnail/  # Video processing
-│   │   └── main-section.tsx  # Shared components
-│   ├── shared/           # Shared components
-│   └── terms/            # Terms of service
-├── components/           # React components
-│   ├── ui/              # UI components
-│   ├── eldoraui/        # Custom components
-│   └── home/            # Home components
-├── lib/                 # Utilities
-├── hooks/              # React hooks
-├── types/              # TypeScript types
-├── public/             # Static assets
-└── config/             # Configuration
-```
-
 ## Getting Started
 
 ### Installation
