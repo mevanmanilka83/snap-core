@@ -10,13 +10,33 @@
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
 
-## 🛠️ How to Use
+## 🛠️ Features
 
-1. Upload Your Media: Click "Upload" to select an image or video from your device.
-2. Remove the Background: Use the "Remove Background" button to instantly erase backgrounds with AI.
-3. Edit & Enhance: Apply filters and adjustments to improve your image or video frame. Add and customize text overlays to make your thumbnail stand out.
-4. Preview Your Thumbnail: See real-time previews as you edit.
-5. Download: Click "Download" to save your finished thumbnail to your device.
+### Video Thumbnail Creation
+1. **Video Frame Selection**
+   - Upload video files or paste video URLs
+   - Capture frames manually or use auto-capture for key frames
+   - Preview and select the perfect frame for your thumbnail
+
+2. **Background Removal**
+   - AI-powered background removal
+   - Real-time preview of the processed image
+   - Undo/redo functionality for background removal
+
+3. **Text & Styling**
+   - Add multiple text elements
+   - Customize text style, size, and position
+   - Apply various text effects and animations
+
+4. **Final Preview**
+   - Preview your thumbnail before saving
+   - Download in high quality
+   - Share directly to social media
+
+### Image Thumbnail Creation
+- Direct image upload support
+- Same powerful editing features as video thumbnails
+- Quick and efficient processing
 
 ## Project Structure
 
@@ -73,3 +93,17 @@ yarn dev
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000)
+
+## Privacy & Security
+
+- All processing happens locally in your browser
+- No data is sent to external servers
+- Your content remains private and secure
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
