@@ -559,11 +559,11 @@ export default function TextEditor({
         } else {
           throw new Error("Failed to create blob from canvas")
         }
-      }, "image/png")
+      }, "image/png", 1.0)
     } catch (error) {
       console.error("Export error:", error)
       if (error instanceof DOMException && error.name === 'SecurityError') {
-        toast.error("Cannot export image due to CORS restrictions")
+        toast.error("Cannot export image due to CORS restrictions. Please ensure all images are from trusted sources.")
       } else {
         toast.error("Failed to download preview")
       }

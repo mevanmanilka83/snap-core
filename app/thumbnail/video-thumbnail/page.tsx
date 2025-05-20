@@ -352,100 +352,136 @@ export default function VideoThumbnailGenerator() {
   const createVideoSnapshot = async (video: HTMLVideoElement): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        // Create canvas matching video dimensions
+        // Create a canvas matching video dimensions
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
-
-        // Set canvas size to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
+        
+        // Get the canvas context
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          throw new Error('Failed to get canvas context');
+        }
 
-        // Draw current video frame
-        ctx.drawImage(video, 0, 0);
+        // Draw the current video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Convert to blob instead of data URL to avoid CORS issues
+        // Convert to blob with error handling
         canvas.toBlob((blob) => {
           if (!blob) {
             reject(new Error('Failed to create image blob'));
-          return;
-        }
-          const url = URL.createObjectURL(blob);
-          resolve(url);
+            return;
+          }
+
+          // Create object URL from blob
+          const objectUrl = URL.createObjectURL(blob);
+
+          // Verify the blob can be loaded as an image
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          
+          img.onload = () => {
+            // Create a new canvas to verify the image data
+            const verifyCanvas = document.createElement('canvas');
+            verifyCanvas.width = img.width;
+            verifyCanvas.height = img.height;
+            const verifyCtx = verifyCanvas.getContext('2d', { willReadFrequently: true });
+            
+            if (!verifyCtx) {
+              URL.revokeObjectURL(objectUrl);
+              reject(new Error('Failed to verify image data'));
+              return;
+            }
+
+            // Draw the image to verify it's valid
+            verifyCtx.drawImage(img, 0, 0);
+            
+            try {
+              // Try to get image data to verify it's not tainted
+              verifyCtx.getImageData(0, 0, 1, 1);
+              
+              // Create a new blob from the verified canvas
+              verifyCanvas.toBlob((verifiedBlob) => {
+                if (!verifiedBlob) {
+                  URL.revokeObjectURL(objectUrl);
+                  reject(new Error('Failed to create verified image blob'));
+                  return;
+                }
+
+                // Create a new object URL from the verified blob
+                const verifiedUrl = URL.createObjectURL(verifiedBlob);
+                
+                // Clean up the original object URL
+                URL.revokeObjectURL(objectUrl);
+                
+                // Return the verified URL
+                resolve(verifiedUrl);
+              }, 'image/png', 1.0);
+            } catch (error) {
+              URL.revokeObjectURL(objectUrl);
+              reject(new Error('Image data is tainted. CORS may be blocking access.'));
+            }
+          };
+
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Failed to load image from blob'));
+          };
+
+          img.src = objectUrl;
         }, 'image/png', 1.0);
-      } catch (err) {
-        reject(err);
+      } catch (error) {
+        reject(error);
       }
     });
   };
 
   // Replace the existing captureSnapshot function
   const captureSnapshot = async () => {
+    if (!videoRef.current) return;
+
     const video = videoRef.current;
     
-    if (!video) {
-      toast.error("No video loaded");
-      return;
-    }
-
-    // Verify video is ready
+    // Check if video is ready
     if (!video.videoWidth || !video.videoHeight) {
-      toast.error("Video is still loading. Please wait a moment and try again.");
+      toast.error("Video is not ready. Please wait for it to load.");
       return;
     }
 
-    // Store playing state
-    const wasPlaying = !video.paused;
-    
+    // Check if video has CORS enabled
+    if (video.crossOrigin !== 'anonymous') {
+      // Try to reload with CORS enabled
+      await reloadVideoWithCORS();
+      return;
+    }
+
     try {
-      // Pause video temporarily
+      // Store current playing state
+      const wasPlaying = !video.paused;
+      
+      // Pause video
       video.pause();
 
-      // Wait a frame to ensure video is actually paused
-      await new Promise(resolve => requestAnimationFrame(resolve));
-
-      // Capture the frame
-      const snapshotUrl = await createVideoSnapshot(video);
-
-      // Update all states
-      setSnapshots(prev => [...prev, snapshotUrl]);
-      setProcessedFrame(snapshotUrl);
-      setCurrentFrame(snapshotUrl);
+      // Create snapshot
+      const snapshot = await createVideoSnapshot(video);
+      
+      // Update snapshots array
+      setSnapshots(prev => [...prev, snapshot]);
       setSelectedSnapshotIndex(snapshots.length);
-      setProcessedImageSrc(snapshotUrl);
-
-      // Handle undo stack
-      if (processedFrame) {
-        setUndoStack(prev => [...prev, processedFrame]);
-        setRedoStack([]);
-      }
-
-      // Update preview
-      updateFinalPreview();
-
-      toast.success("Snapshot captured successfully", {
-        description: `View in Snapshots tab (${snapshots.length + 1} total)`
-      });
-
-    } catch (error) {
-      console.error('Snapshot error:', error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to capture snapshot");
-      }
-    } finally {
+      
       // Restore video state
       if (wasPlaying) {
-        try {
-          await video.play();
-        } catch (e) {
-          console.error('Failed to resume video:', e);
-        }
+        video.play().catch(console.error);
+      }
+
+      toast.success("Snapshot captured successfully");
+    } catch (error) {
+      console.error('Error capturing snapshot:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to capture snapshot");
+      
+      // Try to restore video state
+      if (!video.paused) {
+        video.play().catch(console.error);
       }
     }
   };
@@ -947,7 +983,12 @@ export default function VideoThumbnailGenerator() {
     processedImg.crossOrigin = "anonymous";
     originalImg.crossOrigin = "anonymous";
 
-    originalImg.onload = () => {
+    let loadedImages = 0;
+    const totalImages = 2;
+
+    const tryCreatePreview = () => {
+      if (loadedImages < totalImages) return;
+
       // Set canvas dimensions based on the original image
       previewCanvas.width = originalImg.width;
       previewCanvas.height = originalImg.height;
@@ -993,23 +1034,40 @@ export default function VideoThumbnailGenerator() {
 
       // Update the final thumbnail
       try {
-        const finalImageUrl = previewCanvas.toDataURL("image/png", 1.0);
-        setFinalThumbnail(finalImageUrl);
-        console.debug("Final preview updated");
+        previewCanvas.toBlob((blob) => {
+          if (!blob) {
+            console.error("Failed to create blob from canvas");
+            toast.error("Failed to create final preview");
+            return;
+          }
+          const finalImageUrl = URL.createObjectURL(blob);
+          setFinalThumbnail(finalImageUrl);
+          console.debug("Final preview updated");
+        }, 'image/png', 1.0);
       } catch (error) {
         console.error("Error creating final thumbnail:", error);
         toast.error("Failed to create final preview");
       }
     };
 
+    originalImg.onload = () => {
+      loadedImages++;
+      tryCreatePreview();
+    };
+
+    processedImg.onload = () => {
+      loadedImages++;
+      tryCreatePreview();
+    };
+
     originalImg.onerror = () => {
       console.error("Error loading original image for final preview");
-      toast.error("Failed to create final preview");
+      toast.error("Failed to load original image");
     };
 
     processedImg.onerror = () => {
       console.error("Error loading processed image for final preview");
-      toast.error("Failed to create final preview");
+      toast.error("Failed to load processed image");
     };
 
     // Load both images
@@ -1145,26 +1203,58 @@ export default function VideoThumbnailGenerator() {
     toast.success("Image saved successfully")
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const video = videoRef.current;
     if (!video) return;
 
-    // Clean up old URL if exists
-    if (video.src && video.src.startsWith('blob:')) {
-      URL.revokeObjectURL(video.src);
-    }
+    try {
+      // Clean up old URL if exists
+      if (video.src && video.src.startsWith('blob:')) {
+        URL.revokeObjectURL(video.src);
+      }
 
-    // For local files, we can use blob URLs
-    const blobUrl = URL.createObjectURL(file);
-    video.src = blobUrl;
-    video.setAttribute('crossOrigin', 'anonymous');
-    video.load();
+      // For local files, we can use blob URLs
+      const blobUrl = URL.createObjectURL(file);
+      
+      // Set up video element with CORS
+      video.setAttribute('crossOrigin', 'anonymous');
+      
+      // Create a new video element to test CORS
+      const testVideo = document.createElement('video');
+      testVideo.crossOrigin = 'anonymous';
+      
+      // Wait for the test video to load
+      await new Promise((resolve, reject) => {
+        testVideo.onloadedmetadata = () => {
+          // If test video loads successfully, set the main video source
+          video.src = blobUrl;
+          video.load();
+          resolve(true);
+        };
+        
+        testVideo.onerror = () => {
+          reject(new Error("Failed to load video with CORS enabled"));
+        };
+        
+        testVideo.src = blobUrl;
+      });
+
+      // Add error handling for CORS
+      video.onerror = (e) => {
+        console.error("Video loading error:", video.error);
+        toast.error("Failed to load video. Please try again.");
+      };
+
+    } catch (error) {
+      console.error("Error loading video:", error);
+      toast.error("Failed to load video with CORS enabled. Please try again.");
+    }
   };
 
-  const handleURLLoad = () => {
+  const handleURLLoad = async () => {
     const urlInput = document.getElementById("imageUrl") as HTMLInputElement;
     const url = urlInput.value.trim();
 
@@ -1176,15 +1266,94 @@ export default function VideoThumbnailGenerator() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Clean up old URL if exists
-    if (video.src && video.src.startsWith('blob:')) {
-      URL.revokeObjectURL(video.src);
-    }
+    try {
+      // Clean up old URL if exists
+      if (video.src && video.src.startsWith('blob:')) {
+        URL.revokeObjectURL(video.src);
+      }
 
-    // For remote URLs, ensure CORS is set
-    video.setAttribute('crossOrigin', 'anonymous');
-    video.src = url;
-    video.load();
+      // For remote URLs, ensure CORS is set and handle loading
+      video.setAttribute('crossOrigin', 'anonymous');
+      
+      // Create a new video element to test CORS
+      const testVideo = document.createElement('video');
+      testVideo.crossOrigin = 'anonymous';
+      
+      
+      // Wait for the test video to load
+      await new Promise((resolve, reject) => {
+        testVideo.onloadedmetadata = () => {
+          // If test video loads successfully, set the main video source
+          video.src = url;
+          video.load();
+          resolve(true);
+        };
+        
+        testVideo.onerror = () => {
+          reject(new Error("Failed to load video. CORS may be blocking access."));
+        };
+        
+        testVideo.src = url;
+      });
+
+      // Add error handling for CORS
+      video.onerror = (e) => {
+        console.error("Video loading error:", video.error);
+        toast.error("Failed to load video. Please ensure the video URL allows CORS access.");
+      };
+
+    } catch (error) {
+      console.error("Error loading video:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load video. Please try again.");
+    }
+  };
+
+  const reloadVideoWithCORS = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      // Store current state
+      const currentTime = video.currentTime;
+      const wasPlaying = !video.paused;
+      const currentSrc = video.src;
+
+      // Set CORS attribute
+      video.setAttribute('crossOrigin', 'anonymous');
+      
+      // Create a test video to verify CORS
+      const testVideo = document.createElement('video');
+      testVideo.crossOrigin = 'anonymous';
+      
+      // Wait for test video to load
+      await new Promise((resolve, reject) => {
+        testVideo.onloadedmetadata = () => {
+          // If test video loads successfully, reload the main video
+          video.src = '';
+          video.load();
+          video.src = currentSrc;
+          video.load();
+          
+          // Restore video state
+          video.currentTime = currentTime;
+          if (wasPlaying) {
+            video.play().catch(console.error);
+          }
+          resolve(true);
+        };
+        
+        testVideo.onerror = () => {
+          reject(new Error("Failed to load video with CORS enabled"));
+        };
+        
+        testVideo.src = currentSrc;
+      });
+
+      toast.success("Video reloaded with CORS enabled");
+    } catch (error) {
+      console.error("Error reloading video:", error);
+      toast.error("Failed to reload video with CORS enabled. Please try loading the video again.");
+    }
   };
 
   const handleTabChange = (newTab: string) => {

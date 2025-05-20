@@ -213,7 +213,7 @@ export default function VideoTabSelection({
                     className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
                   >
                     <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="truncate">Snapshots ({snapshots.length})</span>
+                    <span className="truncate">Video Frames ({snapshots.length})</span>
                   </TabsBtn>
                   <TabsBtn
                     value="edit"
@@ -221,7 +221,7 @@ export default function VideoTabSelection({
                     disabled={selectedSnapshotIndex === -1}
                   >
                     <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="truncate">Edit</span>
+                    <span className="truncate">Remove Background</span>
                   </TabsBtn>
                   <TabsBtn
                     value="text"
@@ -229,7 +229,7 @@ export default function VideoTabSelection({
                     disabled={!canGoToTextAndPreview}
                   >
                     <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="truncate">Text</span>
+                    <span className="truncate">Add Text & Style</span>
                   </TabsBtn>
                   <TabsBtn
                     value="preview"
@@ -237,7 +237,7 @@ export default function VideoTabSelection({
                     disabled={!canGoToTextAndPreview}
                   >
                     <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="truncate">Final Preview</span>
+                    <span className="truncate">Final Thumbnail</span>
                   </TabsBtn>
                 </div>
 
@@ -286,7 +286,6 @@ export default function VideoTabSelection({
                     snapshots={snapshots}
                     selectedSnapshotIndex={selectedSnapshotIndex}
                     onNext={() => {
-                      setCanGoToTextAndPreview(true);
                       handleTabChange("text");
                     }}
                     backgroundRemoved={backgroundRemoved}

@@ -305,194 +305,65 @@ export default function ImageUploader({
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = e.target.files?.[0]
-      if (!file) return
-
-      // Validate file type
-      if (!allowedFileTypes.includes(file.type)) {
-        toast.error(`Please upload a valid image file (${allowedFileTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')})`)
-        return
+  const handleImageLoad = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.crossOrigin = "anonymous"  // Add CORS attribute
+      img.onload = () => {
+        setImageInfo({
+          width: img.width,
+          height: img.height,
+          size: file.size,
+          type: file.type
+        })
+        setImageLoaded(true)
+        setError("")
+        setHasAttemptedLoad(true)
+        setImageSrc(e.target?.result as string)
       }
-
-      // Validate file size
-      if (file.size > maxFileSize) {
-        toast.error(`File size too large. Maximum size is ${(maxFileSize / (1024 * 1024)).toFixed(1)}MB`)
-        return
+      img.onerror = () => {
+        setError("Failed to load image")
+        setImageLoaded(false)
+        setHasAttemptedLoad(true)
       }
-
-      setError("")
-      setHasAttemptedLoad(true)
-      setIsLoading(true)
-
-      // Clean up old URL
-      if (previewUrl.current?.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl.current)
-      }
-
-      // Create new URL and update state
-      previewUrl.current = URL.createObjectURL(file)
-      setImageSrc(previewUrl.current)
-      setProcessedImageSrc("")
-      setThumbnailSrc("")
-      setProcessingProgress(0)
-      resetFilters()
-
-      // Update image reference
-      const img = hiddenImageRef.current
-      if (img) {
-        img.src = previewUrl.current
-      }
-
-      setImageLoaded(false)
-      setImageInfo({
-        width: 0,
-        height: 0,
-        type: file.type,
-        size: file.size,
-      })
-
-      // Clear history
-      setUndoStack([])
-      setRedoStack([])
-    } catch (error) {
-      console.error("Error handling file change:", error)
-      toast.error("Failed to process the file. Please try again.")
-      handleCancel()
+      img.src = e.target?.result as string
     }
+    reader.onerror = () => {
+      setError("Failed to read file")
+      setImageLoaded(false)
+      setHasAttemptedLoad(true)
+    }
+    reader.readAsDataURL(file)
   }
 
-  const handleURLLoad = () => {
+  const handleUrlLoad = async (url: string) => {
     try {
-      const urlInput = document.getElementById("imageUrl") as HTMLInputElement
-      const url = urlInput.value.trim()
+      const img = new Image()
+      img.crossOrigin = "anonymous"  // Add CORS attribute
+      
+      // Create a promise to handle the image loading
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = () => reject(new Error("Failed to load image from URL"))
+        img.src = url
+      })
 
-      if (!url) {
-        toast.error("Please enter an image URL")
-        return
-      }
-
-      // Validate URL format
-      let parsedUrl: URL
-      try {
-        parsedUrl = new URL(url)
-      } catch {
-        toast.error("Please enter a valid URL")
-        return
-      }
-
-      // Silently reject CloudFront URLs
-      if (parsedUrl.hostname.includes('cloudfront.net')) {
-        setError("Failed to load image. Please try a different URL.")
-        toast.error("Failed to load image. Please try a different URL.")
-        return
-      }
-
-      // Validate URL protocol
-      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        toast.error("URL must start with http:// or https://")
-        return
-      }
-
-      // Check for common image URL patterns
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff']
-      const hasValidExtension = validExtensions.some(ext => 
-        parsedUrl.pathname.toLowerCase().endsWith(ext)
-      )
-
-      // Check for common image URL patterns in query parameters
-      const hasImageQueryParam = parsedUrl.searchParams.toString().toLowerCase().includes('image') ||
-                               parsedUrl.searchParams.toString().toLowerCase().includes('img') ||
-                               parsedUrl.searchParams.toString().toLowerCase().includes('photo')
-
-      // Check for common image hosting domains
-      const commonImageHosts = [
-        'imgur.com', 'images.unsplash.com', 'picsum.photos',
-        'amazonaws.com', 'googleusercontent.com', 'fbcdn.net', 'instagram.com',
-        'twimg.com', 'cdn.discordapp.com', 'media.giphy.com'
-      ]
-      const isCommonImageHost = commonImageHosts.some(host => parsedUrl.hostname.includes(host))
-
-      if (!hasValidExtension && !hasImageQueryParam && !isCommonImageHost) {
-        toast.error("URL must point to a valid image file or image hosting service")
-        return
-      }
-
+      setImageInfo({
+        width: img.width,
+        height: img.height,
+        size: 0, // We don't know the file size for URLs
+        type: "image/png" // Default type for URLs
+      })
+      setImageLoaded(true)
       setError("")
-      setIsLoading(true)
       setHasAttemptedLoad(true)
-
-      // Clean up old URL
-      if (previewUrl.current?.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl.current)
-        previewUrl.current = null
-      }
-
-      // Create a new image to test loading
-      const testImg = new window.Image()
-      testImg.crossOrigin = "anonymous"
-      
-      // Set a timeout for the image loading
-      const timeoutId = setTimeout(() => {
-        testImg.src = "" // Cancel the image loading
-        setIsLoading(false)
-        setError("Failed to load image. The URL may be invalid or the server may be too slow.")
-        toast.error("Failed to load image. Please try a different URL.")
-      }, 15000) // 15 second timeout
-      
-      testImg.onload = () => {
-        clearTimeout(timeoutId) // Clear the timeout since image loaded successfully
-        
-        // Check if the image is actually loaded and not broken
-        if (!testImg.complete || testImg.naturalWidth === 0) {
-          setIsLoading(false)
-          setError("Failed to load image. The image may be inaccessible or the URL may be invalid.")
-          toast.error("Failed to load image. Please check the URL and try again.")
-          return
-        }
-
-        // Validate image dimensions
-        const maxDimension = 8192 // Maximum dimension in pixels
-        if (testImg.naturalWidth > maxDimension || testImg.naturalHeight > maxDimension) {
-          setIsLoading(false)
-          setError(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
-          toast.error(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
-          return
-        }
-
-        // Update state only after successful load
-        previewUrl.current = url
-        setImageSrc(url)
-        setProcessedImageSrc("")
-        setThumbnailSrc("")
-        setProcessingProgress(0)
-        resetFilters()
-
-        // Update image reference
-        const img = hiddenImageRef.current
-        if (img) {
-          img.src = url
-        }
-
-        setImageLoaded(false)
-        setUndoStack([])
-        setRedoStack([])
-      }
-
-      testImg.onerror = () => {
-        clearTimeout(timeoutId) // Clear the timeout since we got an error
-        setIsLoading(false)
-        setError("Failed to load image. The image may be inaccessible or the URL may be invalid.")
-        toast.error("Failed to load image. Please try a different URL.")
-      }
-
-      // Start loading the test image
-      testImg.src = url
+      setImageSrc(url)
     } catch (error) {
-      console.error("Error handling URL load:", error)
-      toast.error("Failed to load the image. Please try again.")
-      handleCancel()
+      console.error("Error loading image from URL:", error)
+      setError("Failed to load image from URL. Please ensure the URL is accessible and the image is from a trusted source.")
+      setImageLoaded(false)
+      setHasAttemptedLoad(true)
     }
   }
 
@@ -1395,7 +1266,11 @@ export default function ImageUploader({
                       type="file"
                       accept="image/*"
                       className="sr-only"
-                      onChange={handleFileChange}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleImageLoad(e.target.files[0])
+                        }
+                      }}
                     />
                   </div>
                 </label>
@@ -1412,7 +1287,12 @@ export default function ImageUploader({
               <CardContent className="pt-2 space-y-4">
                 <div className="grid grid-cols-4 gap-4">
                   <Input type="url" placeholder="https://example.com/image.jpg" className="col-span-3" id="imageUrl" />
-                  <Button onClick={handleURLLoad} disabled={isLoading} size="default">
+                  <Button onClick={() => {
+                    const urlInput = document.getElementById("imageUrl") as HTMLInputElement
+                    if (urlInput) {
+                      handleUrlLoad(urlInput.value.trim())
+                    }
+                  }} disabled={isLoading} size="default">
                     {isLoading ? (
                       <span className="flex items-center">
                         <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>

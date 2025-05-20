@@ -157,6 +157,7 @@ const EditSection = ({
                 toast.error("Please remove the background before proceeding to text editing.");
                 return;
               }
+              // Set the state and change tab in one go
               setCanGoToTextAndPreview(true);
               onNext();
             }}
