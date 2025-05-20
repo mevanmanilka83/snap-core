@@ -318,8 +318,8 @@ export default function ImageUploader({
           type: file.type
         })
         setImageLoaded(true)
-        setError("")
-        setHasAttemptedLoad(true)
+      setError("")
+      setHasAttemptedLoad(true)
         setImageSrc(e.target?.result as string)
       }
       img.onerror = () => {
@@ -358,11 +358,11 @@ export default function ImageUploader({
       setImageLoaded(true)
       setError("")
       setHasAttemptedLoad(true)
-      setImageSrc(url)
+        setImageSrc(url)
     } catch (error) {
       console.error("Error loading image from URL:", error)
       setError("Failed to load image from URL. Please ensure the URL is accessible and the image is from a trusted source.")
-      setImageLoaded(false)
+        setImageLoaded(false)
       setHasAttemptedLoad(true)
     }
   }
