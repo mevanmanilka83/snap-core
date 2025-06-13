@@ -10,24 +10,9 @@
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
 
-## 🎥 Demo
+## 🚀 Getting Started
 
-<table>
-<tr>
-<td><img src="https://github.com/user-attachments/assets/26253719-4756-4f2f-8965-d59488b01e72" alt="Demo 1"></td>
-<td><img src="https://github.com/user-attachments/assets/dd5b0821-dbb3-4199-82c8-384916e727e4" alt="Demo 2"></td>
-</tr>
-<tr>
-<td><img src="https://github.com/user-attachments/assets/c2734e3f-d455-45fb-bf5d-535cc0ae8493" alt="Demo 3"></td>
-<td><img src="https://github.com/user-attachments/assets/76b2add7-36e6-4a84-ba38-a8cf739d447f" alt="Demo 4"></td>
-</tr>
-</table>
-
-*Watch how Snap Core transforms your videos and images into professional thumbnails*
-
-## Getting Started
-
-### Installation
+### Prerequisites
 
 1. Clone the repository:
 ```bash
