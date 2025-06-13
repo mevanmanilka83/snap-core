@@ -861,7 +861,7 @@ export default function TextEditor({
                 {textElements.map((element) => (
                   <div 
                     key={element.id} 
-                    className={`flex gap-2 items-start p-2 rounded-md ${element.id === activeTextElementId ? 'bg-accent' : ''}`}
+                    className="flex gap-2 items-start p-2 rounded-md"
                     onClick={() => handleTextElementSelect(element.id)}
                   >
                     <div className="flex-1 space-y-2">
