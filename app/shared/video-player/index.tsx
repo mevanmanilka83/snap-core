@@ -275,20 +275,16 @@ export function VideoPlayer({
 
   const handleCaptureFrame = async () => {
     const video = videoRef.current;
-    if (!video) {
-      toast.error("No video loaded");
-      return;
-    }
+    if (!video || !videoInfo) return;
 
     try {
-      // Create canvas with video dimensions
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
+      canvas.width = videoInfo.width;
+      canvas.height = videoInfo.height;
+      const ctx = canvas.getContext('2d');
       
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) {
-        throw new Error("Failed to create canvas context");
+        throw new Error("Failed to get canvas context");
       }
 
       // Draw the current video frame
@@ -297,16 +293,16 @@ export function VideoPlayer({
       // Get the image data
       const imageData = canvas.toDataURL('image/png');
       
-      // Send the snapshot to parent component
       if (onSnapshot) {
         onSnapshot(imageData);
-        toast.success("Frame captured");
-      } else {
-        throw new Error("Snapshot handler not configured");
       }
-    } catch (error) {
-      console.error("Error capturing frame:", error);
-      toast.error("Failed to capture frame. Please try again.");
+    } catch (err) {
+      console.error("Error capturing frame:", err);
+      if (err instanceof Error && err.message.includes('tainted')) {
+        toast.error("Cannot capture frame due to CORS restrictions. Please ensure the video source allows cross-origin access.");
+      } else {
+        toast.error("Failed to capture frame");
+      }
     }
   };
 
@@ -487,48 +483,11 @@ export function VideoPlayer({
             <video
               ref={videoRef}
               className="w-full h-full object-contain"
-              onTimeUpdate={handleTimeUpdate}
+              controls
+              crossOrigin="anonymous"
               onLoadedMetadata={handleMetadataLoaded}
-              onCanPlay={handleMetadataLoaded}
-              onLoadedData={handleMetadataLoaded}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onSeeking={handleTimeUpdate}
+              onTimeUpdate={handleTimeUpdate}
               onEnded={handleVideoEnd}
-              onError={(e) => {
-                const video = e.target as HTMLVideoElement;
-                const error = video.error;
-                let errorMessage = "Error playing video";
-                
-                if (error) {
-                  switch (error.code) {
-                    case MediaError.MEDIA_ERR_ABORTED:
-                      errorMessage = "Video playback was aborted";
-                      break;
-                    case MediaError.MEDIA_ERR_NETWORK:
-                      errorMessage = "Network error occurred while loading video";
-                      break;
-                    case MediaError.MEDIA_ERR_DECODE:
-                      errorMessage = "Video decoding failed. The video format may not be supported";
-                      break;
-                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                      errorMessage = "Video format not supported";
-                      break;
-                    default:
-                      errorMessage = `Video error: ${error.message || "Unknown error"}`;
-                  }
-                }
-                
-                console.error("Video error:", {
-                  code: error?.code,
-                  message: error?.message
-                });
-                
-                setError(errorMessage);
-                toast.error(errorMessage);
-              }}
-              controls={false}
-              playsInline
             />
             {!videoLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/5">

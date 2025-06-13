@@ -55,11 +55,11 @@ const BackgroundRemovedSection = ({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row gap-2">
+      <CardFooter>
         <Button
           onClick={handleRemoveBackground}
           disabled={!processedFrame || isProcessing}
-          className="w-full sm:w-1/2 h-9 sm:h-10"
+          className="w-full h-9 sm:h-10"
         >
           {isProcessing ? (
             <>
@@ -70,22 +70,6 @@ const BackgroundRemovedSection = ({
             "Remove Background"
           )}
         </Button>
-        {processedImageSrc && (
-          <Button
-            onClick={() => {
-              const link = document.createElement('a');
-              link.href = processedImageSrc;
-              link.download = 'background-removed.png';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
-            className="w-full sm:w-1/2 h-9 sm:h-10"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Save Image
-          </Button>
-        )}
       </CardFooter>
     </Card>
   );

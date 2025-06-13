@@ -533,10 +533,14 @@ export default function ImageUploader() {
       // Create thumbnail immediately after background removal
       handleCreateThumbnail()
       
-      toast.success("Background removed successfully")
+      toast.success("Background removed successfully", {
+        id: "background-removed-success"
+      })
     } catch (err) {
       console.error("Error removing background:", err)
-      toast.error("Failed to remove background")
+      toast.error("Failed to remove background", {
+        id: "background-removed-error"
+      })
       setError("Failed to remove background. Please try again.")
     } finally {
       setIsProcessing(false)
@@ -583,12 +587,18 @@ export default function ImageUploader() {
 
   const handleCreateThumbnail = () => {
     if (!processedImageSrc) {
-      toast.error("Please process the image first")
-      return
+      toast.error("Please remove background first to see the preview", {
+        id: "no-background-error"
+      });
+      return;
     }
-    setIsCreatingThumbnail(true)
-    createThumbnail(processedImageSrc)
-  }
+
+    setIsCreatingThumbnail(true);
+    createThumbnail(processedImageSrc);
+    toast.success("Thumbnail updated", {
+      id: "thumbnail-updated-success"
+    });
+  };
 
   const handleSaveBackgroundRemoved = () => {
     if (!processedImageSrc) return
@@ -1012,7 +1022,7 @@ export default function ImageUploader() {
         setIsCreatingThumbnail(false)
 
         if (showUpdateToast) {
-          toast.success("Thumbnail updated. Ready to add text.")
+          toast.success("Thumbnail updated")
           setShowUpdateToast(false)
         }
       }
@@ -1184,22 +1194,14 @@ export default function ImageUploader() {
       </Tabs>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <Card className="w-full">
+        <Card className="w-full flex flex-col">
           <CardHeader className="p-4 md:p-6 pb-2">
             <CardTitle className="text-base">Image Preview</CardTitle>
             {error && hasAttemptedLoad && <p className="text-xs md:text-sm text-red-500 mt-1">{error}</p>}
           </CardHeader>
-          <CardContent className="space-y-4">
-            {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2">
-                <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                <div>
-                  <p>
-                    Image size: {imageInfo.width}x{imageInfo.height} pixels
-                  </p>
-                  {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                </div>
-              </div>
+          <CardContent className="space-y-4 flex-1">
+            {imageInfo && imageLoaded && imageInfo.size > 0 && (
+              <p className="text-xs md:text-sm text-muted-foreground">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
             )}
 
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
@@ -1292,7 +1294,7 @@ export default function ImageUploader() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+          <CardFooter className="items-center [.border-t]:pt-10 flex flex-wrap gap-2 p-4 pt-12 md:p-6">
             <Button onClick={handleCancel} variant="outline" className="flex-1">
               Cancel
             </Button>
@@ -1313,24 +1315,16 @@ export default function ImageUploader() {
           </CardFooter>
         </Card>
 
-        <Card className="w-full">
+        <Card className="w-full flex flex-col">
           <CardHeader className="p-4 md:p-6">
             <CardTitle className="text-base">Background Removal</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               Remove the background to proceed with text editing in the image section
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {imageInfo && imageLoaded && (
-              <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2 mb-4">
-                <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                <div>
-                  <p>
-                    Image size: {imageInfo.width}x{imageInfo.height} pixels
-                  </p>
-                  {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                </div>
-              </div>
+          <CardContent className="flex-1 pb-0">
+            {imageInfo && imageLoaded && imageInfo.size > 0 && (
+              <p className="text-xs md:text-sm text-muted-foreground mb-4">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
             )}
             <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
               <div className="relative w-full h-full">
@@ -1377,7 +1371,7 @@ export default function ImageUploader() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-2 p-4 md:p-6">
+          <CardFooter className="items-center [.border-t]:pt-10 flex flex-wrap gap-2 p-4 pt-12 md:p-6 border-t">
             <Button onClick={handleCancel} variant="outline" className="flex-1">
               Cancel
             </Button>
@@ -1388,7 +1382,7 @@ export default function ImageUploader() {
               className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
             >
               <Download className="h-4 w-4 mr-2" />
-              Save Processed Image
+              Save
             </Button>
           </CardFooter>
         </Card>

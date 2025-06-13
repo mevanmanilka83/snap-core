@@ -316,206 +316,97 @@ export default function VideoThumbnailGenerator() {
     setProcessedFrame(imageSrc)
   }
 
-  const handleSnapshot = (imageData: string) => {
-    if (!imageData) {
-      toast.error("No image data received");
-      return;
-    }
-
-    try {
-      // Add the snapshot directly to the collection
-      setSnapshots((prev) => [...prev, imageData]);
-      setProcessedFrame(imageData);
-      setCurrentFrame(imageData);
-      setSelectedSnapshotIndex(snapshots.length);
-      setProcessedImageSrc(imageData);
-      
-      // Save to undo stack if needed
-      if (processedFrame) {
-        setUndoStack((prev) => [...prev, processedFrame]);
-        setRedoStack([]);
-      }
-
-      // Update final preview
-      updateFinalPreview();
-
-      toast.success("Snapshot captured successfully", {
-        description: `View in Snapshots tab (${snapshots.length + 1} total)`
-      });
-    } catch (error) {
-      console.error("Error handling snapshot:", error);
-      toast.error("Failed to capture snapshot");
-    }
-  };
-
-  // Add this helper function at the top level
-  const createVideoSnapshot = async (video: HTMLVideoElement): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Create a canvas matching video dimensions
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Get the canvas context
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
-          throw new Error('Failed to get canvas context');
-        }
-
-        // Draw the current video frame
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Convert to blob with error handling
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            reject(new Error('Failed to create image blob'));
-            return;
-          }
-
-          // Create object URL from blob
-          const objectUrl = URL.createObjectURL(blob);
-
-          // Verify the blob can be loaded as an image
-          const img = new window.Image();
-          img.crossOrigin = 'anonymous';
-          
-          img.onload = () => {
-            // Create a new canvas to verify the image data
-            const verifyCanvas = document.createElement('canvas');
-            verifyCanvas.width = img.width;
-            verifyCanvas.height = img.height;
-            const verifyCtx = verifyCanvas.getContext('2d', { willReadFrequently: true });
-            
-            if (!verifyCtx) {
-              URL.revokeObjectURL(objectUrl);
-              reject(new Error('Failed to verify image data'));
-              return;
-            }
-
-            // Draw the image to verify it's valid
-            verifyCtx.drawImage(img, 0, 0);
-            
-            try {
-              // Try to get image data to verify it's not tainted
-              verifyCtx.getImageData(0, 0, 1, 1);
-              
-              // Create a new blob from the verified canvas
-              verifyCanvas.toBlob((verifiedBlob) => {
-                if (!verifiedBlob) {
-                  URL.revokeObjectURL(objectUrl);
-                  reject(new Error('Failed to create verified image blob'));
-                  return;
-                }
-
-                // Create a new object URL from the verified blob
-                const verifiedUrl = URL.createObjectURL(verifiedBlob);
-                
-                // Clean up the original object URL
-                URL.revokeObjectURL(objectUrl);
-                
-                // Return the verified URL
-                resolve(verifiedUrl);
-              }, 'image/png', 1.0);
-            } catch (error) {
-              URL.revokeObjectURL(objectUrl);
-              reject(new Error('Image data is tainted. CORS may be blocking access.'));
-            }
-          };
-
-          img.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error('Failed to load image from blob'));
-          };
-
-          img.src = objectUrl;
-        }, 'image/png', 1.0);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
-  // Replace the existing captureSnapshot function
-  const captureSnapshot = async () => {
-    if (!videoRef.current) return;
-
-    const video = videoRef.current;
-    
-    // Check if video is ready
-    if (!video.videoWidth || !video.videoHeight) {
-      toast.error("Video is not ready. Please wait for it to load.");
-      return;
-    }
-
-    // Check if video has CORS enabled
-    if (video.crossOrigin !== 'anonymous') {
-      // Try to reload with CORS enabled
-      await reloadVideoWithCORS();
-      return;
-    }
-
-    try {
-      // Store current playing state
-      const wasPlaying = !video.paused;
-      
-      // Pause video
-      video.pause();
-
-      // Create snapshot
-      const snapshot = await createVideoSnapshot(video);
-      
-      // Update snapshots array
-      setSnapshots(prev => [...prev, snapshot]);
-      setSelectedSnapshotIndex(snapshots.length);
-      
-      // Restore video state
-      if (wasPlaying) {
-        video.play().catch(console.error);
-      }
-
-      toast.success("Snapshot captured successfully");
-    } catch (error) {
-      console.error('Error capturing snapshot:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to capture snapshot");
-      
-      // Try to restore video state
-      if (!video.paused) {
-        video.play().catch(console.error);
-      }
-    }
-  };
-
-  const handleAutoCaptureKeyFrames = () => {
-    if (!videoRef.current || !videoInfo) {
+  const handleSnapshot = () => {
+    if (!videoRef.current) {
       toast.error("No video loaded");
       return;
     }
 
+    try {
+      const canvas = document.createElement("canvas");
+      const video = videoRef.current;
+      
+      // Ensure video is ready
+      if (video.readyState < 2) {
+        toast.error("Video is not ready yet");
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) {
+        toast.error("Failed to create canvas context");
+        return;
+      }
+
+      // Draw the current video frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      try {
+        const imageUrl = canvas.toDataURL("image/png");
+        
+        // Verify the image data is valid
+        if (!imageUrl || imageUrl === 'data:,') {
+          throw new Error("Invalid image data generated");
+        }
+
+        setSnapshots((prev) => [...prev, imageUrl]);
+        setSelectedSnapshotIndex(snapshots.length);
+        setProcessedFrame(imageUrl);
+        setProcessedImageSrc(imageUrl);
+        setActiveTab("edit");
+        toast.success("Snapshot captured successfully", {
+          id: "snapshot-success",
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('tainted')) {
+          toast.error("Cannot capture frame due to CORS restrictions. Please ensure the video source allows cross-origin access.");
+        } else {
+          toast.error("Failed to capture frame. Please try again.");
+        }
+        console.error("Error capturing frame:", error);
+      }
+    } catch (error) {
+      console.error("Error in handleSnapshot:", error);
+      toast.error("Failed to capture frame. Please try again.");
+    }
+  };
+
+  const captureSnapshot = async () => {
+    handleSnapshot();
+    return Promise.resolve();
+  };
+
+  const handleAutoCaptureKeyFrames = () => {
+    if (!videoRef.current) return;
+
     const video = videoRef.current;
     const duration = video.duration;
-    const times = [0, 0.25, 0.5, 0.75, 1].map((percent) => percent * duration);
-    const wasPlaying = !video.paused;
-    
-    // Pause the video
-    video.pause();
-    
-    let timeIndex = 0;
-    const takeSnapshots = () => {
-      if (timeIndex < times.length) {
-        video.currentTime = times[timeIndex];
-        setTimeout(() => {
-          captureSnapshot();
-          timeIndex++;
-          takeSnapshots();
-        }, 500);
-      } else if (wasPlaying) {
-        video.play();
-      }
-    };
-    
-    takeSnapshots();
-    toast.success("Taking snapshots at key points");
+    const interval = 5; // Capture every 5 seconds
+    const newSnapshots: string[] = [];
+
+    for (let time = 0; time < duration; time += interval) {
+      video.currentTime = time;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      newSnapshots.push(canvas.toDataURL("image/png"));
+    }
+
+    setSnapshots((prev) => [...prev, ...newSnapshots]);
+    setSelectedSnapshotIndex(snapshots.length);
+    setProcessedFrame(newSnapshots[0]);
+    setProcessedImageSrc(newSnapshots[0]);
+    setActiveTab("edit");
+    toast.success("Snapshots captured successfully", {
+      id: "auto-snapshot-success", // Add an ID to prevent duplicate toasts
+    });
   };
 
   const handleSaveSnapshot = (index: number) => {
@@ -756,11 +647,11 @@ export default function VideoThumbnailGenerator() {
               }
               setProcessedImageSrc(url);
               setProcessedFrame(url);
-          setBackgroundRemoved(true);
-          toast.success("Background removed successfully");
+              setBackgroundRemoved(true);
+              setCanGoToTextAndPreview(true);
             }
             worker?.terminate();
-          setIsProcessing(false);
+            setIsProcessing(false);
             break;
           case 'error':
             console.error("Worker error:", data);
@@ -909,7 +800,7 @@ export default function VideoThumbnailGenerator() {
     setShowTextEditor(true);
     setActiveTab("text");
     updateFinalPreview();
-    toast.success("Thumbnail updated. Ready to add text.");
+    toast.success("Thumbnail updated");
   };
 
   // Calculate position based on the position property
@@ -1376,7 +1267,6 @@ export default function VideoThumbnailGenerator() {
     // For text and preview tabs, require processed image and navigation permission
     if (newTab === "text" || newTab === "preview") {
       if (!processedImageSrc || !canGoToTextAndPreview) {
-        toast.error("Please remove the background and click Next in the Edit tab before proceeding.");
         return;
       }
       setActiveTab(newTab);

@@ -550,7 +550,7 @@ export default function ImageUploader({
       // Show toast once at the start
       toast.info("Removing background...", {
         duration: 2000,
-        position: "bottom-right",
+        id: "removing-background"
       });
 
       // Save current processed image to undo stack if it exists
@@ -580,7 +580,7 @@ export default function ImageUploader({
             // Debounce progress updates to reduce re-renders
             const now = Date.now();
             if (now - lastProgressUpdate > 100) { // Only update every 100ms
-            setProcessingProgress(data)
+              setProcessingProgress(data)
               lastProgressUpdate = now;
             }
             break
@@ -610,7 +610,7 @@ export default function ImageUploader({
               setProcessedImageSrc(url)
               toast.success("Background removed successfully", {
                 duration: 2000,
-                position: "bottom-right",
+                id: "background-removed-success"
               })
             }
             worker?.terminate()
@@ -620,7 +620,7 @@ export default function ImageUploader({
             console.error("Worker error:", data)
             toast.error(data || "Failed to remove background", {
               duration: 2000,
-              position: "bottom-right",
+              id: "background-removed-error"
             })
             worker?.terminate()
             setIsProcessing(false)
@@ -633,7 +633,7 @@ export default function ImageUploader({
         console.error("Worker error:", error)
         toast.error("Failed to remove background. Please try again.", {
           duration: 2000,
-          position: "bottom-right",
+          id: "background-removed-error"
         })
         worker?.terminate()
         setIsProcessing(false)
@@ -645,7 +645,7 @@ export default function ImageUploader({
       console.error("Error removing background:", error)
       toast.error(error instanceof Error ? error.message : "Failed to remove background", {
         duration: 2000,
-        position: "bottom-right",
+        id: "background-removed-error"
       })
       setIsProcessing(false)
     }
@@ -1342,14 +1342,8 @@ export default function ImageUploader({
               {error && hasAttemptedLoad && <p className="text-sm text-red-500 mt-1">{error}</p>}
             </CardHeader>
             <CardContent className="space-y-4">
-              {imageInfo && imageLoaded && (
-                <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2">
-                  <Info className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
-                    {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                  </div>
-                </div>
+              {imageInfo && imageLoaded && imageInfo.size > 0 && (
+                <p className="text-xs text-muted-foreground">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
               )}
 
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
@@ -1469,14 +1463,8 @@ export default function ImageUploader({
               <CardTitle className="text-base">Background Removed</CardTitle>
             </CardHeader>
             <CardContent>
-              {imageInfo && imageLoaded && (
-                <div className="bg-muted p-2 text-xs rounded flex items-center space-x-2 mb-4">
-                  <Info className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p>Image size: {imageInfo.width}x{imageInfo.height} pixels</p>
-                    {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
-                  </div>
-                </div>
+              {imageInfo && imageLoaded && imageInfo.size > 0 && (
+                <p className="text-xs text-muted-foreground mb-4">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
               )}
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                 <div className="relative w-full h-full">

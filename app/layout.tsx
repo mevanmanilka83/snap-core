@@ -162,7 +162,7 @@ export default function RootLayout({
               </main>
               <Footer />
             </ClientWrapper>
-            <Toaster position="top-right" className="sm:max-w-sm md:max-w-md" />
+            <Toaster className="fixed top-4 right-4 z-50" />
           </div>
         </ThemeProvider>
       </body>

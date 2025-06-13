@@ -42,9 +42,6 @@ const BackgroundRemovedSection = (props: any) => {
               <div className="bg-muted p-2 text-xs md:text-sm rounded flex items-center space-x-2 mb-4">
                 <Info className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                 <div>
-                  <p>
-                    Image size: {imageInfo.width}x{imageInfo.height} pixels
-                  </p>
                   {imageInfo.size > 0 && <p>File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>}
                 </div>
               </div>
