@@ -6,6 +6,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-purple?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
+![Snap Core](https://github.com/user-attachments/assets/1fe69187-e64d-4308-b9ff-a7fd13e0890f)
+
 ## Overview
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
