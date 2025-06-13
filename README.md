@@ -12,7 +12,10 @@ Snap Core is a modern, privacy-focused application that enables content creators
 
 ## 🎥 Demo
 
-https://github.com/yourusername/snap-core/assets/your-asset-id/demo.mp4
+![Image](https://github.com/user-attachments/assets/26253719-4756-4f2f-8965-d59488b01e72)
+![Image](https://github.com/user-attachments/assets/dd5b0821-dbb3-4199-82c8-384916e727e4)
+![Image](https://github.com/user-attachments/assets/c2734e3f-d455-45fb-bf5d-535cc0ae8493)
+![Image](https://github.com/user-attachments/assets/76b2add7-36e6-4a84-ba38-a8cf739d447f)
 
 *Watch how Snap Core transforms your videos and images into professional thumbnails*
 
