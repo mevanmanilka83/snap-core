@@ -54,3 +54,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🛠️ Tech Stack
+
+- **Frontend Framework:** [React](https://react.dev/) (v19)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) (v4.1)
+- **Video Processing:** [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)
+- **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/)
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+- **Icons:** [Lucide Icons](https://lucide.dev/)
+- **Development:** [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
