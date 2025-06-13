@@ -5,7 +5,6 @@ import { ChevronsRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Spline from "@splinetool/react-spline"
 
-
 const HeroSection = memo(function HeroSection() {
   const sceneUrl = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
 

@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Inter, Poppins, Roboto, Open_Sans, Montserrat, Lato } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import ThemeProvider from "@/main-header/ThemeProvider"
 import Footer from "@/footer/footer"
 import { cn } from "@/lib/utils"
 import ClientWrapper from "@/components/client-wrapper"
@@ -148,23 +147,15 @@ export default function RootLayout({
           "antialiased min-h-screen bg-background text-foreground"
         )}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          storageKey="snap-core-theme"
-        >
-          <div className="relative flex min-h-screen flex-col">
-            <ClientWrapper>
-              <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-screen-2xl mx-auto w-full">
-                {children}
-              </main>
-              <Footer />
-            </ClientWrapper>
-            <Toaster className="fixed top-4 right-4 z-50" />
-          </div>
-        </ThemeProvider>
+        <div className="relative flex min-h-screen flex-col">
+          <ClientWrapper>
+            <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-screen-2xl mx-auto w-full">
+              {children}
+            </main>
+            <Footer />
+          </ClientWrapper>
+          <Toaster className="fixed top-4 right-4 z-50" />
+        </div>
       </body>
     </html>
   )
