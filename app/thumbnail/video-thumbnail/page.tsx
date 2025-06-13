@@ -1054,7 +1054,7 @@ export default function VideoThumbnailGenerator() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success("Thumbnail saved successfully");
+    toast.success("Thumbnail updated");
   };
 
   const handleApplyText = () => {

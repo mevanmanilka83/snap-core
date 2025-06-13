@@ -873,7 +873,7 @@ export default function ImageUploader({
       // Update the thumbnail
       thumbnailUrl.current = finalImageUrl
       setThumbnailSrc(finalImageUrl)
-      toast.success("Thumbnail created successfully")
+      toast.success("Thumbnail updated")
 
       // Clean up images
       bgImg.src = ""
