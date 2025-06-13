@@ -20,19 +20,13 @@ export default function Footer() {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
             <Link 
               href="/terms" 
-              className={cn(
-                "text-xs font-medium text-muted-foreground hover:text-primary transition-colors",
-                "px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              )}
+              className="text-xs font-medium text-muted-foreground"
             >
               Terms
             </Link>
             <Link 
               href="/privacy" 
-              className={cn(
-                "text-xs font-medium text-muted-foreground hover:text-primary transition-colors",
-                "px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              )}
+              className="text-xs font-medium text-muted-foreground"
             >
               Privacy
             </Link>
@@ -41,10 +35,7 @@ export default function Footer() {
             href="https://github.com/mevanmanilka83"
             target="_blank"
             rel="noreferrer noopener"
-            className={cn(
-              "text-muted-foreground hover:text-primary transition-colors",
-              "p-1.5 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            )}
+            className="text-muted-foreground"
             aria-label="Developer's GitHub Profile"
           >
             <Github className="h-4 w-4" aria-hidden="true" />

@@ -10,11 +10,6 @@ const SmoothScroll = dynamic(() => import("@/components/smooth-scroll"), {
   loading: () => null,
 });
 
-const SmoothFollower = dynamic(() => import("@/components/SmoothFollower"), {
-  ssr: false,
-  loading: () => null,
-});
-
 export default function ClientWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
@@ -22,7 +17,6 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
         <SmoothScroll>
           {children}
         </SmoothScroll>
-        <SmoothFollower />
       </Suspense>
     </ErrorBoundary>
   );

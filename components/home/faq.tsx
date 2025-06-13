@@ -1,28 +1,13 @@
 "use client"
 
 import React, { useState, useRef, memo, useCallback } from 'react'
-import {  motion, useInView } from 'framer-motion'
 import { Badge } from "@/components/ui/badge"
-import { WordPullUp } from "@/components/eldoraui/wordpullup"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
 
 interface FAQ {
   question: string;
   answer: string;
-}
-
-const faqVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.5,
-      ease: "easeOut"
-    }
-  })
 }
 
 const faqs: FAQ[] = [
@@ -71,10 +56,6 @@ const faqs: FAQ[] = [
 const FAQSection = memo(function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { 
-    amount: 0.3,
-    once: true 
-  })
 
   const handleAccordionClick = useCallback((index: number) => {
     setOpenIndex(openIndex === index ? null : index)
@@ -99,39 +80,21 @@ const FAQSection = memo(function FAQSection() {
           FAQ
         </Badge>
         <div className="min-h-[120px] flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6 }}
-          >
-            <WordPullUp 
-              text="Frequently Asked Questions" 
-              className="text-2xl sm:text-3xl md:text-4xl mb-4" 
-            />
-          </motion.div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4">
+            Frequently Asked Questions
+          </h2>
         </div>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className={cn(
-            "text-muted-foreground max-w-2xl mx-auto",
-            "text-sm sm:text-base"
-          )}
-        >
+        <p className={cn(
+          "text-muted-foreground max-w-2xl mx-auto",
+          "text-sm sm:text-base"
+        )}>
           Find answers to common questions about creating thumbnails from videos and images with Snap Core.
-        </motion.p>
+        </p>
       </div>
 
       <div className="space-y-4">
         {faqs.map((faq, index) => (
-          <motion.div
-            key={index}
-            custom={index}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            variants={faqVariants}
-          >
+          <div key={index}>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value={`item-${index}`}>
                 <AccordionTrigger
@@ -153,7 +116,7 @@ const FAQSection = memo(function FAQSection() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

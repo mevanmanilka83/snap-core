@@ -11,7 +11,7 @@ import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
-import { WordPullUp } from "@/components/eldoraui/wordpullup";
+
 import ImageSection from "../../image-thumbnail/sections/ImageSection";
 import { useState, useEffect } from "react";
 import VideoSection from "./VideoSection";
@@ -153,11 +153,10 @@ export default function VideoTabSelection({
           <Badge variant="outline" className="mb-4 text-xs sm:text-sm">
             Create Thumbnails
           </Badge>
-          <div className="min-h-[80px] flex items-center justify-center">
-            <WordPullUp
-              text="Transform Your Content into Eye-Catching Thumbnails"
-              className="text-2xl sm:text-3xl md:text-4xl mb-4"
-            />
+          <div className="min-h-[120px] flex items-center justify-center">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4">
+              Video Thumbnail Generator
+            </h2>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
             Choose between video frame capture or direct image upload. Our
