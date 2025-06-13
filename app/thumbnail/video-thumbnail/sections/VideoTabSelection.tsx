@@ -155,7 +155,7 @@ export default function VideoTabSelection({
           </Badge>
           <div className="min-h-[120px] flex items-center justify-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4">
-              Video Thumbnail Generator
+              Transform Your Content to Eye Catching Thumbnails
             </h2>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
