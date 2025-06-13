@@ -45,7 +45,7 @@ const HowItWorks = () => {
             "mb-4 text-xs sm:text-sm"
           )}
         >
-          Create Thumbnails from Videos or Images
+         How It Works
         </Badge>
         <div className="min-h-[120px] flex items-center justify-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4">
