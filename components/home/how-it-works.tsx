@@ -45,11 +45,11 @@ const HowItWorks = () => {
             "mb-4 text-xs sm:text-sm"
           )}
         >
-          How It Works
+          Create Thumbnails from Videos or Images
         </Badge>
         <div className="min-h-[120px] flex items-center justify-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4">
-            How It Works
+            Create Thumbnails from Videos or Images
           </h2>
         </div>
         <p className={cn(

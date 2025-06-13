@@ -1078,8 +1078,8 @@ export default function ImageUploader() {
             className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
             disabled={!processedImageSrc}
           >
-            <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-            <span>Final Preview</span>
+            <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+            <span>Final Thumbnail</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1400,7 +1400,7 @@ export default function ImageUploader() {
           </TabsTrigger>
           <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
             <Layers className="h-3 w-3 md:h-4 md:w-4" />
-            <span>Final Preview</span>
+            <span>Final Thumbnail</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1653,7 +1653,7 @@ export default function ImageUploader() {
         <TabsContent value="preview" className="space-y-4">
           <Card className="w-full">
             <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-sm md:text-base">Final Preview</CardTitle>
+              <CardTitle className="text-sm md:text-base">Final Thumbnail</CardTitle>
               <CardDescription className="text-xs md:text-sm">Preview your thumbnail with text and effects</CardDescription>
             </CardHeader>
             <CardContent className="p-4 md:p-6">

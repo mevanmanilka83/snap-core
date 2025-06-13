@@ -1245,13 +1245,11 @@ export default function ImageUploader({
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-            <TabsTrigger value="file" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-              <UploadIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>Image from File</span>
+            <TabsTrigger value="file" className="text-xs sm:text-sm py-2 px-1 sm:px-2">
+              File
             </TabsTrigger>
-            <TabsTrigger value="url" className="flex items-center gap-1 text-xs sm:text-sm py-2 px-1 sm:px-2">
-              <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>Image from URL</span>
+            <TabsTrigger value="url" className="text-xs sm:text-sm py-2 px-1 sm:px-2">
+              URL
             </TabsTrigger>
           </TabsList>
 
@@ -1546,8 +1544,8 @@ export default function ImageUploader({
             </TabsTrigger>
             <TabsTrigger value="preview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
               <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
-              <span className="hidden xs:inline">Final Preview</span>
-              <span className="xs:hidden">Preview</span>
+              <span className="hidden xs:inline">Final Thumbnail</span>
+              <span className="xs:hidden">Final Thumbnail</span>
             </TabsTrigger>
           </TabsList>
 
