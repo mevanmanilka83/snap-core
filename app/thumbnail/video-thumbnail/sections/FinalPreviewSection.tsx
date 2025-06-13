@@ -34,8 +34,8 @@ const FinalPreviewSection = ({
         ) : !finalThumbnail ? (
           <div className="text-center py-8 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-sm">No preview available</p>
-            <p className="text-xs mt-2">Add text in the Text tab to see the final preview</p>
+            <p className="text-sm">No thumbnail available</p>
+            <p className="text-xs mt-2">Add text in the Text tab to see the final thumbnail</p>
           </div>
         ) : (
           <div className="relative aspect-video flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-[linear-gradient(45deg,_#eee_25%,_transparent_25%,_transparent_75%,_#eee_75%,_#eee),_linear-gradient(45deg,_#eee_25%,_transparent_25%,_transparent_75%,_#eee_75%,_#eee)] bg-[length:20px_20px] bg-[position:0_0,10px_10px]">
@@ -51,7 +51,7 @@ const FinalPreviewSection = ({
                 }}
               />
               <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                {videoInfo ? `${videoInfo.width}x${videoInfo.height}` : 'Preview'}
+                {videoInfo ? `${videoInfo.width}x${videoInfo.height}` : 'Thumbnail'}
               </div>
             </div>
           </div>

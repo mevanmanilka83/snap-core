@@ -880,64 +880,65 @@ export default function VideoThumbnailGenerator() {
     const tryCreatePreview = () => {
       if (loadedImages < totalImages) return;
 
-      // Set canvas dimensions based on the original image
-      previewCanvas.width = originalImg.width;
-      previewCanvas.height = originalImg.height;
-      const ctx = previewCanvas.getContext("2d");
-      
-      if (!ctx) {
-        console.error("Failed to get canvas context");
-        return;
-      }
-
-      // Clear canvas
-      ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-
-      // Draw the original image as background with filters
-      ctx.filter = `
-        brightness(${imageFilters.brightness}%) 
-        contrast(${imageFilters.contrast}%) 
-        saturate(${imageFilters.saturation}%) 
-        blur(${imageFilters.blur}px) 
-        hue-rotate(${imageFilters.hueRotate}deg)
-        grayscale(${imageFilters.grayscale}%)
-        sepia(${imageFilters.sepia}%)
-      `;
-      ctx.drawImage(originalImg, 0, 0);
-      ctx.filter = "none"; // Reset filters for text
-
-      // Draw all 'back' text elements (in array order)
-      textElements
-        .filter(e => e.layerOrder === "back" && e.visible !== false)
-        .forEach(element => {
-          drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-        });
-
-      // Draw the processed image (subject)
-      ctx.drawImage(processedImg, 0, 0);
-
-      // Draw all 'front' text elements (in array order)
-      textElements
-        .filter(e => e.layerOrder !== "back" && e.visible !== false)
-        .forEach(element => {
-          drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-        });
-
-      // Update the final thumbnail
       try {
+        // Set canvas dimensions based on the original image
+        previewCanvas.width = originalImg.width;
+        previewCanvas.height = originalImg.height;
+        const ctx = previewCanvas.getContext("2d");
+        
+        if (!ctx) {
+          console.error("Failed to get canvas context");
+          toast.error("Failed to create thumbnail");
+          return;
+        }
+
+        // Clear canvas
+        ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+        // Draw the original image as background with filters
+        ctx.filter = `
+          brightness(${imageFilters.brightness}%) 
+          contrast(${imageFilters.contrast}%) 
+          saturate(${imageFilters.saturation}%) 
+          blur(${imageFilters.blur}px) 
+          hue-rotate(${imageFilters.hueRotate}deg)
+          grayscale(${imageFilters.grayscale}%)
+          sepia(${imageFilters.sepia}%)
+        `;
+        ctx.drawImage(originalImg, 0, 0);
+        ctx.filter = "none"; // Reset filters for text
+
+        // Draw all 'back' text elements (in array order)
+        textElements
+          .filter(e => e.layerOrder === "back" && e.visible !== false)
+          .forEach(element => {
+            drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
+          });
+
+        // Draw the processed image (subject)
+        ctx.drawImage(processedImg, 0, 0);
+
+        // Draw all 'front' text elements (in array order)
+        textElements
+          .filter(e => e.layerOrder !== "back" && e.visible !== false)
+          .forEach(element => {
+            drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
+          });
+
+        // Update the final thumbnail
         previewCanvas.toBlob((blob) => {
           if (!blob) {
             console.error("Failed to create blob from canvas");
-            toast.error("Failed to create final preview");
+            toast.error("Failed to create thumbnail");
             return;
           }
           const finalImageUrl = URL.createObjectURL(blob);
           setFinalThumbnail(finalImageUrl);
-          console.debug("Final preview updated");
+          console.debug("Thumbnail updated");
         }, 'image/png', 1.0);
       } catch (error) {
-        console.error("Error creating final thumbnail:", error);
-        toast.error("Failed to create final preview");
+        console.error("Error creating thumbnail:", error);
+        toast.error("Failed to create thumbnail");
       }
     };
 
@@ -952,12 +953,12 @@ export default function VideoThumbnailGenerator() {
     };
 
     originalImg.onerror = () => {
-      console.error("Error loading original image for final preview");
+      console.error("Error loading original image");
       toast.error("Failed to load original image");
     };
 
     processedImg.onerror = () => {
-      console.error("Error loading processed image for final preview");
+      console.error("Error loading processed image");
       toast.error("Failed to load processed image");
     };
 

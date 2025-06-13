@@ -32,6 +32,7 @@
     "@radix-ui/react-slot": "^1.2.2",
     "@radix-ui/react-switch": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.8",
+    "@splinetool/react-spline": "^4.0.0",
     "@studio-freight/lenis": "^1.0.42",
     "@tabler/icons-react": "^3.31.0",
     "class-variance-authority": "^0.7.1",
