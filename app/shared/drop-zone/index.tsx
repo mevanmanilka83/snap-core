@@ -1069,12 +1069,22 @@ export default function ImageUploader({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    e.currentTarget.classList.remove("border-primary")
+    e.currentTarget.classList.remove("border-primary", "bg-primary/5")
     
     try {
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0]
         if (file.type.startsWith("image/")) {
+          // Validate file size
+          if (file.size > maxFileSize) {
+            toast.error(`File size exceeds ${maxFileSize / (1024 * 1024)}MB limit`)
+            return
+          }
+          // Validate file type
+          if (!allowedFileTypes.includes(file.type)) {
+            toast.error(`File type not supported. Allowed types: ${allowedFileTypes.join(", ")}`)
+            return
+          }
           // Create a synthetic change event
           const fileInput = document.getElementById("file-upload") as HTMLInputElement
           if (fileInput) {
@@ -1128,13 +1138,13 @@ export default function ImageUploader({
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    e.currentTarget.classList.add("border-primary")
+    e.currentTarget.classList.add("border-primary", "bg-primary/5")
   }
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    e.currentTarget.classList.remove("border-primary")
+    e.currentTarget.classList.remove("border-primary", "bg-primary/5")
   }
 
   // Add cleanup for drag and drop events
@@ -1252,23 +1262,40 @@ export default function ImageUploader({
                 <CardDescription className="text-sm">Select an image file from your device or drag and drop</CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
-                <label htmlFor="file-upload">
+                <label htmlFor="file-upload" className="block">
                   <div
-                    className="flex flex-col items-center justify-center space-y-4 py-6 px-4 border-2 border-gray-300 border-dashed rounded-md transition-colors hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-pointer drop-zone"
+                    className="flex flex-col items-center justify-center space-y-4 py-6 px-4 border-2 border-dashed rounded-md transition-all duration-200 ease-in-out cursor-pointer drop-zone bg-transparent"
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Drop zone for image upload"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        document.getElementById('file-upload')?.click()
+                      }
+                    }}
                   >
                     <UploadIcon className="h-8 w-8 text-gray-400" />
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Drop image here or click to browse</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Supported formats: {allowedFileTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')}
+                    </div>
                     <input
                       id="file-upload"
                       type="file"
-                      accept="image/*"
+                      accept={allowedFileTypes.join(',')}
                       className="sr-only"
                       onChange={(e) => {
                         if (e.target.files && e.target.files.length > 0) {
-                          handleImageLoad(e.target.files[0])
+                          const file = e.target.files[0]
+                          if (file.size > maxFileSize) {
+                            toast.error(`File size exceeds ${maxFileSize / (1024 * 1024)}MB limit`)
+                            return
+                          }
+                          handleImageLoad(file)
                         }
                       }}
                     />
