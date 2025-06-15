@@ -513,41 +513,50 @@ export default function VideoThumbnailGenerator() {
     try {
       setIsProcessing(true);
 
-      // Create a new image to process
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = processedFrame!;
+      // Create a worker for background removal
+      const worker = new Worker(new URL("@/app/shared/workers/background-removal.worker.ts", import.meta.url));
 
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+      // Handle worker messages
+      worker.onmessage = async (e) => {
+        const { type, data, progress } = e.data;
 
-      // Create a canvas to process the image
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
-      }
+        if (type === "progress") {
+          // Update progress if needed
+          console.log(`Background removal progress: ${progress}%`);
+        } else if (type === "complete") {
+          // Create a URL from the processed blob
+          const processedImageUrl = URL.createObjectURL(data);
+          
+          // Clean up old URL if it exists
+          if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
+            URL.revokeObjectURL(processedImageSrc);
+          }
+          
+          // Update state with the processed image
+          setProcessedFrame(processedImageUrl);
+          setProcessedImageSrc(processedImageUrl);
+          
+          // Update final preview
+          updateFinalPreview();
+          
+          toast.success("Background removed successfully");
+          worker.terminate();
+        }
+      };
 
-      // Set canvas dimensions
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // Handle worker errors
+      worker.onerror = (error) => {
+        console.error("Worker error:", error);
+        toast.error("Failed to remove background. Please try again.");
+        worker.terminate();
+        setIsProcessing(false);
+      };
 
-      // Draw the image
-      ctx.drawImage(img, 0, 0);
-
-      // Apply filters
-      applyFilters(ctx);
-
-      // Convert to base64
-      const processedImageSrc = canvas.toDataURL("image/png");
-      setProcessedFrame(processedImageSrc);
-      setProcessedImageSrc(processedImageSrc);
+      // Start the background removal process
+      worker.postMessage({ imageSrc: processedFrame });
     } catch (error) {
-      console.error("Error processing image:", error);
-      toast.error("Failed to process image");
-    } finally {
+      console.error("Error removing background:", error);
+      toast.error("Failed to remove background. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -780,22 +789,22 @@ export default function VideoThumbnailGenerator() {
         ctx.drawImage(originalImg, 0, 0);
         ctx.filter = "none"; // Reset filters for text
 
-        // Draw all 'back' text elements (in array order)
-        textElements
-          .filter(e => e.layerOrder === "back" && e.visible !== false)
-          .forEach(element => {
+        // Sort text elements by layer order
+        const sortedTextElements = [...textElements].sort((a, b) => {
+          if (a.layerOrder === "back" && b.layerOrder !== "back") return -1;
+          if (a.layerOrder !== "back" && b.layerOrder === "back") return 1;
+          return 0;
+        });
+
+        // Draw text elements in order
+        sortedTextElements.forEach(element => {
+          if (element.visible !== false) {
             drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-          });
+          }
+        });
 
         // Draw the processed image (subject)
         ctx.drawImage(processedImg, 0, 0);
-
-        // Draw all 'front' text elements (in array order)
-        textElements
-          .filter(e => e.layerOrder !== "back" && e.visible !== false)
-          .forEach(element => {
-            drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-          });
 
         // Update the final thumbnail
         previewCanvas.toBlob((blob) => {

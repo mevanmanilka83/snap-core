@@ -7,15 +7,7 @@ const FinalPreviewSection = ({
   videoInfo,
   handleSaveFinalThumbnail,
   processedImageSrc,
-  textElements
 }: any) => {
-  // Sort text elements by layer order (not used in this component, but kept for parity)
-  const sortedTextElements = textElements?.sort((a: any, b: any) => {
-    const aOrder = a.layerOrder === "back" ? 0 : 1;
-    const bOrder = b.layerOrder === "back" ? 0 : 1;
-    return aOrder - bOrder;
-  }) || [];
-
   return (
     <Card>
       <CardHeader className="pb-2">

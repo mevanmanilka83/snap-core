@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Layers, Download, Trash2, ImageIcon, AlertCircle, RefreshCw } from "lucide-react";
+import { Layers, Download, Trash2, AlertCircle, RefreshCw } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
 const SnapshotsSection = ({
@@ -16,14 +16,12 @@ const SnapshotsSection = ({
   setProcessedImageSrc,
   toast
 }: any) => {
-  const [loadedSnapshots, setLoadedSnapshots] = useState<Set<number>>(new Set());
   const [failedSnapshots, setFailedSnapshots] = useState<Set<number>>(new Set());
   const [retryCount, setRetryCount] = useState<Record<number, number>>({});
   const [loadingSnapshots, setLoadingSnapshots] = useState<Set<number>>(new Set());
 
   // Reset states when snapshots change
   useEffect(() => {
-    setLoadedSnapshots(new Set());
     setFailedSnapshots(new Set());
     setRetryCount({});
     setLoadingSnapshots(new Set());
@@ -68,7 +66,6 @@ const SnapshotsSection = ({
     const isValid = await verifyImage(img.src);
     
     if (isValid) {
-      setLoadedSnapshots(prev => new Set([...prev, index]));
       setFailedSnapshots(prev => {
         const newSet = new Set(prev);
         newSet.delete(index);

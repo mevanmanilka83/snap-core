@@ -309,7 +309,7 @@ export function VideoPlayer({
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (!videoLoaded) return;
+      if (!videoLoaded || !e.key) return;
 
       switch (e.key.toLowerCase()) {
         case " ":

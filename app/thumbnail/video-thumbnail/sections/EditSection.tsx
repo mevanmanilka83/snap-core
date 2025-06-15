@@ -1,24 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { Maximize, Minimize, ZoomIn, ZoomOut, Undo, Redo, RotateCw, Palette, ImageIcon } from "lucide-react";
+
+import { Maximize, Minimize, ZoomIn, ZoomOut, ImageIcon } from "lucide-react";
 import FiltersSection from "./FiltersSection";
 import BackgroundRemovedSection from "./BackgroundRemovedSection";
-import { toast } from "sonner";
+
 
 const EditSection = ({
-  processedFrame,
   zoomLevel,
   setZoomLevel,
   imageFilters,
   setImageFilters,
-  handleUndo,
-  handleRedo,
-  undoStack,
-  redoStack,
   handleCreateThumbnail,
-  handleApplyFilters,
   resetFilters,
   applyPresetFilter,
   imageInfo,
@@ -26,16 +19,10 @@ const EditSection = ({
   processedImageSrc,
   isProcessing,
   isCreatingThumbnail,
-  setProcessedImageSrc,
-  setIsProcessing,
-  setUndoStack,
-  setRedoStack,
-  setProcessingProgress,
   handleRemoveBackground: originalHandleRemoveBackground,
   snapshots,
   selectedSnapshotIndex,
   onNext,
-  backgroundRemoved,
   setCanGoToTextAndPreview
 }: any) => {
   // Wrap the original handleRemoveBackground to add automatic tab switching
