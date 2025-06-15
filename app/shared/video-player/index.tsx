@@ -112,10 +112,10 @@ export function VideoPlayer({
         const handleCanPlay = () => {
           video.removeEventListener('canplay', handleCanPlay);
           video.removeEventListener('error', handleError);
-          resolve(true);
+          resolve(void 0);
         };
 
-        const handleError = (e: Event) => {
+        const handleError = () => {
           video.removeEventListener('canplay', handleCanPlay);
           video.removeEventListener('error', handleError);
           reject(new Error("Failed to load video"));
@@ -156,10 +156,10 @@ export function VideoPlayer({
         const handleCanPlay = () => {
           video.removeEventListener('canplay', handleCanPlay);
           video.removeEventListener('error', handleError);
-          resolve(true);
+          resolve(void 0);
         };
 
-        const handleError = (e: Event) => {
+        const handleError = () => {
           video.removeEventListener('canplay', handleCanPlay);
           video.removeEventListener('error', handleError);
           reject(new Error("Failed to load video"));
