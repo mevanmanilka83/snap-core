@@ -260,16 +260,6 @@ export default function VideoThumbnailGenerator() {
     }
   };
 
-  const handleProcessedImage = (imageSrc: string) => {
-    // Save current state to undo stack if we have a processed frame
-    if (processedFrame) {
-      setUndoStack((prev) => [...prev, processedFrame])
-      setRedoStack([]) // Clear redo stack on new action
-    }
-
-    setProcessedFrame(imageSrc)
-  }
-
   const handleSnapshot = () => {
     if (!videoRef.current) {
       toast.error("No video loaded");
@@ -940,11 +930,6 @@ export default function VideoThumbnailGenerator() {
     toast.success("Thumbnail updated");
   };
 
-  const handleUpdateTextElements = (updatedElements: TextElement[]) => {
-    setTextElements(updatedElements)
-    // The useEffect will trigger updateFinalPreview
-  }
-
   const toggleAutoSnap = (enabled: boolean) => {
     if (enabled) {
       setAutoSnapInterval(5) // Default to 5 seconds
@@ -955,175 +940,6 @@ export default function VideoThumbnailGenerator() {
       }
     }
   }
-
-  const handleSaveBackgroundRemoved = () => {
-    if (!processedFrame) {
-      toast.error("No frame selected")
-      return
-    }
-
-    const link = document.createElement("a")
-    link.href = processedFrame
-    link.download = `background-removed-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    toast.success("Image saved successfully")
-  }
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      // Clean up old URL if exists
-      if (video.src && video.src.startsWith('blob:')) {
-        URL.revokeObjectURL(video.src);
-      }
-
-      // For local files, we can use blob URLs
-      const blobUrl = URL.createObjectURL(file);
-      
-      // Set up video element with CORS
-      video.setAttribute('crossOrigin', 'anonymous');
-      
-      // Create a new video element to test CORS
-      const testVideo = document.createElement('video');
-      testVideo.crossOrigin = 'anonymous';
-      
-      // Wait for the test video to load
-      await new Promise((resolve, reject) => {
-        testVideo.onloadedmetadata = () => {
-          // If test video loads successfully, set the main video source
-          video.src = blobUrl;
-          video.load();
-          resolve(true);
-        };
-        
-        testVideo.onerror = () => {
-          reject(new Error("Failed to load video with CORS enabled"));
-        };
-        
-        testVideo.src = blobUrl;
-      });
-
-      // Add error handling for CORS
-      video.onerror = (e) => {
-        console.error("Video loading error:", video.error);
-        toast.error("Failed to load video. Please try again.");
-      };
-
-    } catch (error) {
-      console.error("Error loading video:", error);
-      toast.error("Failed to load video with CORS enabled. Please try again.");
-    }
-  };
-
-  const handleURLLoad = async () => {
-    const urlInput = document.getElementById("imageUrl") as HTMLInputElement;
-    const url = urlInput.value.trim();
-
-    if (!url) {
-      toast.error("Please enter a video URL");
-      return;
-    }
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      // Clean up old URL if exists
-      if (video.src && video.src.startsWith('blob:')) {
-        URL.revokeObjectURL(video.src);
-      }
-
-      // For remote URLs, ensure CORS is set and handle loading
-      video.setAttribute('crossOrigin', 'anonymous');
-      
-      // Create a new video element to test CORS
-      const testVideo = document.createElement('video');
-      testVideo.crossOrigin = 'anonymous';
-      
-      
-      // Wait for the test video to load
-      await new Promise((resolve, reject) => {
-        testVideo.onloadedmetadata = () => {
-          // If test video loads successfully, set the main video source
-          video.src = url;
-          video.load();
-          resolve(true);
-        };
-        
-        testVideo.onerror = () => {
-          reject(new Error("Failed to load video. CORS may be blocking access."));
-        };
-        
-        testVideo.src = url;
-      });
-
-      // Add error handling for CORS
-      video.onerror = (e) => {
-        console.error("Video loading error:", video.error);
-        toast.error("Failed to load video. Please ensure the video URL allows CORS access.");
-      };
-
-    } catch (error) {
-      console.error("Error loading video:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to load video. Please try again.");
-    }
-  };
-
-  const reloadVideoWithCORS = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      // Store current state
-      const currentTime = video.currentTime;
-      const wasPlaying = !video.paused;
-      const currentSrc = video.src;
-
-      // Set CORS attribute
-      video.setAttribute('crossOrigin', 'anonymous');
-      
-      // Create a test video to verify CORS
-      const testVideo = document.createElement('video');
-      testVideo.crossOrigin = 'anonymous';
-      
-      // Wait for test video to load
-      await new Promise((resolve, reject) => {
-        testVideo.onloadedmetadata = () => {
-          // If test video loads successfully, reload the main video
-          video.src = '';
-          video.load();
-          video.src = currentSrc;
-          video.load();
-          
-          // Restore video state
-          video.currentTime = currentTime;
-          if (wasPlaying) {
-            video.play().catch(console.error);
-          }
-          resolve(true);
-        };
-        
-        testVideo.onerror = () => {
-          reject(new Error("Failed to load video with CORS enabled"));
-        };
-        
-        testVideo.src = currentSrc;
-      });
-
-      toast.success("Video reloaded with CORS enabled");
-    } catch (error) {
-      console.error("Error reloading video:", error);
-      toast.error("Failed to reload video with CORS enabled. Please try loading the video again.");
-    }
-  };
 
   const handleTabChange = (newTab: string) => {
     // Allow access to video and snapshots tabs without restrictions

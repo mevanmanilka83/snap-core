@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Maximize, Minimize, ZoomIn, ZoomOut, Undo, Redo, RotateCw, Palette, ImageIcon } from "lucide-react";

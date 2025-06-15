@@ -1,10 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Info, Download, AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const BackgroundRemovedSection = ({
-  imageInfo,
-  imageLoaded,
   processedImageSrc,
   zoomLevel,
   isProcessing,
