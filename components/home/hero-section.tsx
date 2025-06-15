@@ -46,7 +46,7 @@ const HeroSection = memo(function HeroSection() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-full shadow-sm">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-black">AI-Powered • Privacy First</span>
+              <span className="text-sm font-medium text-black">Smart Processing • Local First</span>
             </div>
 
             {/* Main Heading */}
@@ -69,14 +69,14 @@ const HeroSection = memo(function HeroSection() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 max-w-md sm:max-w-none">
               <button
                 onClick={scrollToMainSection}
-                className="group relative flex h-12 w-[170px] items-center justify-between border-2 border-black rounded-full bg-white font-medium text-black transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center border-2 border-black rounded-full bg-white font-medium text-black transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 aria-label="Start creating thumbnails"
               >
-                <span className="pl-4">Start Creating</span>
-                <div className="relative h-9 w-9 overflow-hidden bg-black/10 rounded-full mr-1 backdrop-blur-sm">
+                <span>Start Creating</span>
+                <div className="relative h-9 w-9 overflow-hidden bg-black/10 rounded-full ml-2 backdrop-blur-sm">
                   <div className="absolute top-[0.7em] left-[-0.1em] grid place-content-center transition-all w-full h-full duration-200 group-hover:-translate-y-5 group-hover:translate-x-4">
                     <svg
                       width="15"
@@ -112,7 +112,7 @@ const HeroSection = memo(function HeroSection() {
 
               <button
                 onClick={scrollToHowItWorks}
-                className="flex items-center gap-2 cursor-pointer px-6 py-3 bg-white border-2 border-black text-black rounded-full transition-all duration-300 font-medium hover:scale-105"
+                className="flex items-center justify-center gap-2 cursor-pointer h-12 w-full sm:w-[170px] bg-white border-2 border-black text-black rounded-full transition-all duration-300 font-medium hover:scale-105"
                 aria-label="Learn more about how it works"
               >
                 Explore
@@ -145,7 +145,7 @@ const HeroSection = memo(function HeroSection() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                           <span className="text-white text-sm font-semibold bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
-                            AI Enhanced
+                            Smart Enhanced
                           </span>
                         </div>
                       </div>
