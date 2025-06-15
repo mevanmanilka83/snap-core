@@ -28,30 +28,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export interface VideoPlayerProps {
-  onMetadataLoaded: (videoInfo: {
-    width: number;
-    height: number;
-    duration: number;
-    currentTime: number;
-  }) => void;
+  url: string;
+  onMetadataLoaded: (metadata: { width: number; height: number; duration: number; currentTime: number }) => void;
   onTimeUpdate: (currentTime: number) => void;
-  onSnapshot?: (imageData: string) => void;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement>;
   videoLoaded: boolean;
-  videoInfo: {
-    width: number;
-    height: number;
-    duration: number;
-    currentTime: number;
-  } | null;
+  videoInfo: { width: number; height: number; duration: number; currentTime: number } | null;
   isPlaying: boolean;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsPlaying: (isPlaying: boolean) => void;
 }
 
 export function VideoPlayer({
+  url,
   onMetadataLoaded,
   onTimeUpdate,
-  onSnapshot,
   videoRef,
   videoLoaded,
   videoInfo,
@@ -77,7 +67,7 @@ export function VideoPlayer({
         width: video.videoWidth,
         height: video.videoHeight,
         duration: video.duration,
-        currentTime: 0,
+        currentTime: video.currentTime,
       });
     } catch (err) {
       console.error("Error loading video metadata:", err);
