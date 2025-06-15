@@ -12,13 +12,8 @@ import { toast } from "sonner";
 import {
   Play,
   Pause,
-  SkipBack,
-  SkipForward,
   Rewind,
   FastForward,
-  ChevronLeft,
-  ChevronRight,
-  Camera,
   Volume2,
   VolumeX,
   Maximize,
@@ -63,7 +58,6 @@ export function VideoPlayer({
   isPlaying,
   setIsPlaying,
 }: VideoPlayerProps) {
-  const [isMetadataLoaded, setIsMetadataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [volume, setVolume] = useState(1);
@@ -79,7 +73,6 @@ export function VideoPlayer({
 
     try {
       metadataLoadedRef.current = true;
-      setIsMetadataLoaded(true);
       onMetadataLoaded({
         width: video.videoWidth,
         height: video.videoHeight,
@@ -110,7 +103,6 @@ export function VideoPlayer({
         URL.revokeObjectURL(video.src);
       }
 
-      setIsMetadataLoaded(false);
       const blobUrl = URL.createObjectURL(file);
       video.src = blobUrl;
       video.load();
@@ -156,7 +148,6 @@ export function VideoPlayer({
         URL.revokeObjectURL(video.src);
       }
 
-      setIsMetadataLoaded(false);
       video.src = url;
       video.load();
 
