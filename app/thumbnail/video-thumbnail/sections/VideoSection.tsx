@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, Layers } from "lucide-react";
 import { VideoPlayer } from "@/app/shared/video-player";
 
 interface VideoSectionProps {
@@ -31,7 +30,6 @@ interface VideoSectionProps {
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
   handleMetadataLoaded: () => void;
   handleTimeUpdate: () => void;
-  handleSnapshot: (imageData: string) => void;
   captureSnapshot: () => Promise<void>;
   handleAutoCaptureKeyFrames: () => void;
   autoSnapInterval: number | null;
@@ -47,7 +45,6 @@ const VideoSection = ({
   setIsPlaying,
   handleMetadataLoaded,
   handleTimeUpdate,
-  handleSnapshot,
   captureSnapshot,
   handleAutoCaptureKeyFrames,
   autoSnapInterval,
@@ -63,7 +60,6 @@ const VideoSection = ({
       setIsPlaying={setIsPlaying}
       onMetadataLoaded={handleMetadataLoaded}
       onTimeUpdate={handleTimeUpdate}
-      onSnapshot={handleSnapshot}
     />
     <Card className="overflow-hidden mb-6">
       <CardHeader className="pb-2 px-4 sm:px-6">

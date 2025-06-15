@@ -13,8 +13,6 @@ import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 
 import ImageSection from "../../image-thumbnail/sections/ImageSection";
-import { useState, useEffect } from "react";
-import VideoSection from "./VideoSection";
 
 interface VideoTabSelectionProps {
   activeTab: string;
@@ -139,13 +137,9 @@ export default function VideoTabSelection({
   processedImageSrc,
 }: VideoTabSelectionProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [subTab, setSubTab] = useState("snapshots");
-
-  // Force create-image-thumbnail to be the default tab
-  const defaultTab = "create-image-thumbnail";
 
   return (
-    <TabsProvider defaultValue={defaultTab} wobbly={!isMobile}>
+    <TabsProvider defaultValue={activeTab} wobbly={!isMobile}>
       <div className="flex flex-col gap-4">
         <div id="transform-content" className="text-center mb-8">
           <Badge variant="outline" className="mb-4 text-xs sm:text-sm">

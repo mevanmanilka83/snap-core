@@ -51,7 +51,7 @@ export default function ScrollBaseAnimation({
     return () => clearTimeout(timer); // Cleanup on unmount
   }, [delay]);
 
-  useAnimationFrame((t, delta) => {
+  useAnimationFrame((_, delta) => {
     if (!hasStarted.current) return; // Skip if delay hasn't passed
 
     let moveBy = directionFactor.current * baseVelocity * (delta / 1000);

@@ -789,22 +789,22 @@ export default function VideoThumbnailGenerator() {
         ctx.drawImage(originalImg, 0, 0);
         ctx.filter = "none"; // Reset filters for text
 
-        // Sort text elements by layer order
-        const sortedTextElements = [...textElements].sort((a, b) => {
-          if (a.layerOrder === "back" && b.layerOrder !== "back") return -1;
-          if (a.layerOrder !== "back" && b.layerOrder === "back") return 1;
-          return 0;
-        });
-
-        // Draw text elements in order
-        sortedTextElements.forEach(element => {
-          if (element.visible !== false) {
+        // Draw text elements that should be behind the image
+        textElements
+          .filter(element => element.visible !== false && element.layerOrder === "back")
+          .forEach(element => {
             drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
-          }
-        });
+          });
 
         // Draw the processed image (subject)
         ctx.drawImage(processedImg, 0, 0);
+
+        // Draw text elements that should be in front of the image
+        textElements
+          .filter(element => element.visible !== false && element.layerOrder === "front")
+          .forEach(element => {
+            drawTextElement(ctx, element, previewCanvas.width, previewCanvas.height);
+          });
 
         // Update the final thumbnail
         previewCanvas.toBlob((blob) => {
