@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
