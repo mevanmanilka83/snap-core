@@ -7,7 +7,6 @@ const FinalPreviewSection = ({
   imageInfo,
   handleSaveFinalThumbnail,
   processedImageSrc,
-  textElements,
   backgroundRemoved
 }: any) => {
   return (
