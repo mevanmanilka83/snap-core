@@ -482,7 +482,7 @@ export default function ImageUploader() {
 
       // Process the image with imgly background removal
       const blob = await backgroundRemoval.removeBackground(image_src, {
-        progress: (message: string, progress: number) => {
+        progress: () => {
           // Update progress state
         },
       })

@@ -3,7 +3,7 @@ import { Info, CheckCircle2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 
 const BackgroundRemovedSection = (props: any) => {
-  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing, backgroundRemoved, onSave } = props;
+  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing, onSave } = props;
   const [localProcessedImage, setLocalProcessedImage] = useState<string | null>(null);
   const [isImageProcessed, setIsImageProcessed] = useState(false);
 
