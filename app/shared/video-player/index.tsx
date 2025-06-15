@@ -264,39 +264,6 @@ export function VideoPlayer({
     }
   };
 
-  const handleCaptureFrame = async () => {
-    const video = videoRef.current;
-    if (!video || !videoInfo) return;
-
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoInfo.width;
-      canvas.height = videoInfo.height;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error("Failed to get canvas context");
-      }
-
-      // Draw the current video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Get the image data
-      const imageData = canvas.toDataURL('image/png');
-      
-      if (onSnapshot) {
-        onSnapshot(imageData);
-      }
-    } catch (err) {
-      console.error("Error capturing frame:", err);
-      if (err instanceof Error && err.message.includes('tainted')) {
-        toast.error("Cannot capture frame due to CORS restrictions. Please ensure the video source allows cross-origin access.");
-      } else {
-        toast.error("Failed to capture frame");
-      }
-    }
-  };
-
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.round(seconds % 60);
