@@ -146,7 +146,6 @@ export default function ImageUploader({
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState(0)
   const [activeTab, setActiveTab] = useState("file")
   const [activeEditorTab, setActiveEditorTab] = useState("text")
   const [zoomLevel, setZoomLevel] = useState(100)
@@ -485,7 +484,8 @@ export default function ImageUploader({
     setImageSrc("")
     setProcessedImageSrc("")
     setThumbnailSrc("")
-    setProcessingProgress(0)
+    setIsProcessing(false)
+    setIsCreatingThumbnail(false)
     resetFilters()
 
     const img = hiddenImageRef.current
@@ -580,7 +580,7 @@ export default function ImageUploader({
             // Debounce progress updates to reduce re-renders
             const now = Date.now();
             if (now - lastProgressUpdate > 100) { // Only update every 100ms
-              setProcessingProgress(data)
+              setIsProcessing(true)
               lastProgressUpdate = now;
             }
             break
