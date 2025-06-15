@@ -12,7 +12,7 @@ const HeroSection = memo(function HeroSection() {
   }, [])
 
   const scrollToMainSection = useCallback(() => {
-    const element = document.getElementById("thumbnail-creator")
+    const element = document.getElementById("transform-content")
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" })
     }
@@ -112,11 +112,16 @@ const HeroSection = memo(function HeroSection() {
 
               <button
                 onClick={scrollToHowItWorks}
-                className="flex items-center justify-center gap-2 cursor-pointer h-12 w-full sm:w-[170px] bg-white border-2 border-black text-black rounded-full transition-all duration-300 font-medium hover:scale-105"
+                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center border-2 border-black rounded-full bg-white font-medium text-black transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 aria-label="Learn more about how it works"
               >
-                Explore
-                <ChevronsRight className="h-5 w-5 text-black" />
+                <span>Learn More</span>
+                <div className="relative h-9 w-9 overflow-hidden bg-black/10 rounded-full ml-2 backdrop-blur-sm">
+                  <div className="absolute top-[0.7em] left-[-0.1em] grid place-content-center transition-all w-full h-full duration-200 group-hover:-translate-y-5 group-hover:translate-x-4">
+                    <ChevronsRight className="h-5 w-5 text-black" />
+                    <ChevronsRight className="h-5 w-5 mb-1 -translate-x-4 text-black" />
+                  </div>
+                </div>
               </button>
             </div>
           </div>
