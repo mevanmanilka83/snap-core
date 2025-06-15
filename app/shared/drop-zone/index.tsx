@@ -160,7 +160,6 @@ export default function ImageUploader({
     grayscale: initialFilters?.grayscale ?? 0,
     sepia: initialFilters?.sepia ?? 0,
   })
-  const [isLoadingForeground, setIsLoadingForeground] = useState(false)
 
   const hiddenImageRef = useRef<HTMLImageElement>(null)
   const previewUrl = useRef<string | null>(null)
