@@ -9,37 +9,6 @@
 
 Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-1. Clone the repository:
-```bash
-git clone [repository-url]
-cd snap-core
-```
-
-2. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-```
-
-3. Configure environment:
-Create a `.env.local` file with required variables.
-
-### Development
-
-Start the development server:
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-Access the application at [http://localhost:3000](http://localhost:3000)
-
 ## Privacy & Security
 
 - All processing happens locally in your browser
