@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { Github } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
