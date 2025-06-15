@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SmoothScroll from "@/components/smooth-scroll";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMediaQuery } from "@/components/useMediaQuery";
 
 const ImageTabSelection = ({
