@@ -27,8 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export interface VideoPlayerProps {
-  url: string;
+interface VideoPlayerProps {
   onMetadataLoaded: (metadata: { width: number; height: number; duration: number; currentTime: number }) => void;
   onTimeUpdate: (currentTime: number) => void;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -39,7 +38,6 @@ export interface VideoPlayerProps {
 }
 
 export function VideoPlayer({
-  url,
   onMetadataLoaded,
   onTimeUpdate,
   videoRef,
