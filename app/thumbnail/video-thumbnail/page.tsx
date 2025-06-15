@@ -2,42 +2,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import {
-  Download,
-  Trash2,
-  Clock,
-  Layers,
-  ImageIcon,
-  Type,
-  Palette,
-  Scissors,
-  Maximize,
-  Minimize,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  Undo,
-  Redo,
-} from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import TextEditor from "@/app/shared/text-editor"
-import * as backgroundRemoval from "@imgly/background-removal"
-import VideoSection from "./sections/VideoSection"
-import SnapshotsSection from "./sections/SnapshotsSection"
-import EditSection from "./sections/EditSection"
-import TextSection from "./sections/TextSection"
-import FinalPreviewSection from "./sections/FinalPreviewSection"
-import MainSection from "../main-section"
 import VideoTabSelection from "./sections/VideoTabSelection"
-import { VideoPlayer } from "@/app/shared/video-player"
-import DropZone from "@/app/shared/drop-zone"
+
 
 interface VideoInfo {
   width: number
@@ -99,7 +65,6 @@ interface TextElement {
 
 export default function VideoThumbnailGenerator() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const finalCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
   const [videoLoaded, setVideoLoaded] = useState(false)
@@ -113,12 +78,8 @@ export default function VideoThumbnailGenerator() {
   const [undoStack, setUndoStack] = useState<string[]>([])
   const [redoStack, setRedoStack] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState(0)
-  const [showTextEditor, setShowTextEditor] = useState(false)
   const [finalThumbnail, setFinalThumbnail] = useState<string | null>(null)
   const [autoSnapInterval, setAutoSnapInterval] = useState<number | null>(null)
-  const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false)
-  const [showUpdateToast, setShowUpdateToast] = useState(false)
   const [processedImageSrc, setProcessedImageSrc] = useState<string | null>(null)
   const autoSnapIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [imageFilters, setImageFilters] = useState<ImageFilter>({
@@ -163,7 +124,7 @@ export default function VideoThumbnailGenerator() {
   ])
 
   const [canGoToTextAndPreview, setCanGoToTextAndPreview] = useState(false);
-  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
+  const [backgroundRemoved] = useState(false);
 
   // Clean up on unmount
   useEffect(() => {
@@ -298,13 +259,6 @@ export default function VideoThumbnailGenerator() {
       console.debug("Time update skipped");
     }
   };
-
-  const goToTime = (time: number) => {
-    const video = videoRef.current
-    if (!video || !videoInfo) return
-
-    video.currentTime = Math.min(videoInfo.duration, Math.max(0, time))
-  }
 
   const handleProcessedImage = (imageSrc: string) => {
     // Save current state to undo stack if we have a processed frame
@@ -568,113 +522,42 @@ export default function VideoThumbnailGenerator() {
 
     try {
       setIsProcessing(true);
-      setProcessingProgress(0);
 
       // Create a new image to process
-      const img = new window.Image();
-      img.crossOrigin = 'anonymous';
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = processedFrame!;
 
-      // First load the image to ensure it's accessible
       await new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error("Image loading timed out"));
-        }, 15000); // 15 second timeout
-
-        img.onload = () => {
-          clearTimeout(timeoutId);
-          // Verify the image loaded successfully
-          if (!img.complete || img.naturalWidth === 0) {
-            reject(new Error("Image failed to load properly"));
-            return;
-          }
-          resolve(true);
-        };
-
-        img.onerror = () => {
-          clearTimeout(timeoutId);
-          reject(new Error("Failed to load image. Please try again."));
-        };
-
-        img.src = processedFrame;
+        img.onload = resolve;
+        img.onerror = reject;
       });
 
-      // Create a new worker with proper error handling
-      let worker: Worker | null = null;
-      try {
-        worker = new Worker(new URL('../../shared/workers/background-removal.worker.ts', import.meta.url), {
-          type: 'module'
-        });
-      } catch (error) {
-        console.error("Failed to create worker:", error);
-        throw new Error("Failed to initialize background removal process");
+      // Create a canvas to process the image
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
       }
 
-      // Set up worker message handling with debounced progress updates
-      let lastProgressUpdate = 0;
-      worker.onmessage = (event) => {
-        const { type, data } = event.data;
+      // Set canvas dimensions
+      canvas.width = img.width;
+      canvas.height = img.height;
 
-        switch (type) {
-          case 'progress':
-            // Debounce progress updates to reduce re-renders
-            const now = Date.now();
-            if (now - lastProgressUpdate > 100) { // Only update every 100ms
-              setProcessingProgress(data);
-              lastProgressUpdate = now;
-            }
-            break;
-          case 'complete':
-            if (data) {
-              // Validate the blob before creating URL
-              if (!(data instanceof Blob)) {
-                throw new Error("Invalid image data received from worker");
-              }
-              
-              // Verify the blob is not empty
-              if (data.size === 0) {
-                throw new Error("Received empty image data from worker");
-              }
+      // Draw the image
+      ctx.drawImage(img, 0, 0);
 
-              // Verify the blob is a valid image
-              if (!data.type.startsWith('image/')) {
-                throw new Error("Invalid image format received from worker");
-              }
-              
-              const url = URL.createObjectURL(data);
-              // Revoke old blob URL if it exists
-              if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
-                URL.revokeObjectURL(processedImageSrc);
-              }
-              setProcessedImageSrc(url);
-              setProcessedFrame(url);
-              setBackgroundRemoved(true);
-              setCanGoToTextAndPreview(true);
-            }
-            worker?.terminate();
-            setIsProcessing(false);
-            break;
-          case 'error':
-            console.error("Worker error:", data);
-            toast.error(data || "Failed to remove background");
-            worker?.terminate();
-            setIsProcessing(false);
-            break;
-        }
-      };
+      // Apply filters
+      applyFilters(ctx);
 
-      // Handle worker errors
-      worker.onerror = (error) => {
-        console.error("Worker error:", error);
-        toast.error("Failed to remove background. Please try again.");
-        worker?.terminate();
-        setIsProcessing(false);
-      };
-
-      // Start the background removal process
-      worker.postMessage({ imageSrc: processedFrame });
+      // Convert to base64
+      const processedImageSrc = canvas.toDataURL("image/png");
+      setProcessedFrame(processedImageSrc);
+      setProcessedImageSrc(processedImageSrc);
     } catch (error) {
-      console.error("Error removing background:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to remove background. Please try again.");
+      console.error("Error processing image:", error);
+      toast.error("Failed to process image");
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -797,7 +680,6 @@ export default function VideoThumbnailGenerator() {
       return;
     }
 
-    setShowTextEditor(true);
     setActiveTab("text");
     updateFinalPreview();
     toast.success("Thumbnail updated");
@@ -1058,11 +940,6 @@ export default function VideoThumbnailGenerator() {
     toast.success("Thumbnail updated");
   };
 
-  const handleApplyText = () => {
-    updateFinalPreview()
-    toast.success("Text applied to thumbnail")
-  }
-
   const handleUpdateTextElements = (updatedElements: TextElement[]) => {
     setTextElements(updatedElements)
     // The useEffect will trigger updateFinalPreview
@@ -1286,8 +1163,8 @@ export default function VideoThumbnailGenerator() {
         selectedSnapshotIndex={selectedSnapshotIndex}
         canGoToTextAndPreview={canGoToTextAndPreview}
         videoRef={videoRef as React.RefObject<HTMLVideoElement>}
-        videoLoaded={videoLoaded}
         videoInfo={videoInfo}
+        videoLoaded={videoLoaded}
         isPlaying={isPlaying}
         setIsPlaying={setIsPlaying}
         handleMetadataLoaded={handleMetadataLoaded}
@@ -1298,7 +1175,6 @@ export default function VideoThumbnailGenerator() {
         autoSnapInterval={autoSnapInterval}
         setAutoSnapInterval={setAutoSnapInterval}
         toggleAutoSnap={toggleAutoSnap}
-        handleSelectSnapshot={handleSelectSnapshot}
         handleSaveSnapshot={handleSaveSnapshot}
         handleDeleteSnapshot={handleDeleteSnapshot}
         handleSaveAllSnapshots={handleSaveAllSnapshots}
@@ -1321,11 +1197,10 @@ export default function VideoThumbnailGenerator() {
         resetFilters={resetFilters}
         applyPresetFilter={applyPresetFilter}
         isProcessing={isProcessing}
-        isCreatingThumbnail={isCreatingThumbnail}
+        isCreatingThumbnail={false}
         setIsProcessing={setIsProcessing}
         setUndoStack={setUndoStack}
         setRedoStack={setRedoStack}
-        setProcessingProgress={setProcessingProgress}
         handleRemoveBackground={handleRemoveBackground}
         backgroundRemoved={backgroundRemoved}
         setCanGoToTextAndPreview={setCanGoToTextAndPreview}
@@ -1333,6 +1208,7 @@ export default function VideoThumbnailGenerator() {
         setTextElements={setTextElements}
         finalThumbnail={finalThumbnail}
         handleSaveFinalThumbnail={handleSaveFinalThumbnail}
+        handleSelectSnapshot={handleSelectSnapshot}
       />
     </div>
   )

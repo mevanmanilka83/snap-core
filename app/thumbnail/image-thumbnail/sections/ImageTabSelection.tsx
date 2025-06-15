@@ -2,13 +2,10 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useMediaQuery } from "@/components/useMediaQuery";
 
 const ImageTabSelection = ({
-  activeTab,
   handleTabChange,
 }: {
-  activeTab: string;
   handleTabChange: (tab: string) => void;
 }) => {
   return (

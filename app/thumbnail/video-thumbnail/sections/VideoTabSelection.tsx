@@ -74,7 +74,6 @@ interface VideoTabSelectionProps {
   setIsProcessing: (isProcessing: boolean) => void;
   setUndoStack: (stack: string[]) => void;
   setRedoStack: (stack: string[]) => void;
-  setProcessingProgress: (progress: number) => void;
   handleRemoveBackground: () => void;
   backgroundRemoved: boolean;
   setCanGoToTextAndPreview: (canGo: boolean) => void;
@@ -130,7 +129,6 @@ export default function VideoTabSelection({
   setIsProcessing,
   setUndoStack,
   setRedoStack,
-  setProcessingProgress,
   handleRemoveBackground,
   backgroundRemoved,
   setCanGoToTextAndPreview,
@@ -280,7 +278,6 @@ export default function VideoTabSelection({
                     setIsProcessing={setIsProcessing}
                     setUndoStack={setUndoStack}
                     setRedoStack={setRedoStack}
-                    setProcessingProgress={setProcessingProgress}
                     handleRemoveBackground={handleRemoveBackground}
                     snapshots={snapshots}
                     selectedSnapshotIndex={selectedSnapshotIndex}
