@@ -14,3 +14,7 @@ Snap Core is a modern, privacy-focused application that enables content creators
 - All processing happens locally in your browser
 - No data is sent to external servers
 - Your content remains private and secure
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
