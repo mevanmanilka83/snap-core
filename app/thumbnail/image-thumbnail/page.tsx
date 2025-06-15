@@ -98,7 +98,6 @@ export default function ImageUploader() {
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState(0)
   const [activeTab, setActiveTab] = useState("file")
   const [activeEditorTab, setActiveEditorTab] = useState("text")
   const [zoomLevel, setZoomLevel] = useState(100)
@@ -153,7 +152,6 @@ export default function ImageUploader() {
 
   // Text editing states
   const [textElements, setTextElements] = useState<TextElement[]>([{ ...defaultTextElement }])
-  const [selectedTextIndex, setSelectedTextIndex] = useState<number>(0)
 
   useEffect(() => {
     return () => {
@@ -272,7 +270,6 @@ export default function ImageUploader() {
     setImageSrc(previewUrl.current)
     setProcessedImageSrc("") // Clear processed image
     setThumbnailSrc("") // Clear thumbnail
-    setProcessingProgress(0)
     resetFilters() // Reset filters for new image
 
     const img = hiddenImageRef.current
@@ -317,7 +314,6 @@ export default function ImageUploader() {
     setImageSrc(url)
     setProcessedImageSrc("") // Clear processed image
     setThumbnailSrc("") // Clear thumbnail
-    setProcessingProgress(0)
     resetFilters() // Reset filters for new image
 
     const img = hiddenImageRef.current
@@ -390,7 +386,6 @@ export default function ImageUploader() {
     setImageSrc("")
     setProcessedImageSrc("")
     setThumbnailSrc("")
-    setProcessingProgress(0)
     resetFilters()
 
     const img = hiddenImageRef.current
@@ -415,23 +410,6 @@ export default function ImageUploader() {
     // Clear undo/redo stacks
     setUndoStack([])
     setRedoStack([])
-  }
-
-  const handleSaveProcessedImage = () => {
-    if (!processedImageSrc) {
-      toast.error("No processed image to save")
-      return
-    }
-
-    // Create a download link
-    const link = document.createElement("a")
-    link.href = processedImageSrc
-    link.download = `processed-image-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    toast.success("Image saved successfully")
   }
 
   const handleTabChange = (newTab: string) => {
@@ -492,7 +470,6 @@ export default function ImageUploader() {
     try {
       setIsProcessing(true)
       setThumbnailSrc("") // Clear any existing thumbnail
-      setProcessingProgress(0)
 
       // Save current state to undo stack
       if (processedImageSrc) {
@@ -507,7 +484,6 @@ export default function ImageUploader() {
       const blob = await backgroundRemoval.removeBackground(image_src, {
         progress: (message: string, progress: number) => {
           // Update progress state
-          setProcessingProgress(progress)
         },
       })
       
@@ -621,7 +597,6 @@ export default function ImageUploader() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
     toast.success("Thumbnail saved successfully")
   }
 
@@ -1137,7 +1112,6 @@ export default function ImageUploader() {
                         setImageSrc(data)
                         setProcessedImageSrc("") // Clear processed image
                         setThumbnailSrc("") // Clear thumbnail
-                        setProcessingProgress(0)
 
                         const img = hiddenImageRef.current
                         if (img) {
