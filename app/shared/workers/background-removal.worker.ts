@@ -13,11 +13,11 @@ self.onmessage = async (e) => {
     // Configure background removal with optimized parameters
     const options = {
       model: "isnet" as const,
-      progress: (key: string, current: number, total: number) => {
+      progress: (_: string, current: number, total: number) => {
         // Only send progress updates every 5%
         const progress = Math.round((current / total) * 100)
         if (progress % 5 === 0) {
-        self.postMessage({ type: 'progress', data: progress })
+          self.postMessage({ type: "progress", progress })
         }
       },
       // Optimize parameters for better performance
