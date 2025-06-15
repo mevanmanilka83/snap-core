@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { VideoPlayer } from "@/app/shared/video-player"
-import DropZone from "@/app/shared/drop-zone"
 import { toast } from "sonner"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
 import Image from "next/image"
@@ -38,6 +36,8 @@ import TextSection from "./sections/TextSection"
 import FinalPreviewSection from "./sections/FinalPreviewSection"
 import MainSection from "../main-section"
 import VideoTabSelection from "./sections/VideoTabSelection"
+import { VideoPlayer } from "@/app/shared/video-player"
+import DropZone from "@/app/shared/drop-zone"
 
 interface VideoInfo {
   width: number

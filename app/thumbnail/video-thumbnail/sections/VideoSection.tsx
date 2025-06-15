@@ -1,4 +1,3 @@
-import { VideoPlayer } from "@/app/shared/video-player";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +16,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Clock, Layers } from "lucide-react";
+import { VideoPlayer } from "@/app/shared/video-player";
+
+interface VideoSectionProps {
+  videoRef: React.RefObject<HTMLVideoElement>;
+  videoLoaded: boolean;
+  videoInfo: {
+    width: number;
+    height: number;
+    duration: number;
+    currentTime: number;
+  } | null;
+  isPlaying: boolean;
+  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+  handleMetadataLoaded: () => void;
+  handleTimeUpdate: () => void;
+  handleSnapshot: (imageData: string) => void;
+  captureSnapshot: () => Promise<void>;
+  handleAutoCaptureKeyFrames: () => void;
+  autoSnapInterval: number | null;
+  setAutoSnapInterval: (interval: number | null) => void;
+  toggleAutoSnap: (enabled: boolean) => void;
+}
 
 const VideoSection = ({
   videoRef,
@@ -32,7 +53,7 @@ const VideoSection = ({
   autoSnapInterval,
   setAutoSnapInterval,
   toggleAutoSnap,
-}: any) => (
+}: VideoSectionProps) => (
   <div className="space-y-4 sm:space-y-6">
     <VideoPlayer
       videoRef={videoRef}

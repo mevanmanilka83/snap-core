@@ -160,7 +160,6 @@ export default function ImageUploader({
     grayscale: initialFilters?.grayscale ?? 0,
     sepia: initialFilters?.sepia ?? 0,
   })
-  const [showUpdateToast, setShowUpdateToast] = useState(false)
   const [isLoadingBackground, setIsLoadingBackground] = useState(false)
   const [isLoadingForeground, setIsLoadingForeground] = useState(false)
 
