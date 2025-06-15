@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { toast } from "sonner";
-import { Download, Info } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as backgroundRemoval from "@imgly/background-removal";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -115,7 +114,7 @@ export function BackgroundRemovalProcessor({
 
       // Process the image with imgly background removal
       const blob = await backgroundRemoval.removeBackground(inputImageSrc, {
-        progress: (message: string, progress: number) => {
+        progress: (_: string, progress: number) => {
           setProgress(Math.round(progress * 100));
         },
       });
