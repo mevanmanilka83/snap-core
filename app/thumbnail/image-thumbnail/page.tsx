@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   UploadIcon,
-  Info,
+ 
   Download,
   Type,
   RotateCw,
-  ImageIcon,
+  
   Layers,
   Palette,
   Undo,
@@ -27,11 +27,7 @@ import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/app/shared/text-editor"
-import FileUploadSection from "./sections/FileUploadSection"
-import ImagePreviewSection from "./sections/ImagePreviewSection"
-import BackgroundRemovedSection from "./sections/BackgroundRemovedSection"
-import TextEditorSection from "./sections/TextEditorSection"
-import FiltersSection from "./sections/FiltersSection"
+
 
 interface ImageInfo {
   width: number
