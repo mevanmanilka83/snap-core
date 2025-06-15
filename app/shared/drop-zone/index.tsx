@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   UploadIcon,
-  Info,
+ 
   Download,
   Type,
   RotateCw,
@@ -22,7 +22,7 @@ import {
   Maximize,
   Minimize,
 } from "lucide-react"
-import * as backgroundRemoval from "@imgly/background-removal"
+
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/app/shared/text-editor"
