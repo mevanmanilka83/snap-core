@@ -309,6 +309,15 @@ export function VideoPlayer({
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore keyboard events when typing in input fields or when in text tab
+      if (
+        e.target instanceof HTMLInputElement || 
+        e.target instanceof HTMLTextAreaElement ||
+        document.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.includes('Text')
+      ) {
+        return;
+      }
+
       if (!videoLoaded || !e.key) return;
 
       switch (e.key.toLowerCase()) {
