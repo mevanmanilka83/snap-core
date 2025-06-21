@@ -7,15 +7,17 @@
 
 ## Overview
 
-Snap Core is a modern, privacy-focused application that enables content creators to generate high-quality thumbnails from videos and images. Built with performance and user experience in mind, it offers a comprehensive suite of editing tools while ensuring all processing happens locally in the browser.
+SnapCore is a modern privacy-focused application that reimagines how content creators generate thumbnails from videos and images. At its core, SnapCore is built around the concept of local processing - ensuring all editing happens in your browser while keeping your content completely private and secure.
+
+## The SnapCore Experience
+
+SnapCore transforms thumbnail creation through local browser processing - ensuring your content never leaves your device. Users upload videos or images, capture perfect frames at precise moments, and leverage AI-powered background removal for clean compositions. Within the editor, users add text overlays with extensive styling options, apply professional filters, and see real-time previews of every change. The responsive design adapts seamlessly to any device, and high-resolution export options optimize thumbnails for different platforms.
 
 ## Why SnapCore?
 
-SnapCore combines powerful video frame capture with AI background removal and professional editing tools, all while keeping your content private through local browser processing. Perfect for YouTube thumbnails, social media content, and marketing materials, it eliminates the need for complex software or cloud uploads. With real-time preview and high-resolution export options, you can create eye-catching thumbnails that stand out across all platforms.
+SnapCore combines the best of video editing, AI processing, and privacy protection into one seamless experience. Whether you're a YouTuber creating thumbnails, a social media manager designing content, or a marketer building campaigns, SnapCore provides the tools and platform to make it happen.
 
-## SnapCore Experience
-
-Upload your video or image, capture the perfect frame, and let our background removal technology isolate your subject instantly. Add text overlays with extensive styling options and apply professional filters to enhance your composition. The real-time preview shows every change instantly, while responsive design works on any device. Export your masterpiece in multiple formats optimized for different platforms.
+Built with modern web technologies and designed for privacy, SnapCore offers a responsive, accessible, and beautiful experience across all devices.
 
 ## Privacy & Security
 
