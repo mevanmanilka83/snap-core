@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ImageStage from "@/features/thumbnail/common/ImageStage";
+import ThumbnailImageStage from "@/features/thumbnail/common/ThumbnailImageStage";
 
 const BackgroundRemovedSection = ({
   processedImageSrc,
@@ -25,7 +25,7 @@ const BackgroundRemovedSection = ({
             <p className="text-sm">Please select a snapshot first</p>
           </div>
         ) : (
-          <ImageStage
+          <ThumbnailImageStage
             src={processedImageSrc || processedFrame}
             alt={processedImageSrc ? "Processed frame" : "Selected frame"}
             zoom={zoomLevel}

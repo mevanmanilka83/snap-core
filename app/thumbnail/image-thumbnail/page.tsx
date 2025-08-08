@@ -26,7 +26,7 @@ import {
 import * as backgroundRemoval from "@imgly/background-removal"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import TextEditor from "@/features/thumbnail/common/TextEditor"
+import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
 
 
 interface ImageInfo {

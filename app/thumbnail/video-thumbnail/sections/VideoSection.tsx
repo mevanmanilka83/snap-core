@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VideoPlayer } from "@/features/thumbnail/video/VideoPlayer";
+import { VideoPlayer as ThumbnailVideoPlayer } from "@/features/thumbnail/video/ThumbnailVideoPlayer";
 
 interface VideoSectionProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -52,7 +52,7 @@ const VideoSection = ({
   toggleAutoSnap,
 }: VideoSectionProps) => (
   <div className="space-y-4 sm:space-y-6">
-    <VideoPlayer
+    <ThumbnailVideoPlayer
       videoRef={videoRef}
       videoLoaded={videoLoaded}
       videoInfo={videoInfo}

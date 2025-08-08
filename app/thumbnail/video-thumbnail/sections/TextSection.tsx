@@ -1,4 +1,4 @@
-import SharedTextEditorSection from "@/features/thumbnail/common/TextEditorSection";
+import SharedTextEditorSection from "@/features/thumbnail/common/ThumbnailTextEditorSection";
 import { useEffect } from "react";
 
 const TextSection = ({

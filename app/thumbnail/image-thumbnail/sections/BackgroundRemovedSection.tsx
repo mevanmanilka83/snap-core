@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info, CheckCircle2 } from "lucide-react";
-import ImageStage from "@/features/thumbnail/common/ImageStage";
+import ThumbnailImageStage from "@/features/thumbnail/common/ThumbnailImageStage";
 import { useEffect, useState, useCallback } from "react";
 
 const BackgroundRemovedSection = (props: any) => {
@@ -47,7 +47,7 @@ const BackgroundRemovedSection = (props: any) => {
                 </div>
               </div>
             )}
-            <ImageStage
+            <ThumbnailImageStage
               src={localProcessedImage || undefined}
               alt="Background Removed"
               zoom={zoomLevel}
