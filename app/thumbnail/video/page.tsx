@@ -36,7 +36,7 @@ export default function VideoThumbnailGenerator() {
   const [processedFrame, setProcessedFrame] = useState<string | null>(null)
   const [snapshots, setSnapshots] = useState<string[]>([])
   const [selectedSnapshotIndex, setSelectedSnapshotIndex] = useState<number>(-1)
-  const [activeTab, setActiveTab] = useState("video")
+  const [activeTab, setActiveTab] = useState("create-image-thumbnail")
   const [zoomLevel, setZoomLevel] = useState(100)
   const [undoStack, setUndoStack] = useState<string[]>([])
   const [redoStack, setRedoStack] = useState<string[]>([])
