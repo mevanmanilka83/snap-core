@@ -43,11 +43,7 @@ const HeroSection = memo(function HeroSection() {
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center min-h-screen py-20">
           {/* Left Content */}
           <div className="lg:col-span-7 space-y-10">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-full shadow-sm">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-black">Smart Processing • Local First</span>
-            </div>
+
 
             {/* Main Heading */}
             <div className="space-y-8">
@@ -134,93 +130,10 @@ const HeroSection = memo(function HeroSection() {
                 {/* Background Glass Effect */}
                 <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl"></div>
 
-                <div className="relative p-8 grid grid-cols-2 gap-6 max-w-lg mx-auto lg:max-w-none">
-                  {/* Large Featured Card */}
-                  <div className="col-span-2">
-                    <div className="group relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden border border-white/50 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02]">
-                      <div className="aspect-[16/9] overflow-hidden">
-                        <img
-                          src="/img/car%20vs%20plane.jpg"
-                          alt="Car vs Plane thumbnail example"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
 
-                      <div className="absolute bottom-4 left-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="text-white text-sm font-semibold bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
-                            Smart Enhanced
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Smaller Cards */}
-                  <div>
-                    <div className="group relative bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-white/50 hover:shadow-xl transition-all duration-500 hover:scale-105">
-                      <div className="aspect-square overflow-hidden">
-                        <img
-                          src="/img/formula.png"
-                          alt="Formula thumbnail example"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="group relative bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-white/50 hover:shadow-xl transition-all duration-500 hover:scale-105">
-                      <div className="aspect-square overflow-hidden">
-                        <img
-                          src="/img/sanfrancisco.png"
-                          alt="San Francisco thumbnail example"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* Enhanced Floating Elements */}
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500 rounded-3xl shadow-2xl flex items-center justify-center transform rotate-12 hover:rotate-0 transition-all duration-500 hover:scale-110 animate-float">
-                <Sparkles className="w-10 h-10 text-white" />
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-400 via-purple-400 to-blue-400 rounded-3xl blur-xl opacity-50 -z-10"></div>
-              </div>
 
-              <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl shadow-2xl flex items-center justify-center transform -rotate-12 hover:rotate-0 transition-all duration-500 hover:scale-110 animate-float delay-1000">
-                <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl blur-xl opacity-50 -z-10"></div>
-              </div>
-
-              {/* Floating Feature Cards */}
-              <div className="absolute -left-12 top-1/4 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/50 hidden lg:block animate-float delay-500">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-violet-100 to-purple-100 rounded-xl flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-violet-600" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-bold text-gray-900">Instant</div>
-                    <div className="text-xs text-gray-500">Processing</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -right-12 bottom-1/4 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/50 hidden lg:block animate-float delay-700">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center">
-                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-bold text-gray-900">100%</div>
-                    <div className="text-xs text-gray-500">Private</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
