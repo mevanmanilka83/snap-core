@@ -1,4 +1,4 @@
-import ThumbnailPreviewCard from "@/features/thumbnail/common/ThumbnailPreviewCard";
+import SharedFinalPreviewSection from "@/features/thumbnail/common/FinalPreviewSection";
 
 const FinalPreviewSection = ({
   finalThumbnail,
@@ -7,7 +7,7 @@ const FinalPreviewSection = ({
   backgroundRemoved
 }: any) => {
   return (
-    <ThumbnailPreviewCard
+    <SharedFinalPreviewSection
       title="Final Preview"
       descriptionWhenReady="Preview your thumbnail with all effects applied"
       descriptionWhenBlocked="Background removal required"

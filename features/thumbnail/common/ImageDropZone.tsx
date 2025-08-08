@@ -559,7 +559,7 @@ export default function ImageUploader({
       // Create a new worker with proper error handling
       let worker: Worker | null = null;
       try {
-        worker = new Worker(new URL('../workers/background-removal.worker.ts', import.meta.url), {
+        worker = new Worker(new URL('./workers/background-removal.worker.ts', import.meta.url), {
           type: 'module'
         });
       } catch (error) {
