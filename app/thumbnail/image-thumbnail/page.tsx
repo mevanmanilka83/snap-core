@@ -24,7 +24,7 @@ import {
   Maximize,
   Minimize,
 } from "lucide-react"
-import * as backgroundRemoval from "@imgly/background-removal"
+import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
@@ -431,50 +431,29 @@ export default function ImageUploader() {
 
     try {
       setIsProcessing(true)
-      setThumbnailSrc("") // Clear any existing thumbnail
+      setThumbnailSrc("")
 
-      // Save current state to undo stack
       if (processedImageSrc) {
         setUndoStack((prev) => [...prev, processedImageSrc])
-        setRedoStack([]) // Clear redo stack on new action
+        setRedoStack([])
       }
 
-      // Use the current image source as input
-      const image_src = previewUrl.current
-
-      // Process the image with imgly background removal
-      const blob = await backgroundRemoval.removeBackground(image_src, {
-        progress: () => {
-          // Update progress state
-        },
+      const blob = await removeBackgroundViaWorker(previewUrl.current, {
+        workerUrl: new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url),
       })
-      
-      // Create a URL from the resulting blob
+
       const processedImageUrl = URL.createObjectURL(blob)
-      
-      // Clean up old URL if it exists
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(processedUrl.current)
       }
-      
-      // Save the transparent background image URL
       processedUrl.current = processedImageUrl
       setProcessedImageSrc(processedImageUrl)
-      
-      // Automatically switch to text tab after successful background removal
       setActiveEditorTab("text")
-      
-      // Create thumbnail immediately after background removal
       handleCreateThumbnail()
-      
-      toast.success("Background removed successfully", {
-        id: "background-removed-success"
-      })
+      toast.success("Background removed successfully", { id: "background-removed-success" })
     } catch (err) {
       console.error("Error removing background:", err)
-      toast.error("Failed to remove background", {
-        id: "background-removed-error"
-      })
+      toast.error("Failed to remove background", { id: "background-removed-error" })
       setError("Failed to remove background. Please try again.")
     } finally {
       setIsProcessing(false)
