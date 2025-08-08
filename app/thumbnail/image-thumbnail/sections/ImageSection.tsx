@@ -1,4 +1,4 @@
-import ImageUploader from "@/features/thumbnail/common/DropZone";
+import ImageDropZone from "@/features/thumbnail/common/ImageDropZone";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 const ImageSection = () => {
@@ -9,7 +9,7 @@ const ImageSection = () => {
         <CardDescription className="text-xs sm:text-sm">Upload or drag and drop an image</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-4 sm:px-6">
-        <ImageUploader />
+        <ImageDropZone />
       </CardContent>
     </Card>
   );
