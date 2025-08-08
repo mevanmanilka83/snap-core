@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ImageStage from "@/app/shared/image-stage";
 
 const BackgroundRemovedSection = ({
   processedImageSrc,
@@ -23,34 +24,12 @@ const BackgroundRemovedSection = ({
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
             <p className="text-sm">Please select a snapshot first</p>
           </div>
-        ) : !processedImageSrc ? (
-          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-            <div className="relative w-full h-full">
-              <img
-                src={processedFrame}
-                alt="Selected frame"
-                className="object-contain w-full h-full"
-                style={{
-                  transform: `scale(${zoomLevel / 100})`,
-                }}
-                crossOrigin="anonymous"
-              />
-            </div>
-          </div>
         ) : (
-          <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-            <div className="relative w-full h-full">
-              <img
-                src={processedImageSrc}
-                alt="Processed frame"
-                className="object-contain w-full h-full"
-                style={{
-                  transform: `scale(${zoomLevel / 100})`,
-                }}
-                crossOrigin="anonymous"
-              />
-            </div>
-          </div>
+          <ImageStage
+            src={processedImageSrc || processedFrame}
+            alt={processedImageSrc ? "Processed frame" : "Selected frame"}
+            zoom={zoomLevel}
+          />
         )}
       </CardContent>
       <CardFooter>

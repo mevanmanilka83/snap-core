@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info, CheckCircle2 } from "lucide-react";
+import ImageStage from "@/app/shared/image-stage";
 import { useEffect, useState, useCallback } from "react";
 
 const BackgroundRemovedSection = (props: any) => {
@@ -46,37 +47,19 @@ const BackgroundRemovedSection = (props: any) => {
                 </div>
               </div>
             )}
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              <div className="relative w-full h-full">
-                {localProcessedImage ? (
-                  <img
-                    src={localProcessedImage}
-                    alt="Background Removed"
-                    className="object-contain w-full h-full"
-                    style={{
-                      objectFit: "contain",
-                      width: "100%",
-                      height: "100%",
-                      position: "absolute",
-                      inset: 0,
-                      transform: `scale(${zoomLevel / 100})`,
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : isProcessing ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mb-2 md:mb-4"></div>
-                    <p className="text-xs md:text-sm text-gray-500">Removing background...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                      {imageLoaded ? "Ready to process image" : "Please upload an image"}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ImageStage
+              src={localProcessedImage || undefined}
+              alt="Background Removed"
+              zoom={zoomLevel}
+              emptyState={
+                <div className="flex flex-col items-center justify-center h-full">
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                    {imageLoaded ? "Ready to process image" : "Please upload an image"}
+                  </p>
+                </div>
+              }
+              loading={isProcessing}
+            />
             {localProcessedImage && (
               <div data-slot="card-footer" className="items-center [.border-t]:pt-6 flex flex-wrap gap-4 p-6 md:p-8">
                 <button 
