@@ -12,7 +12,7 @@ import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 
-import ImageSection from "../../image-thumbnail/sections/ImageSection";
+import ImageSection from "../../image/steps/ImageSection";
 
 interface VideoTabSelectionProps {
   activeTab: string;

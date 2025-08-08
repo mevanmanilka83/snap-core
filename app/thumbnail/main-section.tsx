@@ -1,5 +1,5 @@
-import VideoSection from "./video-thumbnail/sections/VideoSection";
-import SimpleVideoTabSelection from "./video-thumbnail/sections/SimpleVideoTabSelection";
+import VideoSection from "./video/steps/VideoSection";
+import SimpleVideoTabSelection from "./video/steps/SimpleVideoTabSelection";
 
 const MainSection = ({
   videoRef,
