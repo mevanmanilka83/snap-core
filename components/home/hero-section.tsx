@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, memo } from "react"
-import { Sparkles, Zap, ChevronsRight } from "lucide-react"
+import { ChevronsRight } from "lucide-react"
+import CTAButton from "@/components/ui/cta-button"
 
 const HeroSection = memo(function HeroSection() {
   const scrollToHowItWorks = useCallback(() => {
@@ -66,59 +67,19 @@ const HeroSection = memo(function HeroSection() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4 max-w-md sm:max-w-none">
-              <button
+              <CTAButton
                 onClick={scrollToMainSection}
-                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center border-2 border-black rounded-full bg-white font-medium text-black transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 aria-label="Start creating thumbnails"
-              >
-                <span>Start Creating</span>
-                <div className="relative h-9 w-9 overflow-hidden bg-black/10 rounded-full ml-2 backdrop-blur-sm">
-                  <div className="absolute top-[0.7em] left-[-0.1em] grid place-content-center transition-all w-full h-full duration-200 group-hover:-translate-y-5 group-hover:translate-x-4">
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 15 15"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 fill-black"
-                    >
-                      <path
-                        d="M3.64645 11.3536C3.45118 11.1583 3.45118 10.8417 3.64645 10.6465L10.2929 4L6 4C5.72386 4 5.5 3.77614 5.5 3.5C5.5 3.22386 5.72386 3 6 3L11.5 3C11.6326 3 11.7598 3.05268 11.8536 3.14645C11.9473 3.24022 12 3.36739 12 3.5L12 9.00001C12 9.27615 11.7761 9.50001 11.5 9.50001C11.2239 9.50001 11 9.27615 11 9.00001V4.70711L4.35355 11.3536C4.15829 11.5488 3.84171 11.5488 3.64645 11.3536Z"
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 15 15"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mb-1 -translate-x-4 fill-black"
-                    >
-                      <path
-                        d="M3.64645 11.3536C3.45118 11.1583 3.45118 10.8417 3.64645 10.6465L10.2929 4L6 4C5.72386 4 5.5 3.77614 5.5 3.5C5.5 3.22386 5.72386 3 6 3L11.5 3C11.6326 3 11.7598 3.05268 11.8536 3.14645C11.9473 3.24022 12 3.36739 12 3.5L12 9.00001C12 9.27615 11.7761 9.50001 11.5 9.50001C11.2239 9.50001 11 9.27615 11 9.00001V4.70711L4.35355 11.3536C4.15829 11.5488 3.84171 11.5488 3.64645 11.3536Z"
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </button>
+                label="Start Creating"
+                icon={<ChevronsRight />}
+              />
 
-              <button
+              <CTAButton
                 onClick={scrollToHowItWorks}
-                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center border-2 border-black rounded-full bg-white font-medium text-black transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 aria-label="Learn more about how it works"
-              >
-                <span>Learn More</span>
-                <div className="relative h-9 w-9 overflow-hidden bg-black/10 rounded-full ml-2 backdrop-blur-sm">
-                  <div className="absolute top-[0.7em] left-[-0.1em] grid place-content-center transition-all w-full h-full duration-200 group-hover:-translate-y-5 group-hover:translate-x-4">
-                    <ChevronsRight className="h-5 w-5 text-black" />
-                    <ChevronsRight className="h-5 w-5 mb-1 -translate-x-4 text-black" />
-                  </div>
-                </div>
-              </button>
+                label="Learn More"
+                icon={<ChevronsRight />}
+              />
             </div>
           </div>
 
@@ -139,25 +100,7 @@ const HeroSection = memo(function HeroSection() {
         </div>
       </div>
 
-      {/* Custom CSS for animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(12deg); }
-          50% { transform: translateY(-10px) rotate(12deg); }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        .delay-500 {
-          animation-delay: 0.5s;
-        }
-        .delay-700 {
-          animation-delay: 0.7s;
-        }
-        .delay-1000 {
-          animation-delay: 1s;
-        }
-      `}</style>
+
     </div>
   )
 })

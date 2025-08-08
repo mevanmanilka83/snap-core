@@ -1,8 +1,8 @@
 "use client"
 
-import React from "react"
+import React, { memo } from "react"
 import { Badge } from "@/components/ui/badge"
-import { StaticStep } from "@/components/eldoraui/staticstepper"
+import { StaticStep } from "./staticstepper"
 import { cn } from "@/lib/utils"
 
 interface Step {
@@ -78,4 +78,4 @@ const HowItWorks = () => {
   )
 }
 
-export default HowItWorks 
+export default memo(HowItWorks) 
