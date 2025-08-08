@@ -64,12 +64,16 @@ export async function removeBackgroundViaWorker(
         .finally(() => {
           if (worker) {
             worker.postMessage({ imageSrc });
+          } else {
+            reject(new Error('Worker not initialized'));
           }
         });
     } catch {
       // proceed anyway; worker will handle blob URLs too
       if (worker) {
         worker.postMessage({ imageSrc });
+      } else {
+        reject(new Error('Worker not initialized'));
       }
     }
   });
