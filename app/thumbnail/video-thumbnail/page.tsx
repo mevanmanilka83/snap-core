@@ -514,7 +514,7 @@ export default function VideoThumbnailGenerator() {
       setIsProcessing(true);
 
       // Create a worker for background removal
-      const worker = new Worker(new URL("@/app/shared/workers/background-removal.worker.ts", import.meta.url));
+      const worker = new Worker(new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url));
 
       // Handle worker messages
       worker.onmessage = async (e) => {

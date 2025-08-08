@@ -25,7 +25,7 @@ import {
 
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import TextEditor from "@/app/shared/text-editor"
+import TextEditor from "@/features/thumbnail/common/TextEditor"
 
 interface ImageInfo {
   width: number
@@ -1560,7 +1560,7 @@ export default function ImageUploader({
                   isCreatingThumbnail={isCreatingThumbnail}
                   processedImageSrc={processedImageSrc}
                   textElements={textElements}
-                  onTextElementsChange={(elements) => {
+                  onTextElementsChange={(elements: TextElement[]) => {
                     setTextElements(elements)
                   }}
                 />

@@ -1,4 +1,4 @@
-import ImageUploader from "@/app/shared/drop-zone";
+import ImageUploader from "@/features/thumbnail/common/DropZone";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 const ImageSection = () => {

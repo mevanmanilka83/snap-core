@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import TextEditor from "@/app/shared/text-editor";
+import TextEditor from "@/features/thumbnail/common/TextEditor";
 import { AlertCircle } from "lucide-react";
 
 const TextSection = ({

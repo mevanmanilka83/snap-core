@@ -2,7 +2,7 @@
 
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import TextEditor from "@/app/shared/text-editor"
+import TextEditor from "@/features/thumbnail/common/TextEditor"
 import { AlertCircle } from "lucide-react"
 
 interface SharedTextEditorSectionProps {

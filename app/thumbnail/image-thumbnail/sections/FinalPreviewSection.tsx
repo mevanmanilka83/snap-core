@@ -1,4 +1,4 @@
-import FinalPreviewCard from "@/app/shared/final-preview-card";
+import FinalPreviewCard from "@/features/thumbnail/common/FinalPreviewCard";
 
 const FinalPreviewSection = ({
   finalThumbnail,

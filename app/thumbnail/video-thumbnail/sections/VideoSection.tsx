@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VideoPlayer } from "@/app/shared/video-player";
+import { VideoPlayer } from "@/features/thumbnail/video/VideoPlayer";
 
 interface VideoSectionProps {
   videoRef: React.RefObject<HTMLVideoElement>;

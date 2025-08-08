@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FiltersPanel from "@/app/shared/filters-panel";
+import FiltersPanel from "@/features/thumbnail/common/FiltersPanel";
 
 const FiltersSection = (props: any) => {
   const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, processedFrame, isCreatingThumbnail } = props;
