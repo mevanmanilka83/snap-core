@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import type { TextElement } from "@/types/text-element"
 import { toast } from "sonner"
 import VideoTabSelection from "./sections/VideoTabSelection"
+import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
 
 
 interface VideoInfo {
@@ -474,51 +475,23 @@ export default function VideoThumbnailGenerator() {
 
     try {
       setIsProcessing(true);
+      const blob = await removeBackgroundViaWorker(processedFrame, {
+        workerUrl: new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url),
+        onProgress: (p) => console.debug("Background removal:", p, "%"),
+      });
 
-      // Create a worker for background removal
-      const worker = new Worker(new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url));
-
-      // Handle worker messages
-      worker.onmessage = async (e) => {
-        const { type, data, progress } = e.data;
-
-        if (type === "progress") {
-          // Update progress if needed
-          console.log(`Background removal progress: ${progress}%`);
-        } else if (type === "complete") {
-          // Create a URL from the processed blob
-          const processedImageUrl = URL.createObjectURL(data);
-          
-          // Clean up old URL if it exists
-          if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
-            URL.revokeObjectURL(processedImageSrc);
-          }
-          
-          // Update state with the processed image
-          setProcessedFrame(processedImageUrl);
-          setProcessedImageSrc(processedImageUrl);
-          
-          // Update final preview
-          updateFinalPreview();
-          
-          toast.success("Background removed successfully");
-          worker.terminate();
-        }
-      };
-
-      // Handle worker errors
-      worker.onerror = (error) => {
-        console.error("Worker error:", error);
-        toast.error("Failed to remove background. Please try again.");
-        worker.terminate();
-        setIsProcessing(false);
-      };
-
-      // Start the background removal process
-      worker.postMessage({ imageSrc: processedFrame });
+      const processedImageUrl = URL.createObjectURL(blob);
+      if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(processedImageSrc);
+      }
+      setProcessedFrame(processedImageUrl);
+      setProcessedImageSrc(processedImageUrl);
+      updateFinalPreview();
+      toast.success("Background removed successfully");
     } catch (error) {
       console.error("Error removing background:", error);
       toast.error("Failed to remove background. Please try again.");
+    } finally {
       setIsProcessing(false);
     }
   };
