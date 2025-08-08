@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import type { TextElement } from "@/types/text-element"
 import { toast } from "sonner"
-import VideoTabSelection from "./steps/VideoTabs"
+import VideoWorkflowTabs from "./steps/VideoWorkflowTabs"
 import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
 
 
@@ -916,7 +916,7 @@ export default function VideoThumbnailGenerator() {
 
   return (
     <div className="container mx-auto py-4 sm:py-6 px-2 sm:px-4">
-      <VideoTabSelection
+      <VideoWorkflowTabs
         activeTab={activeTab}
         handleTabChange={handleTabChange}
         snapshots={snapshots}

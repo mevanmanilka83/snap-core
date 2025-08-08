@@ -1,5 +1,5 @@
 import VideoPlayerStep from "./VideoPlayerStep";
-import SimpleVideoTabs from "./SimpleVideoTabs";
+import VideoPlayerContainer from "./VideoPlayerContainer";
 
 const MainSection = ({
   videoRef,
@@ -56,7 +56,7 @@ const MainSection = ({
   return (
     <div id="main-section" className="space-y-4 sm:space-y-6">
       <div className="relative">
-        <SimpleVideoTabs
+        <VideoPlayerContainer
           VideoSection={VideoPlayerStep}
           videoRef={videoRef}
           videoLoaded={videoLoaded}
