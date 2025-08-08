@@ -3,16 +3,16 @@
 import { Clock, Layers, Palette, Type, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import MainSection from "../../main-section";
-import SnapshotsSection from "./SnapshotsSection";
-import EditSection from "./EditSection";
-import TextSection from "./TextSection";
-import FinalPreviewSection from "./FinalPreviewSection";
+import SnapshotsStep from "./SnapshotsStep";
+import EditStep from "./EditStep";
+import TextEditorStep from "./TextEditorStep";
+import FinalPreviewStep from "./FinalPreviewStep";
 import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 
-import ImageSection from "../../image/steps/ImageSection";
+import ImageUploadStep from "../../image/steps/ImageUploadStep";
 
 interface VideoTabSelectionProps {
   activeTab: string;
@@ -233,7 +233,7 @@ export default function VideoTabSelection({
                 </div>
 
                 <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
-                  <SnapshotsSection
+                  <SnapshotsStep
                     snapshots={snapshots}
                     selectedSnapshotIndex={selectedSnapshotIndex}
                     handleSelectSnapshot={handleSelectSnapshot}
@@ -249,7 +249,7 @@ export default function VideoTabSelection({
                 </TabsContent>
 
                 <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
-                  <EditSection
+                  <EditStep
                     processedFrame={processedFrame}
                     zoomLevel={zoomLevel}
                     setZoomLevel={setZoomLevel}
@@ -284,7 +284,7 @@ export default function VideoTabSelection({
                 </TabsContent>
 
                 <TabsContent value="text" className="space-y-4">
-                  <TextSection
+                  <TextEditorStep
                     isCreatingThumbnail={isCreatingThumbnail}
                     processedImageSrc={processedImageSrc}
                     textElements={textElements}
@@ -294,7 +294,7 @@ export default function VideoTabSelection({
                 </TabsContent>
 
                 <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
-                  <FinalPreviewSection
+                  <FinalPreviewStep
                     finalThumbnail={finalThumbnail}
                     videoInfo={videoInfo}
                     handleSaveFinalThumbnail={handleSaveFinalThumbnail}
@@ -308,7 +308,7 @@ export default function VideoTabSelection({
         </TabsContent>
 
         <TabsContent value="create-image-thumbnail" className="space-y-4 sm:space-y-6 mt-4">
-            <ImageSection />
+            <ImageUploadStep />
         </TabsContent>
       </div>
     </TabsProvider>
