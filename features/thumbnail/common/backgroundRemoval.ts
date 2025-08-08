@@ -52,6 +52,13 @@ export async function removeBackgroundViaWorker(
       reject(new Error('Background removal worker error'));
     };
 
+    try {
+      // Try fetch validation to avoid CORS/404 surprises
+      const resp = await fetch(imageSrc, { mode: 'cors' });
+      if (!resp.ok) throw new Error('Unable to fetch image for processing');
+    } catch {
+      // proceed anyway; worker will handle blob URLs too
+    }
     worker.postMessage({ imageSrc });
   });
 }

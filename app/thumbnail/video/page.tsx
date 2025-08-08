@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import type { TextElement } from "@/types/text-element"
 import { toast } from "sonner"
-import VideoWorkflowTabs from "./steps/VideoWorkflowTabs"
+import VideoWorkflowTabs from "../tabs"
 import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
 
 

@@ -68,7 +68,7 @@ self.onmessage = async (e) => {
     console.error("Worker error:", error)
     self.postMessage({ 
       type: 'error', 
-      data: error instanceof Error ? error.message : "Failed to remove background" 
+      error: error instanceof Error ? error.message : "Failed to remove background" 
     })
   }
 }

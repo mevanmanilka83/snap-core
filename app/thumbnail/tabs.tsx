@@ -2,17 +2,17 @@
 
 import { Clock, Layers, Palette, Type, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import VideoMainSection from "./VideoMainSection";
-import SnapshotsStep from "./SnapshotsStep";
-import EditStep from "./EditStep";
-import TextEditorStep from "./TextEditorStep";
-import FinalPreviewStep from "./FinalPreviewStep";
+import VideoMainSection from "./video/steps/VideoMainSection";
+import SnapshotsStep from "./video/steps/SnapshotsStep";
+import EditStep from "./video/steps/EditStep";
+import TextEditorStep from "./video/steps/TextEditorStep";
+import FinalPreviewStep from "./video/steps/FinalPreviewStep";
 import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 
-import ImageUploadStep from "../../image/steps/ImageUploadStep";
+import ImageUploadStep from "./image/steps/ImageUploadStep";
 
 interface VideoTabSelectionProps {
   activeTab: string;
