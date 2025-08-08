@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FiltersPanel from "@/features/thumbnail/common/FiltersPanel";
+import ImageFiltersPanel from "@/features/thumbnail/common/ImageFiltersPanel";
 
 const FiltersSection = (props: any) => {
   const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, processedImageSrc, isCreatingThumbnail, backgroundRemoved } = props;
@@ -15,7 +15,7 @@ const FiltersSection = (props: any) => {
             Please remove the background before applying filters.
           </div>
         ) : (
-          <FiltersPanel
+          <ImageFiltersPanel
             filters={imageFilters}
             setFilters={setImageFilters}
             resetFilters={resetFilters}

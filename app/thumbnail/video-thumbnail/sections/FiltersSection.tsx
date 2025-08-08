@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FiltersPanel from "@/features/thumbnail/common/FiltersPanel";
+import ImageFiltersPanel from "@/features/thumbnail/common/ImageFiltersPanel";
 
 const FiltersSection = (props: any) => {
   const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, processedFrame, isCreatingThumbnail } = props;
@@ -10,7 +10,7 @@ const FiltersSection = (props: any) => {
         <CardTitle className="text-sm md:text-base">Image Filters</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-4 md:p-6">
-        <FiltersPanel
+        <ImageFiltersPanel
           filters={imageFilters}
           setFilters={setImageFilters}
           resetFilters={resetFilters}

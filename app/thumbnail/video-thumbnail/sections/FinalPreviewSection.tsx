@@ -1,4 +1,4 @@
-import FinalPreviewCard from "@/features/thumbnail/common/FinalPreviewCard";
+import ThumbnailPreviewCard from "@/features/thumbnail/common/ThumbnailPreviewCard";
 
 const FinalPreviewSection = ({
   finalThumbnail,
@@ -7,7 +7,7 @@ const FinalPreviewSection = ({
   processedImageSrc,
 }: any) => {
   return (
-    <FinalPreviewCard
+    <ThumbnailPreviewCard
       title="Final Preview"
       descriptionWhenReady="Preview your thumbnail with all effects applied"
       descriptionWhenBlocked="Background removal required"
