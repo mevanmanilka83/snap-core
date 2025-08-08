@@ -535,6 +535,11 @@ export default function ImageUploader({
             reject(new Error("Image failed to load properly"))
             return
           }
+          console.log("Image validation successful:", {
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            src: imageSrc.substring(0, 100) + "..." // Log first 100 chars of src
+          })
           resolve(true)
         }
         img.onerror = () => {
@@ -576,7 +581,7 @@ export default function ImageUploader({
           case 'progress':
             // Debounce progress updates to reduce re-renders
             const now = Date.now();
-            if (now - lastProgressUpdate > 100) { // Only update every 100ms
+            if (now - lastProgressUpdate > 200) { // Only update every 200ms for better performance
               setIsProcessing(true)
               lastProgressUpdate = now;
             }
@@ -615,8 +620,8 @@ export default function ImageUploader({
             break
           case 'error':
             console.error("Worker error:", data)
-            toast.error(data || "Failed to remove background", {
-              duration: 2000,
+            toast.error(data || "Failed to remove background. Check console for details.", {
+              duration: 3000,
               id: "background-removed-error"
             })
             worker?.terminate()

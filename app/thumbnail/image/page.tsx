@@ -425,9 +425,7 @@ export default function ImageUploader() {
         setRedoStack([])
       }
 
-      const blob = await removeBackgroundViaWorker(previewUrl.current, {
-        workerUrl: new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url),
-      })
+      const blob = await removeBackgroundViaWorker(previewUrl.current, {})
 
       const processedImageUrl = URL.createObjectURL(blob)
       if (processedUrl.current && processedUrl.current.startsWith("blob:")) {

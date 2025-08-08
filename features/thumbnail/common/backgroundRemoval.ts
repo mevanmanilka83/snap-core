@@ -4,18 +4,18 @@ export type BackgroundRemovalMessage =
   | { type: 'error'; error: string };
 
 export interface BackgroundRemovalOptions {
-  workerUrl: URL;
   onProgress?: (progress: number) => void;
 }
 
 export async function removeBackgroundViaWorker(
   imageSrc: string,
-  { workerUrl, onProgress }: BackgroundRemovalOptions
+  { onProgress }: BackgroundRemovalOptions
 ): Promise<Blob> {
   return new Promise<Blob>((resolve, reject) => {
     let worker: Worker | null = null;
     try {
-      worker = new Worker(workerUrl, { type: 'module' });
+      // Use the correct worker path
+      worker = new Worker(new URL('./workers/background-removal.worker.ts', import.meta.url), { type: 'module' });
     } catch (e) {
       reject(new Error('Failed to initialize background removal worker'));
       return;
@@ -54,11 +54,19 @@ export async function removeBackgroundViaWorker(
 
     try {
       // Try fetch validation to avoid CORS/404 surprises
-      const resp = await fetch(imageSrc, { mode: 'cors' });
-      if (!resp.ok) throw new Error('Unable to fetch image for processing');
+      fetch(imageSrc, { mode: 'cors' })
+        .then(resp => {
+          if (!resp.ok) throw new Error('Unable to fetch image for processing');
+        })
+        .catch(() => {
+          // proceed anyway; worker will handle blob URLs too
+        })
+        .finally(() => {
+          worker.postMessage({ imageSrc });
+        });
     } catch {
       // proceed anyway; worker will handle blob URLs too
+      worker.postMessage({ imageSrc });
     }
-    worker.postMessage({ imageSrc });
   });
 }

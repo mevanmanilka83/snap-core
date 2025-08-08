@@ -476,7 +476,6 @@ export default function VideoThumbnailGenerator() {
     try {
       setIsProcessing(true);
       const blob = await removeBackgroundViaWorker(processedFrame, {
-        workerUrl: new URL("@/features/thumbnail/common/workers/background-removal.worker.ts", import.meta.url),
         onProgress: (p) => console.debug("Background removal:", p, "%"),
       });
 
