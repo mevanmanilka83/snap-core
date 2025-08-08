@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ThumbnailImageStage from "@/features/thumbnail/common/ThumbnailImageStage";
+import SharedBackgroundRemovalSection from "@/features/thumbnail/common/BackgroundRemovalSection";
 
 const BackgroundRemovedSection = ({
   processedImageSrc,
@@ -11,28 +10,21 @@ const BackgroundRemovedSection = ({
   handleRemoveBackground
 }: any) => {
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base sm:text-lg">Background Removal</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          Remove the background to proceed with text editing
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!processedFrame ? (
+    <SharedBackgroundRemovalSection
+      title="Background Removal"
+      description="Remove the background to proceed with text editing"
+      stageSrc={processedImageSrc || processedFrame}
+      zoomLevel={zoomLevel}
+      loading={isProcessing}
+      emptyState={
+        !processedFrame ? (
           <div className="text-center py-8 text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
             <p className="text-sm">Please select a snapshot first</p>
           </div>
-        ) : (
-          <ThumbnailImageStage
-            src={processedImageSrc || processedFrame}
-            alt={processedImageSrc ? "Processed frame" : "Selected frame"}
-            zoom={zoomLevel}
-          />
-        )}
-      </CardContent>
-      <CardFooter>
+        ) : undefined
+      }
+      footer={
         <Button
           onClick={handleRemoveBackground}
           disabled={!processedFrame || isProcessing}
@@ -47,8 +39,8 @@ const BackgroundRemovedSection = ({
             "Remove Background"
           )}
         </Button>
-      </CardFooter>
-    </Card>
+      }
+    />
   );
 };
 
