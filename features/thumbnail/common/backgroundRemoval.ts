@@ -62,11 +62,15 @@ export async function removeBackgroundViaWorker(
           // proceed anyway; worker will handle blob URLs too
         })
         .finally(() => {
-          worker.postMessage({ imageSrc });
+          if (worker) {
+            worker.postMessage({ imageSrc });
+          }
         });
     } catch {
       // proceed anyway; worker will handle blob URLs too
-      worker.postMessage({ imageSrc });
+      if (worker) {
+        worker.postMessage({ imageSrc });
+      }
     }
   });
 }

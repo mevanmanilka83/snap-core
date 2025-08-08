@@ -1,4 +1,4 @@
-import { eslint } from '@eslint/eslintrc';
+import eslint from '@eslint/js';
 
 export default eslint.config({
   extends: [
