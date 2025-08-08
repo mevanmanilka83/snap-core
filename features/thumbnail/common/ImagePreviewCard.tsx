@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react";
 import { ReactNode } from "react";
@@ -14,6 +14,7 @@ interface ImagePreviewCardProps {
   filtersCss?: string;
   isLoading?: boolean;
   emptyContent?: ReactNode;
+  footer?: ReactNode;
 }
 
 export default function ImagePreviewCard({
@@ -88,6 +89,7 @@ export default function ImagePreviewCard({
           </div>
         )}
       </CardContent>
+      {footer && <CardFooter>{footer}</CardFooter>}
     </Card>
   );
 }

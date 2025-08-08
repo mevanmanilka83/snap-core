@@ -28,6 +28,7 @@ import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroun
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
+import ImagePreviewCard from "@/features/thumbnail/common/ImagePreviewCard"
 
 
 interface ImageInfo {
@@ -1105,126 +1106,49 @@ export default function ImageUploader() {
       </Tabs>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <Card className="w-full flex flex-col">
-          <CardHeader className="p-4 md:p-6 pb-2">
-            <CardTitle className="text-base">Image Preview</CardTitle>
-            {error && hasAttemptedLoad && <p className="text-xs md:text-sm text-red-500 mt-1">{error}</p>}
-          </CardHeader>
-          <CardContent className="space-y-4 flex-1">
-            {imageInfo && imageLoaded && imageInfo.size > 0 && (
-              <p className="text-xs md:text-sm text-muted-foreground">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
-            )}
-
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              {imageSrc && imageLoaded ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={imageSrc || "/placeholder.svg"}
-                    alt="Preview"
-                    className="object-contain w-full h-full"
-                    style={{
-                      objectFit: "contain",
-                      width: "100%",
-                      height: "100%",
-                      position: "absolute",
-                      inset: 0,
-                      transform: `scale(${zoomLevel / 100})`,
-                      filter: `
-                        brightness(${imageFilters.brightness}%) 
-                        contrast(${imageFilters.contrast}%) 
-                        saturate(${imageFilters.saturation}%) 
-                        blur(${imageFilters.blur}px) 
-                        hue-rotate(${imageFilters.hueRotate}deg)
-                        grayscale(${imageFilters.grayscale}%)
-                        sepia(${imageFilters.sepia}%)
-                      `,
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                </div>
-              ) : (
-                <>
-                  {!isLoading && !error && (
-                    <div className="text-center p-4">
-                      <UploadIcon className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">No image selected</p>
-                    </div>
-                  )}
-                  {isLoading && (
-                    <div className="flex justify-center py-8 md:py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary"></div>
-                    </div>
-                  )}
-                </>
-              )}
+        <ImagePreviewCard
+          title="Image Preview"
+          imageSrc={imageSrc && imageLoaded ? imageSrc : null}
+          zoom={zoomLevel}
+          onZoomChange={setZoomLevel}
+          filtersCss={`
+            brightness(${imageFilters.brightness}%) 
+            contrast(${imageFilters.contrast}%) 
+            saturate(${imageFilters.saturation}%) 
+            blur(${imageFilters.blur}px) 
+            hue-rotate(${imageFilters.hueRotate}deg)
+            grayscale(${imageFilters.grayscale}%)
+            sepia(${imageFilters.sepia}%)
+          `}
+          isLoading={isLoading}
+          emptyContent={
+            <div className="text-center p-4">
+              <UploadIcon className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">No image selected</p>
             </div>
-
-            {imageLoaded && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 md:gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}
-                    disabled={zoomLevel <= 50}
-                  >
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <span className="text-xs md:text-sm">{zoomLevel}%</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
-                    disabled={zoomLevel >= 200}
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-1 md:gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setZoomLevel(100)}
-                    disabled={zoomLevel === 100}
-                  >
-                    <Maximize className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setZoomLevel(50)}
-                    disabled={zoomLevel === 50}
-                  >
-                    <Minimize className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="items-center [.border-t]:pt-10 flex flex-wrap gap-2 p-4 pt-12 md:p-6">
-            <Button onClick={handleCancel} variant="outline" className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRemoveBackground}
-              disabled={!imageLoaded || isProcessing}
-              className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
-            >
-              {isProcessing ? (
-                <span className="flex items-center">
-                  <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                  Processing...
-                </span>
-              ) : (
-                "Remove Background"
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+          }
+          footer={
+            <div className="items-center flex flex-wrap gap-2 w-full">
+              <Button onClick={handleCancel} variant="outline" className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRemoveBackground}
+                disabled={!imageLoaded || isProcessing}
+                className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
+              >
+                {isProcessing ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
+                    Processing...
+                  </span>
+                ) : (
+                  "Remove Background"
+                )}
+              </Button>
+            </div>
+          }
+        />
 
         <Card className="w-full flex flex-col">
           <CardHeader className="p-4 md:p-6">
