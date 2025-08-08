@@ -2,7 +2,7 @@
 
 import { Clock, Layers, Palette, Type, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import MainSection from "../../main-section";
+import VideoMainSection from "./VideoMainSection";
 import SnapshotsStep from "./SnapshotsStep";
 import EditStep from "./EditStep";
 import TextEditorStep from "./TextEditorStep";
@@ -181,7 +181,7 @@ export default function VideoTabSelection({
 
         <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
           <div className="space-y-6">
-            <MainSection
+            <VideoMainSection
               videoRef={_videoRef}
               videoLoaded={videoLoaded}
               videoInfo={videoInfo}
