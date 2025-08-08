@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import {
   UploadIcon,
  
@@ -29,6 +29,7 @@ import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
 import ImagePreviewCard from "@/features/thumbnail/common/ImagePreviewCard"
+import StepTabs from "@/features/thumbnail/common/StepTabs"
 
 
 interface ImageInfo {
@@ -962,39 +963,15 @@ export default function ImageUploader() {
       />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2 overflow-x-auto">
-          <TabsTrigger 
-            value="upload" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-          >
-            <UploadIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-            <span>Upload</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="edit" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!imageLoaded}
-          >
-            <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-            <span>Edit</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="text" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedImageSrc}
-          >
-            <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-            <span>Text</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="preview" 
-            className="data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 flex items-center gap-1 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-            disabled={!processedImageSrc}
-          >
-            <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-            <span>Final Thumbnail</span>
-          </TabsTrigger>
-        </TabsList>
+        <StepTabs
+          steps={[
+            { value: "upload", label: "Upload", icon: <UploadIcon className="h-3.5 w-3.5 md:h-4 md:w-4" /> },
+            { value: "edit", label: "Edit", icon: <Palette className="h-3.5 w-3.5 md:h-4 md:w-4" />, disabled: !imageLoaded },
+            { value: "text", label: "Text", icon: <Type className="h-3.5 w-3.5 md:h-4 md:w-4" />, disabled: !processedImageSrc },
+            { value: "preview", label: "Final Thumbnail", icon: <Layers className="h-3.5 w-3.5 md:h-4 md:w-4" />, disabled: !processedImageSrc },
+          ]}
+          listClassName="bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2 overflow-x-auto"
+        />
 
         <TabsContent value="file" className="space-y-4">
           <Card>
