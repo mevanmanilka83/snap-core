@@ -1,13 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+// no-op import removed
 
 import { ImageIcon } from "lucide-react";
-import FiltersSection from "./FiltersSection";
-import BackgroundRemovedSection from "./BackgroundRemovedSection";
+import FiltersSection from "./FiltersStep";
+import BackgroundRemovedSection from "./BackgroundRemovalStep";
 import ImagePreviewCard from "@/features/thumbnail/common/ImagePreviewCard";
 
 
-const EditSection = ({
+const EditStep = ({
   zoomLevel,
   setZoomLevel,
   imageFilters,
@@ -87,4 +86,4 @@ const EditSection = ({
   );
 };
 
-export default EditSection; 
+export default EditStep; 

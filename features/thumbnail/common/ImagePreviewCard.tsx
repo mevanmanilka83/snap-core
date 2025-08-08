@@ -26,6 +26,7 @@ export default function ImagePreviewCard({
   filtersCss,
   isLoading,
   emptyContent,
+  footer,
 }: ImagePreviewCardProps) {
   const handleZoomOut = () => onZoomChange(Math.max(50, zoom - 10));
   const handleZoomIn = () => onZoomChange(Math.min(200, zoom + 10));

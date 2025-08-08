@@ -47,7 +47,7 @@ export async function removeBackgroundViaWorker(
       }
     };
 
-    worker.onerror = (err) => {
+    worker.onerror = () => {
       cleanup();
       reject(new Error('Background removal worker error'));
     };

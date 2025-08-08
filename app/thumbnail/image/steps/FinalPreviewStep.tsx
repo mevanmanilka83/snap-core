@@ -1,6 +1,6 @@
 import SharedFinalPreviewSection from "@/features/thumbnail/common/FinalPreviewSection";
 
-const FinalPreviewSection = ({
+const FinalPreviewStep = ({
   finalThumbnail,
   imageInfo,
   handleSaveFinalThumbnail,
@@ -20,4 +20,4 @@ const FinalPreviewSection = ({
   );
 };
 
-export default FinalPreviewSection; 
+export default FinalPreviewStep; 

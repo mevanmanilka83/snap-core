@@ -7,23 +7,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
-import {
-  UploadIcon,
- 
-  Download,
-  Type,
-  RotateCw,
-  
-  Layers,
-  Palette,
-  Undo,
-  Redo,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Minimize,
-} from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UploadIcon, Download, Type, RotateCw, Layers, Palette, Undo, Redo } from "lucide-react"
 import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
@@ -55,7 +40,7 @@ export default function ImageUploader() {
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [_error, setError] = useState("")
   const [imageSrc, setImageSrc] = useState<string>("")
   const [processedImageSrc, setProcessedImageSrc] = useState<string>("")
   const [thumbnailSrc, setThumbnailSrc] = useState<string>("")
@@ -86,7 +71,7 @@ export default function ImageUploader() {
   const pendingThumbnailUpdate = useRef<NodeJS.Timeout | null>(null)
 
   // Default text element
-  const defaultTextElement: TextElement = {
+  const defaultTextElement = {
     id: "default-text",
     text: "TTV",
     x: 50,
@@ -115,7 +100,7 @@ export default function ImageUploader() {
   }
 
   // Text editing states
-  const [textElements, setTextElements] = useState<TextElement[]>([{ ...defaultTextElement }])
+  const [textElements, setTextElements] = useState<any[]>([{ ...defaultTextElement }])
 
   useEffect(() => {
     return () => {
@@ -1225,7 +1210,7 @@ export default function ImageUploader() {
             isCreatingThumbnail={isCreatingThumbnail}
             processedImageSrc={processedImageSrc}
             textElements={textElements}
-            onTextElementsChange={(elements: TextElement[]) => {
+            onTextElementsChange={(elements: any[]) => {
               setTextElements(elements)
             }}
           />

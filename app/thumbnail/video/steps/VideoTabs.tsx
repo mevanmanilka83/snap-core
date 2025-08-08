@@ -88,19 +88,20 @@ export default function VideoTabSelection({
   snapshots,
   selectedSnapshotIndex,
   canGoToTextAndPreview,
-  videoRef,
-  videoLoaded,
   videoInfo,
-  isPlaying,
-  setIsPlaying,
-  handleMetadataLoaded,
-  handleTimeUpdate,
-  handleSnapshot,
-  captureSnapshot,
-  handleAutoCaptureKeyFrames,
-  autoSnapInterval,
-  setAutoSnapInterval,
-  toggleAutoSnap,
+  // Unused props omitted in tabs container
+  videoRef: _videoRef,
+  videoLoaded,
+  isPlaying: _isPlaying,
+  setIsPlaying: _setIsPlaying,
+  handleMetadataLoaded: _handleMetadataLoaded,
+  handleTimeUpdate: _handleTimeUpdate,
+  handleSnapshot: _handleSnapshot,
+  captureSnapshot: _captureSnapshot,
+  handleAutoCaptureKeyFrames: _handleAutoCaptureKeyFrames,
+  autoSnapInterval: _autoSnapInterval,
+  setAutoSnapInterval: _setAutoSnapInterval,
+  toggleAutoSnap: _toggleAutoSnap,
   handleSelectSnapshot,
   handleSaveSnapshot,
   handleDeleteSnapshot,
@@ -181,19 +182,19 @@ export default function VideoTabSelection({
         <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
           <div className="space-y-6">
             <MainSection
-              videoRef={videoRef}
+              videoRef={_videoRef}
               videoLoaded={videoLoaded}
               videoInfo={videoInfo}
-              isPlaying={isPlaying}
-              setIsPlaying={setIsPlaying}
-              handleMetadataLoaded={handleMetadataLoaded}
-              handleTimeUpdate={handleTimeUpdate}
-              handleSnapshot={handleSnapshot}
-              captureSnapshot={captureSnapshot}
-              handleAutoCaptureKeyFrames={handleAutoCaptureKeyFrames}
-              autoSnapInterval={autoSnapInterval}
-              setAutoSnapInterval={setAutoSnapInterval}
-              toggleAutoSnap={toggleAutoSnap}
+              isPlaying={_isPlaying}
+              setIsPlaying={_setIsPlaying}
+              handleMetadataLoaded={_handleMetadataLoaded}
+              handleTimeUpdate={_handleTimeUpdate}
+              handleSnapshot={_handleSnapshot}
+              captureSnapshot={_captureSnapshot}
+              handleAutoCaptureKeyFrames={_handleAutoCaptureKeyFrames}
+              autoSnapInterval={_autoSnapInterval}
+              setAutoSnapInterval={_setAutoSnapInterval}
+              toggleAutoSnap={_toggleAutoSnap}
             />
             
             <div className="border-t pt-6">
@@ -204,12 +205,12 @@ export default function VideoTabSelection({
                     className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
                   >
                     <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
-                    <span className="truncate">Video Frames ({snapshots.length})</span>
+                    <span className="truncate">Video Frames ({snapshots?.length || 0})</span>
                   </TabsBtn>
                   <TabsBtn
                     value="edit"
                     className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-                    disabled={selectedSnapshotIndex === -1}
+                    disabled={selectedSnapshotIndex === -1 || selectedSnapshotIndex === undefined}
                   >
                     <Palette className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
                     <span className="truncate">Remove Background</span>
@@ -217,7 +218,7 @@ export default function VideoTabSelection({
                   <TabsBtn
                     value="text"
                     className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-                    disabled={!canGoToTextAndPreview}
+                    disabled={!canGoToTextAndPreview || canGoToTextAndPreview === undefined}
                   >
                     <Type className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
                     <span className="truncate">Add Text & Style</span>
@@ -225,7 +226,7 @@ export default function VideoTabSelection({
                   <TabsBtn
                     value="preview"
                     className="bg-muted h-auto min-h-[40px] flex-1 justify-center rounded-md border border-transparent font-medium transition-all focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm py-2.5 px-3 sm:px-4 whitespace-nowrap"
-                    disabled={!canGoToTextAndPreview}
+                    disabled={!canGoToTextAndPreview || canGoToTextAndPreview === undefined}
                   >
                     <ImageIcon className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
                     <span className="truncate">Final Thumbnail</span>

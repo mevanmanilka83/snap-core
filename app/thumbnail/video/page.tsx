@@ -260,7 +260,7 @@ export default function VideoThumbnailGenerator() {
         }
 
         setSnapshots((prev) => [...prev, imageUrl]);
-        setSelectedSnapshotIndex(snapshots.length);
+        setSelectedSnapshotIndex(snapshots?.length || 0);
         setProcessedFrame(imageUrl);
         setProcessedImageSrc(imageUrl);
         setActiveTab("edit");
@@ -307,7 +307,7 @@ export default function VideoThumbnailGenerator() {
     }
 
     setSnapshots((prev) => [...prev, ...newSnapshots]);
-    setSelectedSnapshotIndex(snapshots.length);
+    setSelectedSnapshotIndex(snapshots?.length || 0);
     setProcessedFrame(newSnapshots[0]);
     setProcessedImageSrc(newSnapshots[0]);
     setActiveTab("edit");
@@ -355,7 +355,7 @@ export default function VideoThumbnailGenerator() {
   }
 
   const handleSelectSnapshot = (index: number) => {
-    if (index < 0 || index >= snapshots.length) {
+    if (index < 0 || index >= (snapshots?.length || 0)) {
       toast.error("Invalid snapshot index");
       return;
     }
@@ -399,9 +399,9 @@ export default function VideoThumbnailGenerator() {
 
   // Add useEffect to handle snapshot updates
   useEffect(() => {
-    if (snapshots.length > 0) {
+    if (snapshots?.length > 0) {
       // Ensure the last snapshot is valid
-      const lastSnapshot = snapshots[snapshots.length - 1];
+              const lastSnapshot = snapshots[snapshots?.length - 1];
       if (!lastSnapshot || lastSnapshot === 'data:,') {
         // Remove invalid snapshot
         setSnapshots((prev) => prev.slice(0, -1));

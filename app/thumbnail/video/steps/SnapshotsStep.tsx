@@ -157,7 +157,7 @@ const SnapshotsSection = ({
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {snapshots.length > 0 ? (
+      {snapshots?.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {snapshots.map((snapshot: string, index: number) => (
             <div
@@ -251,14 +251,14 @@ const SnapshotsSection = ({
           setProcessedImageSrc(null);
           toast.success("All snapshots cleared");
         }}
-        disabled={snapshots.length === 0}
+        disabled={snapshots?.length === 0}
         className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
       >
         Clear All
       </Button>
       <Button
         onClick={handleSaveAllSnapshots}
-        disabled={snapshots.length === 0}
+        disabled={snapshots?.length === 0}
         variant="default"
         className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
       >
