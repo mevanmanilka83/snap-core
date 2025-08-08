@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import type { TextElement } from "@/types/text-element"
 import { toast } from "sonner"
 import VideoTabSelection from "./sections/VideoTabSelection"
 
@@ -22,46 +23,7 @@ interface ImageFilter {
   sepia: number
 }
 
-interface TextElement {
-  id: string
-  text: string
-  x: number
-  y: number
-  fontSize: number
-  color: string
-  rotation: number
-  fontFamily: string
-  position:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right"
-    | "top-center"
-    | "center-left"
-    | "center-right"
-    | "bottom-center"
-  maxWidth?: number
-  curve?: boolean
-  backgroundColor?: string
-  backgroundEnabled?: boolean
-  shadow?: boolean
-  shadowBlur?: number
-  shadowColor?: string
-  textAlign?: "left" | "center" | "right" | "justify"
-  bold?: boolean
-  italic?: boolean
-  underline?: boolean
-  letterSpacing?: number
-  lineHeight?: number
-  opacity?: number
-  visible?: boolean
-  layerOrder?: "front" | "back"
-}
+ 
 
 export default function VideoThumbnailGenerator() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
