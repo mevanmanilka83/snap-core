@@ -1,8 +1,7 @@
 "use client"
 
 import { useCallback, memo } from "react"
-import { ChevronsRight } from "lucide-react"
-import CTAButton from "@/components/ui/cta-button"
+import { ChevronsRight, ArrowUpRight } from "lucide-react"
 
 
 const HeroSection = memo(function HeroSection() {
@@ -62,19 +61,25 @@ const HeroSection = memo(function HeroSection() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4 max-w-md sm:max-w-none">
-              <CTAButton
+              <button
                 onClick={scrollToMainSection}
                 aria-label="Start creating thumbnails"
-                label="Start Creating"
-                icon={<ChevronsRight />}
-              />
+                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-2xl hover:shadow-white/10"
+              >
+                <span>Start Creating</span>
+                <ArrowUpRight className="absolute top-3 right-3 h-5 w-5 text-white/90 transition-transform duration-300 group-hover:translate-x-2 group-hover:-translate-y-2" />
+              </button>
 
-              <CTAButton
+              <button
                 onClick={scrollToHowItWorks}
                 aria-label="Learn more about how it works"
-                label="Learn More"
-                icon={<ChevronsRight />}
-              />
+                className="group relative flex h-12 w-full sm:w-[170px] items-center justify-center rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-white font-medium transition-all duration-300 hover:bg-white/15 hover:scale-105 hover:shadow-2xl hover:shadow-white/5"
+              >
+                <span className="flex items-center gap-2">
+                  Learn More
+                  <ChevronsRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </button>
             </div>
           </div>
 
