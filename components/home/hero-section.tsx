@@ -21,10 +21,10 @@ const HeroSection = memo(function HeroSection() {
   }, [])
 
     return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-[90vh] relative overflow-hidden rounded-3xl mb-8">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 rounded-3xl"
         style={{
           backgroundImage: 'url(/background.png)',
           backgroundSize: 'cover',
@@ -34,11 +34,11 @@ const HeroSection = memo(function HeroSection() {
       />
       
       {/* Dark overlay for better text readability */}
-      <div className="absolute inset-0 z-0 bg-black/40" />
+      <div className="absolute inset-0 z-0 bg-black/40 rounded-3xl" />
       
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center min-h-screen py-20">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center min-h-[90vh] px-4">
           {/* Left Content */}
           <div className="lg:col-span-7 space-y-10">
             {/* Main Heading */}
@@ -78,24 +78,9 @@ const HeroSection = memo(function HeroSection() {
             </div>
           </div>
 
-          {/* Right side with rounded content card */}
-          <div className="lg:col-span-5">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-400/20 rounded-full mx-auto flex items-center justify-center">
-                  <div className="w-8 h-8 bg-green-300 rounded-full"></div>
-                </div>
-                <h3 className="text-xl font-semibold text-white">AI-Powered</h3>
-                <p className="text-green-100 text-sm leading-relaxed">
-                  Advanced machine learning for perfect background removal and text placement
-                </p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
-    </div>
-  )
     </div>
   )
 })

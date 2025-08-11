@@ -98,19 +98,15 @@ export const metadata: Metadata = {
   verification: {
     google: 'your-google-site-verification', // Add your Google Search Console verification code
   },
-  alternates: {
-    canonical: 'https://snap-core.com',
-  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://snap-core.com',
     title: 'Snap Core | Create thumbnails and snapshots',
     description: 'Create professional thumbnails and snapshots from your videos and images',
     siteName: 'Snap Core',
     images: [
       {
-        url: 'https://snap-core.com/og-image.jpg', // Add your OG image
+        url: '/og-image.jpg', // Local OG image path
         width: 1200,
         height: 630,
         alt: 'Snap Core - Thumbnail and Snapshot Creator',
@@ -122,7 +118,7 @@ export const metadata: Metadata = {
     title: 'Snap Core | Create thumbnails and snapshots',
     description: 'Create professional thumbnails and snapshots from your videos and images',
     creator: '@snapcore', // Add your Twitter handle
-    images: ['https://snap-core.com/twitter-image.jpg'], // Add your Twitter image
+    images: ['/twitter-image.jpg'], // Local Twitter image path
   },
   manifest: '/manifest.json', // We'll create this file next
 }
