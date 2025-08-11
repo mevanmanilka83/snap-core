@@ -3,7 +3,7 @@
 import { ImageIcon } from "lucide-react";
 import FiltersSection from "./FiltersStep";
 import BackgroundRemovedSection from "./BackgroundRemovalStep";
-import ImagePreviewCard from "@/features/thumbnail/common/ImagePreviewCard";
+import { ImagePreviewCard } from "@/features/thumbnail/common";
 
 
 const EditStep = ({
@@ -69,7 +69,7 @@ const EditStep = ({
           resetFilters={resetFilters}
           applyPresetFilter={applyPresetFilter}
           handleCreateThumbnail={handleCreateThumbnail}
-          processedFrame={selectedSnapshot}
+          imageSrc={selectedSnapshot}
           isCreatingThumbnail={isCreatingThumbnail}
         />
         <BackgroundRemovedSection
@@ -78,7 +78,7 @@ const EditStep = ({
           processedImageSrc={processedImageSrc}
           zoomLevel={zoomLevel}
           isProcessing={isProcessing}
-          processedFrame={selectedSnapshot}
+          imageSrc={selectedSnapshot}
           handleRemoveBackground={handleRemoveBackground}
         />
       </div>

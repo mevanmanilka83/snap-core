@@ -2,27 +2,13 @@
 
 import { useState, useRef, useEffect } from "react"
 import type { TextElement } from "@/types/text-element"
+import type { VideoInfo, ImageFilter } from "@/app/thumbnail/video/types"
 import { toast } from "sonner"
 import VideoWorkflowTabs from "../tabs"
-import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
+import { removeBackgroundViaWorker } from "@/features/thumbnail/common"
 
 
-interface VideoInfo {
-  width: number
-  height: number
-  duration: number
-  currentTime: number
-}
-
-interface ImageFilter {
-  brightness: number
-  contrast: number
-  saturation: number
-  blur: number
-  hueRotate: number
-  grayscale: number
-  sepia: number
-}
+// Types are imported from app/thumbnail/video/types
 
  
 
@@ -804,8 +790,10 @@ export default function VideoThumbnailGenerator() {
     let fontStyle = "";
     if (element.bold) fontStyle += "bold ";
     if (element.italic) fontStyle += "italic ";
-    const scaleFactor = Math.min(canvasWidth, canvasHeight) / 1000;
-    const scaledFontSize = element.fontSize * scaleFactor * 2;
+    // Use scaling approach for MASSIVE, extremely prominent text
+    const scaleFactor = Math.min(canvasWidth, canvasHeight) / 250;
+    // Allow text to be absolutely huge for maximum impact
+    const scaledFontSize = Math.max(element.fontSize * scaleFactor * 4.0, element.fontSize * 1.2);
     fontStyle += `${scaledFontSize}px ${element.fontFamily}`;
     ctx.font = fontStyle;
 

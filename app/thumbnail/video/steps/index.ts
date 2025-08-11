@@ -1,0 +1,9 @@
+export { default as VideoMainSection } from "./VideoMainSection";
+export { default as VideoPlayerStep } from "./VideoPlayerStep";
+export { default as VideoPlayerContainer } from "./VideoPlayerContainer";
+export { default as SnapshotsStep } from "./SnapshotsStep";
+export { default as EditStep } from "./EditStep";
+export { default as TextEditorStep } from "./TextEditorStep";
+export { default as FiltersStep } from "./FiltersStep";
+export { default as BackgroundRemovalStep } from "./BackgroundRemovalStep";
+export { default as FinalPreviewStep } from "./FinalPreviewStep";

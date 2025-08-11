@@ -5,16 +5,14 @@ import type { TextElement } from "@/types/text-element"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { UploadIcon, Download, Type, RotateCw, Layers, Palette, Undo, Redo } from "lucide-react"
-import { removeBackgroundViaWorker } from "@/features/thumbnail/common/backgroundRemoval"
-import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
-import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
-import ImagePreviewCard from "@/features/thumbnail/common/ImagePreviewCard"
-import StepTabs from "@/features/thumbnail/common/StepTabs"
+import { UploadIcon, Type, Layers, Palette } from "lucide-react"
+import { removeBackgroundViaWorker } from "@/features/thumbnail/common"
+// Removed Slider/Label; filters now in a dedicated component
+import { BackgroundRemovalStep, FiltersStep, TextEditorStep, ImagePreviewStep, FinalPreviewStep } from "@/app/thumbnail/image/steps"
+import { StepTabs } from "@/features/thumbnail/common"
 
 
 interface ImageInfo {
@@ -49,9 +47,8 @@ export default function ImageUploader() {
   const [isCreatingThumbnail, setIsCreatingThumbnail] = useState(false)
   const [activeTab, setActiveTab] = useState("file")
   const [activeEditorTab, setActiveEditorTab] = useState("text")
-  const [zoomLevel, setZoomLevel] = useState(100)
-  const [undoStack, setUndoStack] = useState<string[]>([])
-  const [redoStack, setRedoStack] = useState<string[]>([])
+  const [zoomLevel] = useState(100)
+  // Deprecated with new steps; retained logic removed
   const [imageFilters, setImageFilters] = useState<ImageFilter>({
     brightness: 100,
     contrast: 100,
@@ -235,9 +232,7 @@ export default function ImageUploader() {
       size: file.size,
     })
 
-    // Clear undo/redo stacks for new image
-    setUndoStack([])
-    setRedoStack([])
+    // Reset any previous state related to editing
   }
 
   const handleURLLoad = () => {
@@ -272,9 +267,7 @@ export default function ImageUploader() {
 
     setImageLoaded(false)
 
-    // Clear undo/redo stacks for new image
-    setUndoStack([])
-    setRedoStack([])
+    // Reset any previous state related to editing
   }
 
   const handleImageLoaded = () => {
@@ -356,9 +349,7 @@ export default function ImageUploader() {
       }
     }
 
-    // Clear undo/redo stacks
-    setUndoStack([])
-    setRedoStack([])
+    // Reset any previous state related to editing
   }
 
   const handleTabChange = (newTab: string) => {
@@ -420,10 +411,7 @@ export default function ImageUploader() {
       setIsProcessing(true)
       setThumbnailSrc("")
 
-      if (processedImageSrc) {
-        setUndoStack((prev) => [...prev, processedImageSrc])
-        setRedoStack([])
-      }
+      // Prepare state for new processed image
 
       const blob = await removeBackgroundViaWorker(previewUrl.current, {})
 
@@ -445,43 +433,7 @@ export default function ImageUploader() {
     }
   }
 
-  const handleUndo = () => {
-    if (undoStack.length === 0) {
-      toast.info("Nothing to undo")
-      return
-    }
-
-    // Save current state to redo stack
-    setRedoStack((prev) => [...prev, processedImageSrc])
-
-    // Get the last state from undo stack
-    const lastState = undoStack[undoStack.length - 1]
-    setProcessedImageSrc(lastState)
-
-    // Remove the last state from undo stack
-    setUndoStack((prev) => prev.slice(0, -1))
-
-    toast.info("Undo successful")
-  }
-
-  const handleRedo = () => {
-    if (redoStack.length === 0) {
-      toast.info("Nothing to redo")
-      return
-    }
-
-    // Save current state to undo stack
-    setUndoStack((prev) => [...prev, processedImageSrc])
-
-    // Get the last state from redo stack
-    const lastState = redoStack[redoStack.length - 1]
-    setProcessedImageSrc(lastState)
-
-    // Remove the last state from redo stack
-    setRedoStack((prev) => prev.slice(0, -1))
-
-    toast.info("Redo successful")
-  }
+  // Undo/Redo are currently not used in the new steps UI
 
   const handleCreateThumbnail = () => {
     if (!processedImageSrc) {
@@ -614,8 +566,10 @@ export default function ImageUploader() {
           if (element.rotation !== 0) {
             ctx.rotate((element.rotation * Math.PI) / 180)
           }
-          const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-          const scaledFontSize = element.fontSize * scaleFactor * 2
+          // Use scaling approach for MASSIVE, extremely prominent text
+          const scaleFactor = Math.min(canvas.width, canvas.height) / 250
+          // Allow text to be absolutely huge for maximum impact
+          const scaledFontSize = Math.max(element.fontSize * scaleFactor * 4.0, element.fontSize * 1.2)
 
           // Set font style
           let fontStyle = ""
@@ -720,8 +674,9 @@ export default function ImageUploader() {
             if (element.rotation !== 0) {
               ctx.rotate((element.rotation * Math.PI) / 180)
             }
-            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-            const scaledFontSize = element.fontSize * scaleFactor * 2
+            // Use balanced scaling approach for readable text sizes
+            const scaleFactor = Math.min(canvas.width, canvas.height) / 800
+            const scaledFontSize = Math.min(element.fontSize * scaleFactor, element.fontSize * 1.2)
 
             // Set font style
             let fontStyle = ""
@@ -819,8 +774,10 @@ export default function ImageUploader() {
             if (element.rotation !== 0) {
               ctx.rotate((element.rotation * Math.PI) / 180)
             }
-            const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
-            const scaledFontSize = element.fontSize * scaleFactor * 2
+            // Use scaling approach for MASSIVE, extremely prominent text
+            const scaleFactor = Math.min(canvas.width, canvas.height) / 250
+            // Allow text to be absolutely huge for maximum impact
+            const scaledFontSize = Math.max(element.fontSize * scaleFactor * 4.0, element.fontSize * 1.2)
 
             // Set font style
             let fontStyle = ""
@@ -1066,121 +1023,27 @@ export default function ImageUploader() {
       </Tabs>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <ImagePreviewCard
-          title="Image Preview"
-          imageSrc={imageSrc && imageLoaded ? imageSrc : null}
-          zoom={zoomLevel}
-          onZoomChange={setZoomLevel}
-          filtersCss={`
-            brightness(${imageFilters.brightness}%) 
-            contrast(${imageFilters.contrast}%) 
-            saturate(${imageFilters.saturation}%) 
-            blur(${imageFilters.blur}px) 
-            hue-rotate(${imageFilters.hueRotate}deg)
-            grayscale(${imageFilters.grayscale}%)
-            sepia(${imageFilters.sepia}%)
-          `}
+        <ImagePreviewStep
+          imageInfo={imageInfo}
+          imageLoaded={imageLoaded}
+          imageSrc={imageSrc}
+          zoomLevel={zoomLevel}
           isLoading={isLoading}
-          emptyContent={
-            <div className="text-center p-4">
-              <UploadIcon className="h-8 w-8 md:h-12 md:w-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">No image selected</p>
-            </div>
-          }
-          footer={
-            <div className="items-center flex flex-wrap gap-2 w-full">
-              <Button onClick={handleCancel} variant="outline" className="flex-1">
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRemoveBackground}
-                disabled={!imageLoaded || isProcessing}
-                className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
-              >
-                {isProcessing ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></span>
-                    Processing...
-                  </span>
-                ) : (
-                  "Remove Background"
-                )}
-              </Button>
-            </div>
-          }
+          error={_error}
+          hasAttemptedLoad={hasAttemptedLoad}
+          processedImageSrc={processedImageSrc}
         />
 
-        <Card className="w-full flex flex-col">
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base">Background Removal</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Remove the background to proceed with text editing in the image section
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 pb-0">
-            {imageInfo && imageLoaded && imageInfo.size > 0 && (
-              <p className="text-xs md:text-sm text-muted-foreground mb-4">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
-            )}
-            <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-              <div className="relative w-full h-full">
-                {processedImageSrc ? (
-                  <img
-                    src={processedImageSrc || "/placeholder.svg"}
-                    alt="Background Removed"
-                    className="object-contain w-full h-full"
-                    style={{
-                      objectFit: "contain",
-                      width: "100%",
-                      height: "100%",
-                      position: "absolute",
-                      inset: 0,
-                      transform: `scale(${zoomLevel / 100})`,
-                    }}
-                    crossOrigin="anonymous"
-                  />
-                ) : isProcessing ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mb-2 md:mb-4"></div>
-                    <p className="text-xs md:text-sm text-gray-500">Removing background...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                      {imageLoaded ? "Ready to process image" : "Please upload an image"}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {processedImageSrc && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleUndo} disabled={undoStack.length === 0} className="h-8 w-8">
-                    <Undo className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0} className="h-8 w-8">
-                    <Redo className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="items-center [.border-t]:pt-10 flex flex-wrap gap-2 p-4 pt-12 md:p-6 border-t">
-            <Button onClick={handleCancel} variant="outline" className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveBackgroundRemoved}
-              disabled={!processedImageSrc}
-              variant="default"
-              className="flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-          </CardFooter>
-        </Card>
+        <BackgroundRemovalStep
+          imageInfo={imageInfo}
+          imageLoaded={imageLoaded}
+          processedImageSrc={processedImageSrc}
+          zoomLevel={zoomLevel}
+          isProcessing={isProcessing}
+          onSave={handleSaveBackgroundRemoved}
+          onRemoveBackground={handleRemoveBackground}
+          onCancel={handleCancel}
+        />
       </div>
 
       <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
@@ -1200,7 +1063,7 @@ export default function ImageUploader() {
         </TabsList>
 
         <TabsContent value="text" className="space-y-4">
-          <TextEditor
+          <TextEditorStep
             onApply={() => {
               setShowUpdateToast(true)
               handleCreateThumbnail()
@@ -1211,300 +1074,30 @@ export default function ImageUploader() {
             onTextElementsChange={(elements: any[]) => {
               setTextElements(elements)
             }}
+            backgroundRemoved={!!processedImageSrc}
           />
         </TabsContent>
 
         <TabsContent value="filters" className="space-y-4">
-          <Card className="w-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-sm md:text-base">Image Filters</CardTitle>
-              <CardDescription className="text-xs md:text-sm">Adjust image appearance with filters</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 p-4 md:p-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="brightness" className="text-xs md:text-sm">Brightness ({imageFilters.brightness}%)</Label>
-                    <Button 
-                      variant="ghost"
-                      size="sm" 
-                      onClick={() => setImageFilters({ ...imageFilters, brightness: 100 })}
-                      disabled={imageFilters.brightness === 100}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="brightness"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.brightness]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="contrast" className="text-xs md:text-sm">Contrast ({imageFilters.contrast}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, contrast: 100 })}
-                      disabled={imageFilters.contrast === 100}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="contrast"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.contrast]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, contrast: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="saturation" className="text-xs md:text-sm">Saturation ({imageFilters.saturation}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, saturation: 100 })}
-                      disabled={imageFilters.saturation === 100}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="saturation"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={[imageFilters.saturation]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, saturation: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="blur" className="text-xs md:text-sm">Blur ({imageFilters.blur}px)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, blur: 0 })}
-                      disabled={imageFilters.blur === 0}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="blur"
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    value={[imageFilters.blur]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="hueRotate" className="text-xs md:text-sm">Hue Rotate ({imageFilters.hueRotate}°)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, hueRotate: 0 })}
-                      disabled={imageFilters.hueRotate === 0}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="hueRotate"
-                    min={0}
-                    max={360}
-                    step={1}
-                    value={[imageFilters.hueRotate]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="grayscale" className="text-xs md:text-sm">Grayscale ({imageFilters.grayscale}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, grayscale: 0 })}
-                      disabled={imageFilters.grayscale === 0}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="grayscale"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[imageFilters.grayscale]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sepia" className="text-xs md:text-sm">Sepia ({imageFilters.sepia}%)</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setImageFilters({ ...imageFilters, sepia: 0 })}
-                      disabled={imageFilters.sepia === 0}
-                      className="h-7 w-7 md:h-8 md:w-8 text-xs md:text-sm"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <Slider
-                    id="sepia"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[imageFilters.sepia]}
-                    onValueChange={(value) => setImageFilters({ ...imageFilters, sepia: value[0] })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs md:text-sm">Filter Presets</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("grayscale")}
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    Grayscale
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("sepia")}
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    Sepia
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("vivid")}
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    Vivid
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("cool")}
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    Cool
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => applyPresetFilter("warm")}
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    Warm
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={resetFilters} 
-                    className="flex-1 text-xs md:text-sm h-8 md:h-9"
-                  >
-                    <RotateCw className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                    Reset All
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end p-4 md:p-6">
-              <Button
-                onClick={handleCreateThumbnail}
-                disabled={!processedImageSrc || isCreatingThumbnail}
-                className="flex-1 text-xs md:text-sm h-8 md:h-9"
-              >
-                Apply Filters
-              </Button>
-            </CardFooter>
-          </Card>
+          <FiltersStep
+            imageFilters={imageFilters}
+            setImageFilters={setImageFilters}
+            resetFilters={resetFilters}
+            applyPresetFilter={applyPresetFilter}
+            handleCreateThumbnail={handleCreateThumbnail}
+            processedImageSrc={processedImageSrc}
+            isCreatingThumbnail={isCreatingThumbnail}
+            backgroundRemoved={!!processedImageSrc}
+          />
         </TabsContent>
 
         <TabsContent value="preview" className="space-y-4">
-          <Card className="w-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-sm md:text-base">Final Thumbnail</CardTitle>
-              <CardDescription className="text-xs md:text-sm">Preview your thumbnail with text and effects</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                <div className="relative w-full h-full">
-                  {thumbnailSrc ? (
-                    <img
-                      src={thumbnailSrc || "/placeholder.svg"}
-                      alt="Thumbnail"
-                      className="object-contain w-full h-full"
-                      style={{
-                        objectFit: "contain",
-                        width: "100%",
-                        height: "100%",
-                        position: "absolute",
-                        inset: 0,
-                        filter: `
-                          brightness(${imageFilters.brightness}%) 
-                          contrast(${imageFilters.contrast}%) 
-                          saturate(${imageFilters.saturation}%) 
-                          blur(${imageFilters.blur}px) 
-                          hue-rotate(${imageFilters.hueRotate}deg)
-                          grayscale(${imageFilters.grayscale}%)
-                          sepia(${imageFilters.sepia}%)
-                        `,
-                      }}
-                      crossOrigin="anonymous"
-                    />
-                  ) : isCreatingThumbnail ? (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mb-2 md:mb-4"></div>
-                      <p className="text-xs md:text-sm text-gray-500">Creating thumbnail...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                        {processedImageSrc
-                          ? "Click 'Apply' in the text editor to generate preview"
-                          : "Process image first"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end p-4 md:p-6">
-              <Button
-                onClick={handleSaveThumbnail}
-                disabled={!thumbnailSrc}
-                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs md:text-sm h-8 md:h-9"
-              >
-                <Download className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                Download Thumbnail
-              </Button>
-            </CardFooter>
-          </Card>
+          <FinalPreviewStep
+            finalThumbnail={thumbnailSrc}
+            imageInfo={imageInfo}
+            handleSaveFinalThumbnail={handleSaveThumbnail}
+            backgroundRemoved={!!processedImageSrc}
+          />
         </TabsContent>
       </Tabs>
     </div>

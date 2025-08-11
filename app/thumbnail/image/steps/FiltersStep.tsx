@@ -1,7 +1,16 @@
 import SharedFiltersSection from "@/features/thumbnail/common/FiltersSection";
 
 const FiltersSection = (props: any) => {
-  const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, processedImageSrc, isCreatingThumbnail, backgroundRemoved } = props;
+  const {
+    imageFilters,
+    setImageFilters,
+    resetFilters,
+    applyPresetFilter,
+    handleCreateThumbnail,
+    processedImageSrc,
+    isCreatingThumbnail,
+    backgroundRemoved,
+  } = props;
 
   return (
     <SharedFiltersSection

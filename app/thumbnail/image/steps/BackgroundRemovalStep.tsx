@@ -3,7 +3,16 @@ import { useEffect, useState, useCallback } from "react";
 import SharedBackgroundRemovalSection from "@/features/thumbnail/common/BackgroundRemovalSection";
 
 const BackgroundRemovedSection = (props: any) => {
-  const { imageInfo, imageLoaded, processedImageSrc, zoomLevel, isProcessing, onSave } = props;
+  const {
+    imageInfo,
+    imageLoaded,
+    processedImageSrc,
+    zoomLevel,
+    isProcessing,
+    onSave,
+    onRemoveBackground,
+    onCancel,
+  } = props;
   const [localProcessedImage, setLocalProcessedImage] = useState<string | null>(null);
   const [isImageProcessed, setIsImageProcessed] = useState(false);
 
@@ -21,6 +30,33 @@ const BackgroundRemovedSection = (props: any) => {
       onSave(localProcessedImage);
     }
   }, [localProcessedImage, onSave]);
+
+  const footer = (
+    <div className="w-full flex gap-4">
+      <button
+        onClick={onCancel}
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 px-4 py-2 has-[>svg]:px-3 flex-1"
+      >
+        Cancel
+      </button>
+      {localProcessedImage ? (
+        <button
+          onClick={handleSave}
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs h-9 px-4 py-2 has-[>svg]:px-3 flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
+        >
+          Save
+        </button>
+      ) : (
+        <button
+          onClick={onRemoveBackground}
+          disabled={!imageLoaded || isProcessing}
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs h-9 px-4 py-2 has-[>svg]:px-3 flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black"
+        >
+          Remove Background
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <SharedBackgroundRemovalSection
@@ -48,18 +84,7 @@ const BackgroundRemovedSection = (props: any) => {
           </div>
         )
       }
-      footer={
-        localProcessedImage ? (
-          <div className="w-full flex gap-4">
-            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 px-4 py-2 has-[>svg]:px-3 flex-1">
-              Cancel
-            </button>
-            <button onClick={handleSave} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs h-9 px-4 py-2 has-[>svg]:px-3 flex-1 bg-black hover:bg-black/90 text-white dark:bg-white dark:hover:bg-white/90 dark:text-black">
-              Save
-            </button>
-          </div>
-        ) : null
-      }
+      footer={footer}
     />
   );
 };

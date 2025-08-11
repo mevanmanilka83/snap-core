@@ -848,7 +848,8 @@ export default function ImageUploader({
       // Draw text elements that should be behind the image
       const backElements = textElements.filter((element) => element.visible && element.layerOrder === "back")
       const frontElements = textElements.filter((element) => element.visible && element.layerOrder === "front")
-      const scaleFactor = Math.min(canvas.width, canvas.height) / 1000
+      // Use scaling approach for MASSIVE, extremely prominent text
+      const scaleFactor = Math.min(canvas.width, canvas.height) / 250
 
       // Draw back elements
       backElements.forEach((element) => {
@@ -949,7 +950,8 @@ export default function ImageUploader({
       if (element.rotation !== 0) {
         ctx.rotate((element.rotation * Math.PI) / 180)
       }
-      const scaledFontSize = element.fontSize * (canvasWidth / 1280)
+      // Use provided scaleFactor from caller for consistent sizing
+      const scaledFontSize = Math.max(element.fontSize * scaleFactor * 0.8, element.fontSize * 0.3)
 
       let fontStyle = ""
       if (element.bold) fontStyle += "bold "

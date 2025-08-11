@@ -1,7 +1,14 @@
 import SharedTextEditorSection from "@/features/thumbnail/common/ThumbnailTextEditorSection";
 
 const TextEditorSection = (props: any) => {
-  const { onApply, isCreatingThumbnail, processedImageSrc, textElements, onTextElementsChange, backgroundRemoved } = props;
+  const {
+    onApply,
+    isCreatingThumbnail,
+    processedImageSrc,
+    textElements,
+    onTextElementsChange,
+    backgroundRemoved,
+  } = props;
 
   return (
     <SharedTextEditorSection

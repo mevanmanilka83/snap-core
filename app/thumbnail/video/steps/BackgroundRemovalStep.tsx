@@ -6,18 +6,18 @@ const BackgroundRemovedSection = ({
   processedImageSrc,
   zoomLevel,
   isProcessing,
-  processedFrame,
+  imageSrc,
   handleRemoveBackground
 }: any) => {
   return (
     <SharedBackgroundRemovalSection
       title="Background Removal"
       description="Remove the background to proceed with text editing"
-      stageSrc={processedImageSrc || processedFrame}
+      stageSrc={processedImageSrc || imageSrc}
       zoomLevel={zoomLevel}
       loading={isProcessing}
       emptyState={
-        !processedFrame ? (
+        !imageSrc ? (
           <div className="text-center py-8 text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
             <p className="text-sm">Please select a snapshot first</p>
@@ -27,7 +27,7 @@ const BackgroundRemovedSection = ({
       footer={
         <Button
           onClick={handleRemoveBackground}
-          disabled={!processedFrame || isProcessing}
+          disabled={!imageSrc || isProcessing}
           className="w-full h-9 sm:h-10"
         >
           {isProcessing ? (

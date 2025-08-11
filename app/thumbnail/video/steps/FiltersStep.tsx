@@ -1,7 +1,7 @@
 import SharedFiltersSection from "@/features/thumbnail/common/FiltersSection";
 
 const FiltersSection = (props: any) => {
-  const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, processedFrame, isCreatingThumbnail } = props;
+  const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, imageSrc, isCreatingThumbnail } = props;
 
   return (
     <SharedFiltersSection
@@ -12,7 +12,7 @@ const FiltersSection = (props: any) => {
       resetFilters={resetFilters}
       applyPresetFilter={applyPresetFilter}
       onApply={handleCreateThumbnail}
-      applyDisabled={!processedFrame || isCreatingThumbnail}
+      applyDisabled={!imageSrc || isCreatingThumbnail}
       applyLabel="Apply Filters"
       compactButtons
     />

@@ -130,8 +130,11 @@ export default function TextEditor({
       if (!activeTextElementId || !initialTextElements.find(e => e.id === activeTextElementId)) {
         setActiveTextElementId(initialTextElements[0].id)
       }
+    } else if (textElements.length === 0) {
+      // Add a default text element if none exist
+      handleAddTextElement()
     }
-  }, [initialTextElements, activeTextElementId])
+  }, [initialTextElements, activeTextElementId, textElements.length])
 
   // Memoize the text element change handler
   const handleTextElementChange = useCallback((id: string, updates: Partial<TextElement>) => {
@@ -179,7 +182,7 @@ export default function TextEditor({
       text: "New Text",
       x: 50,
       y: 50,
-      fontSize: 72,
+      fontSize: 120, // Bigger default font size
       color: "#ffffff",
       rotation: 0,
       fontFamily: "Arial",
@@ -187,12 +190,12 @@ export default function TextEditor({
       maxWidth: 80,
       curve: false,
       backgroundColor: "#000000",
-      backgroundEnabled: false,
+      backgroundEnabled: true, // Enable background by default for better visibility
       shadow: true,
       shadowBlur: 10,
       shadowColor: "#000000",
       textAlign: "center",
-      bold: false,
+      bold: true, // Make it bold by default
       italic: false,
       underline: false,
       letterSpacing: 0,
@@ -241,7 +244,8 @@ export default function TextEditor({
       if (element.rotation !== 0) {
         ctx.rotate((element.rotation * Math.PI) / 180)
       }
-      const scaledFontSize = element.fontSize * (canvasWidth / 1280)
+      // Use provided scaleFactor from caller for consistent sizing
+      const scaledFontSize = Math.max(element.fontSize * scaleFactor * 0.8, element.fontSize * 0.3)
 
       let fontStyle = ""
       if (element.bold) fontStyle += "bold "
@@ -329,9 +333,9 @@ export default function TextEditor({
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas dimensions
-    canvas.width = 320
-    canvas.height = 180
+    // Set canvas dimensions - larger for better text preview
+    canvas.width = 480
+    canvas.height = 270
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -363,15 +367,27 @@ export default function TextEditor({
       }
     }
 
-    // Draw text elements
+    // Draw text elements with proper scaling for preview
     const elements = textElements.filter(element => element.visible)
-    elements.forEach((element) => {
-      try {
-        renderTextOnCanvas(ctx, element, canvas.width, canvas.height, 1)
-      } catch (error) {
-        console.error("Error rendering text element:", error)
-      }
-    })
+    console.log("Preview rendering:", { textElementsCount: textElements.length, visibleElementsCount: elements.length, elements })
+    if (elements.length > 0) {
+      elements.forEach((element) => {
+        try {
+          // Use the same scaling approach as the final thumbnail for consistency
+          const scaleFactor = Math.min(canvas.width, canvas.height) / 250
+          console.log("Rendering element:", element.id, "with scaleFactor:", scaleFactor, "fontSize:", element.fontSize)
+          renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
+        } catch (error) {
+          console.error("Error rendering text element:", error)
+        }
+      })
+    } else {
+      // Show placeholder text if no text elements exist
+      ctx.fillStyle = "#666"
+      ctx.font = "16px Arial"
+      ctx.textAlign = "center"
+      ctx.fillText("No text elements to display", canvas.width / 2, canvas.height / 2)
+    }
   }, [processedImageSrc, textElements])
 
   // Add error handling for the preview image
@@ -591,10 +607,12 @@ export default function TextEditor({
               // Draw the background image
               ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
               
-              // Draw all text elements
+              // Draw all text elements with proper scaling for preview
               textElements.forEach(element => {
                 if (element.visible) {
-                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, 1)
+                  // Use the same scaling approach as the final thumbnail for consistency
+                  const scaleFactor = Math.min(canvas.width, canvas.height) / 250
+                  renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
                 }
               })
             } else {
@@ -635,7 +653,7 @@ export default function TextEditor({
     <div className="w-full space-y-4" data-text-editor>
       {processedImageSrc && (
         <div className="relative border rounded-md overflow-hidden w-full md:w-auto">
-          <canvas ref={canvasRef} className="w-full md:w-[160px] h-[90px]" />
+          <canvas ref={canvasRef} className="w-full md:w-[240px] h-[135px]" />
           <img
             ref={previewImageRef}
             src={processedImageSrc || "/placeholder.svg"}
