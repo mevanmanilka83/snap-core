@@ -1,44 +1,36 @@
 'use client';
-
 import React from 'react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
-
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   className?: string;
 }
-
 interface State {
   hasError: boolean;
   error?: Error;
 }
-
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
-
   static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
       error,
     };
   }
-
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to an error reporting service
+
     console.error('Error caught by boundary:', error, errorInfo);
   }
-
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-
       return (
         <div className={cn(
           "min-h-[400px] flex flex-col items-center justify-center p-4 text-center",
@@ -62,7 +54,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
         </div>
       );
     }
-
     return this.props.children;
   }
 } 

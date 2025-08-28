@@ -1,20 +1,16 @@
 'use client';
-
 import { cn } from "@/lib/utils";
-
 interface LoadingProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   fullScreen?: boolean;
 }
-
 export function Loading({ className, size = 'md', fullScreen = false }: LoadingProps) {
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-8 h-8',
     lg: 'w-12 h-12',
   };
-
   return (
     <div 
       className={cn(
@@ -36,7 +32,6 @@ export function Loading({ className, size = 'md', fullScreen = false }: LoadingP
     </div>
   );
 }
-
 export function LoadingPage() {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
@@ -44,7 +39,6 @@ export function LoadingPage() {
     </div>
   );
 }
-
 export function LoadingSection() {
   return (
     <div className="min-h-[200px] flex items-center justify-center">

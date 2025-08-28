@@ -1,5 +1,4 @@
 "use client";
-
 import { Clock, Layers, Palette, Type, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -13,9 +12,7 @@ import { TabsProvider, TabsBtn, TabsContent } from "@/components/tab";
 import SmoothScroll from "@/components/smooth-scroll";
 import { useMediaQuery } from "@/components/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
-
 import ImageUploadStep from "./image/steps/ImageUploadStep";
-
 interface VideoTabSelectionProps {
   activeTab: string;
   handleTabChange: (tab: string) => void;
@@ -83,7 +80,6 @@ interface VideoTabSelectionProps {
   handleSaveFinalThumbnail: () => void;
   processedImageSrc: string | null;
 }
-
 export default function VideoTabSelection({
   activeTab,
   handleTabChange,
@@ -91,7 +87,7 @@ export default function VideoTabSelection({
   selectedSnapshotIndex,
   canGoToTextAndPreview,
   videoInfo,
-  // Unused props omitted in tabs container
+  
   videoRef: _videoRef,
   videoLoaded,
   isPlaying: _isPlaying,
@@ -140,7 +136,6 @@ export default function VideoTabSelection({
   processedImageSrc,
 }: VideoTabSelectionProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-
   return (
     <TabsProvider defaultValue={activeTab} wobbly={!isMobile}>
       <div className="flex flex-col gap-4">
@@ -158,10 +153,8 @@ export default function VideoTabSelection({
             powerful tools help you create professional thumbnails with ease.
           </p>
         </div>
-
         <div className="relative mb-4">
         </div>
-
         <SmoothScroll className="w-full">
           <div className="flex items-center justify-center gap-1 sm:gap-2 p-[3px] min-w-fit">
             <TabsBtn
@@ -180,7 +173,6 @@ export default function VideoTabSelection({
             </TabsBtn>
           </div>
         </SmoothScroll>
-
         <TabsContent value="video" className="space-y-4 sm:space-y-6 mt-4">
           <div className="space-y-6">
             <VideoMainSection
@@ -198,7 +190,6 @@ export default function VideoTabSelection({
               setAutoSnapInterval={_setAutoSnapInterval}
               toggleAutoSnap={_toggleAutoSnap}
             />
-            
             <div className="border-t pt-6">
               <TabsProvider defaultValue="snapshots" wobbly={!isMobile}>
                 <div className="flex items-center justify-center gap-1 sm:gap-2 p-[3px] min-w-fit mb-4">
@@ -234,7 +225,6 @@ export default function VideoTabSelection({
                     <span className="truncate">Final Thumbnail</span>
                   </TabsBtn>
                 </div>
-
                 <TabsContent value="snapshots" className="space-y-4 sm:space-y-6 mt-4">
                   <SnapshotsStep
                     snapshots={snapshots}
@@ -250,7 +240,6 @@ export default function VideoTabSelection({
                     toast={toast}
                   />
                 </TabsContent>
-
                 <TabsContent value="edit" className="space-y-4 sm:space-y-6 mt-4">
                   <EditStep
                     processedFrame={processedFrame}
@@ -285,7 +274,6 @@ export default function VideoTabSelection({
                     setCanGoToTextAndPreview={setCanGoToTextAndPreview}
                   />
                 </TabsContent>
-
                 <TabsContent value="text" className="space-y-4">
                   <TextEditorStep
                     isCreatingThumbnail={isCreatingThumbnail}
@@ -295,7 +283,6 @@ export default function VideoTabSelection({
                     handleCreateThumbnail={handleCreateThumbnail}
                   />
                 </TabsContent>
-
                 <TabsContent value="preview" className="space-y-4 sm:space-y-6 mt-4">
                   <FinalPreviewStep
                     finalThumbnail={finalThumbnail}
@@ -309,7 +296,6 @@ export default function VideoTabSelection({
             </div>
           </div>
         </TabsContent>
-
         <TabsContent value="create-image-thumbnail" className="space-y-4 sm:space-y-6 mt-4">
             <ImageUploadStep />
         </TabsContent>

@@ -1,8 +1,6 @@
 "use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ImageFiltersPanel from "@/features/thumbnail/common/ImageFiltersPanel";
-
 interface SharedFiltersSectionProps {
   title?: string;
   ready?: boolean; // when false, show blocked message
@@ -16,7 +14,6 @@ interface SharedFiltersSectionProps {
   applyLabel?: string;
   compactButtons?: boolean;
 }
-
 export default function FiltersSection({
   title = "Image Filters",
   ready = true,

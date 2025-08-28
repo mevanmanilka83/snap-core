@@ -1,6 +1,5 @@
 import { Separator } from "@/components/ui/separator"
 import type { Metadata } from "next"
-
 export const metadata: Metadata = {
   title: "Privacy Policy | Snap Core",
   description: "Privacy policy for Snap Core - a browser-based thumbnail generator that processes everything locally in your browser.",
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
     follow: true,
   },
 }
-
 export default function PrivacyPolicy() {
   return (
     <article className="max-w-7xl mx-auto py-8 px-4 bg-background">
@@ -20,7 +18,6 @@ export default function PrivacyPolicy() {
           At Snap Core, we prioritize your privacy. This Privacy Policy explains how we handle your information when you use our browser-based thumbnail generator for creating and customizing video and image thumbnails.
         </p>
       </header>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section>
           <h2 className="text-xl font-semibold mb-4">Information Collection & Processing</h2>
@@ -39,7 +36,6 @@ export default function PrivacyPolicy() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">How We Use Your Information</h2>
           <div className="space-y-4">
@@ -53,13 +49,11 @@ export default function PrivacyPolicy() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">Third Parties</h2>
           <p className="mb-4 text-base">
             We do not share your videos, images, or text content with any third parties. Any analytics services we use cannot access your thumbnail content or text overlays.
           </p>
-
           <h2 className="text-xl font-semibold mb-4">Your Rights & Control</h2>
           <div className="space-y-4">
             <div>
@@ -72,20 +66,17 @@ export default function PrivacyPolicy() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">Security</h2>
           <p className="mb-6 text-base">
             We use standard security practices to protect any anonymous usage data. For your safety, always use Snap Core on trusted devices and networks, especially when working with sensitive video content or text overlays.
           </p>
-
           <h2 className="text-xl font-semibold mb-4">Updates to This Policy</h2>
           <p className="mb-4 text-base">
             We may update this Privacy Policy from time to time. Significant changes will be posted on this page. Continued use of Snap Core means you accept any updates.
           </p>
         </section>
       </div>
-
       <footer className="mt-8 text-sm text-center">
         <p>Last updated May 15, 2024</p>
       </footer>

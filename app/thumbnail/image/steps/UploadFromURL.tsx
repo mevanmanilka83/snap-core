@@ -1,12 +1,10 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 interface UploadFromURLProps {
   onLoadUrl: (url: string) => void;
   isLoading?: boolean;
 }
-
 export default function UploadFromURL({ onLoadUrl, isLoading }: UploadFromURLProps) {
   return (
     <Card>

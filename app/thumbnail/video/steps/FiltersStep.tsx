@@ -1,8 +1,6 @@
 import SharedFiltersSection from "@/features/thumbnail/common/FiltersSection";
-
 const FiltersSection = (props: any) => {
   const { imageFilters, setImageFilters, resetFilters, applyPresetFilter, handleCreateThumbnail, imageSrc, isCreatingThumbnail } = props;
-
   return (
     <SharedFiltersSection
       title="Image Filters"
@@ -18,5 +16,4 @@ const FiltersSection = (props: any) => {
     />
   );
 };
-
 export default FiltersSection; 

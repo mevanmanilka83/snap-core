@@ -1,5 +1,4 @@
 import SharedTextEditorSection from "@/features/thumbnail/common/ThumbnailTextEditorSection";
-
 const TextEditorSection = (props: any) => {
   const {
     onApply,
@@ -9,7 +8,6 @@ const TextEditorSection = (props: any) => {
     onTextElementsChange,
     backgroundRemoved,
   } = props;
-
   return (
     <SharedTextEditorSection
       title="Text Editor"
@@ -24,5 +22,4 @@ const TextEditorSection = (props: any) => {
     />
   );
 };
-
 export default TextEditorSection; 

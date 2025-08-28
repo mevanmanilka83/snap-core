@@ -1,7 +1,5 @@
 "use client"
-
 import ThumbnailPreviewCard from "@/features/thumbnail/common/ThumbnailPreviewCard";
-
 interface SharedFinalPreviewSectionProps {
   title?: string;
   descriptionWhenReady?: string;
@@ -12,7 +10,6 @@ interface SharedFinalPreviewSectionProps {
   onDownload: () => void;
   downloadDisabled?: boolean;
 }
-
 export default function FinalPreviewSection({
   title = "Final Preview",
   descriptionWhenReady = "Preview your thumbnail with all effects applied",

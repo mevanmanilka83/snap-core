@@ -1,7 +1,6 @@
 import { Info, CheckCircle2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import SharedBackgroundRemovalSection from "@/features/thumbnail/common/BackgroundRemovalSection";
-
 const BackgroundRemovedSection = (props: any) => {
   const {
     imageInfo,
@@ -15,22 +14,17 @@ const BackgroundRemovedSection = (props: any) => {
   } = props;
   const [localProcessedImage, setLocalProcessedImage] = useState<string | null>(null);
   const [isImageProcessed, setIsImageProcessed] = useState(false);
-
-  // Maintain local state of processed image
   useEffect(() => {
     if (processedImageSrc) {
       setLocalProcessedImage(processedImageSrc);
       setIsImageProcessed(true);
     }
   }, [processedImageSrc]);
-
-  // Handle save
   const handleSave = useCallback(() => {
     if (localProcessedImage && onSave) {
       onSave(localProcessedImage);
     }
   }, [localProcessedImage, onSave]);
-
   const footer = (
     <div className="w-full flex gap-4">
       <button
@@ -57,7 +51,6 @@ const BackgroundRemovedSection = (props: any) => {
       )}
     </div>
   );
-
   return (
     <SharedBackgroundRemovalSection
       title="Background Removal"
@@ -88,5 +81,4 @@ const BackgroundRemovedSection = (props: any) => {
     />
   );
 };
-
 export default BackgroundRemovedSection; 

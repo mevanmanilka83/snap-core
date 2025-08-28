@@ -1,5 +1,4 @@
 "use client"
-
 import React from "react"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
@@ -9,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   UploadIcon,
- 
   Download,
   Type,
   RotateCw,
@@ -22,18 +20,15 @@ import {
   Maximize,
   Minimize,
 } from "lucide-react"
-
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
-
 interface ImageInfo {
   width: number
   height: number
   type: string
   size: number
 }
-
 interface TextElement {
   id: string
   text: string
@@ -74,7 +69,6 @@ interface TextElement {
   visible?: boolean
   layerOrder?: "back" | "front"
 }
-
 interface ImageFilter {
   brightness: number
   contrast: number
@@ -84,14 +78,11 @@ interface ImageFilter {
   grayscale: number
   sepia: number
 }
-
 interface ImageUploaderProps {
   maxFileSize?: number // in bytes
   allowedFileTypes?: string[]
   initialFilters?: Partial<ImageFilter>
 }
-
-// Add error boundary component
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
@@ -100,15 +91,12 @@ class ErrorBoundary extends React.Component<
     super(props)
     this.state = { hasError: false, error: null }
   }
-
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Error caught by boundary:", error, errorInfo)
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -126,11 +114,9 @@ class ErrorBoundary extends React.Component<
         </div>
       )
     }
-
     return this.props.children
   }
 }
-
 export default function ImageUploader({
   maxFileSize = 10 * 1024 * 1024, // 10MB default
   allowedFileTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -160,15 +146,12 @@ export default function ImageUploader({
     grayscale: initialFilters?.grayscale ?? 0,
     sepia: initialFilters?.sepia ?? 0,
   })
-
   const hiddenImageRef = useRef<HTMLImageElement>(null)
   const previewUrl = useRef<string | null>(null)
   const processedUrl = useRef<string | null>(null)
   const thumbnailUrl = useRef<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pendingThumbnailUpdate = useRef<NodeJS.Timeout | null>(null)
-
-  // Remove unused defaultTextElement since it's only used once in the initial state
   const [textElements, setTextElements] = useState<TextElement[]>([{
     id: "default-text",
     text: "TTV",
@@ -196,40 +179,29 @@ export default function ImageUploader({
     visible: true,
     layerOrder: "back",
   }])
-
   useEffect(() => {
-    // Clean up blob URLs
     const cleanup = () => {
       [previewUrl, processedUrl, thumbnailUrl].forEach(url => {
         if (url.current?.startsWith("blob:")) {
           URL.revokeObjectURL(url.current)
         }
       })
-      
-      // Clear pending updates
       if (pendingThumbnailUpdate.current) {
         clearTimeout(pendingThumbnailUpdate.current)
       }
     }
-
-    // Add event listener for beforeunload
     window.addEventListener("beforeunload", cleanup)
-
-    // Add event listener for visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         cleanup()
       }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)
-
-    // Add event listener for error handling
     const handleError = (event: ErrorEvent) => {
       console.error("Global error caught:", event.error)
       toast.error("An unexpected error occurred")
     }
     window.addEventListener("error", handleError)
-
     return () => {
       cleanup()
       window.removeEventListener("beforeunload", cleanup)
@@ -237,8 +209,6 @@ export default function ImageUploader({
       window.removeEventListener("error", handleError)
     }
   }, [])
-
-  // Apply filters to the image
   const applyFilters = (ctx: CanvasRenderingContext2D) => {
     try {
       const filters = Object.entries(imageFilters)
@@ -260,7 +230,6 @@ export default function ImageUploader({
           }
         })
         .filter(Boolean)
-
       ctx.filter = filters.length > 0 ? filters.join(" ") : "none"
     } catch (error) {
       console.error("Error applying filters:", error)
@@ -268,8 +237,6 @@ export default function ImageUploader({
       ctx.filter = "none"
     }
   }
-
-  // Reset filters to default values
   const resetFilters = () => {
     setImageFilters({
       brightness: 100,
@@ -282,8 +249,6 @@ export default function ImageUploader({
     })
     toast.success("Image filters reset to default")
   }
-
-  // Apply a preset filter
   const applyPresetFilter = (preset: string) => {
     const presets = {
       grayscale: { grayscale: 100, saturation: 0 },
@@ -292,7 +257,6 @@ export default function ImageUploader({
       cool: { hueRotate: 180, saturation: 90 },
       warm: { hueRotate: 30, saturation: 120, brightness: 105 },
     }
-
     if (preset in presets) {
       setImageFilters(prev => ({ ...prev, ...presets[preset as keyof typeof presets] }))
       toast.success(`Applied ${preset} filter`)
@@ -300,7 +264,6 @@ export default function ImageUploader({
       resetFilters()
     }
   }
-
   const handleImageLoad = (file: File) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -332,19 +295,15 @@ export default function ImageUploader({
     }
     reader.readAsDataURL(file)
   }
-
   const handleUrlLoad = async (url: string) => {
     try {
       const img = new Image()
       img.crossOrigin = "anonymous"  // Add CORS attribute
-      
-      // Create a promise to handle the image loading
       await new Promise((resolve, reject) => {
         img.onload = resolve
         img.onerror = () => reject(new Error("Failed to load image from URL"))
         img.src = url
       })
-
       setImageInfo({
         width: img.width,
         height: img.height,
@@ -362,21 +321,16 @@ export default function ImageUploader({
       setHasAttemptedLoad(true)
     }
   }
-
   const handleImageLoaded = () => {
     const img = hiddenImageRef.current
     if (!img) return
-
     try {
-      // Check if the image is actually loaded and not broken
       if (!img.complete || img.naturalWidth === 0) {
         setError("Image failed to load properly")
         toast.error("Image failed to load properly")
         handleCancel()
         return
       }
-
-      // Check for CORS errors
       try {
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
@@ -394,8 +348,6 @@ export default function ImageUploader({
         }
         throw error
       }
-
-      // Validate image dimensions
       const maxDimension = 4096 // Maximum dimension in pixels
       if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
         setError(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
@@ -403,8 +355,6 @@ export default function ImageUploader({
         handleCancel()
         return
       }
-
-      // Validate minimum dimensions
       const minDimension = 100 // Minimum dimension in pixels
       if (img.naturalWidth < minDimension || img.naturalHeight < minDimension) {
         setError(`Image dimensions too small. Minimum dimension is ${minDimension}px`)
@@ -412,18 +362,14 @@ export default function ImageUploader({
         handleCancel()
         return
       }
-
       setImageInfo({
         width: img.naturalWidth,
         height: img.naturalHeight,
         type: img.src.split(".").pop()?.toUpperCase() || "UNKNOWN",
         size: 0,
       })
-
       setImageLoaded(true)
       setIsLoading(false)
-      
-      // Draw the image to canvas after loading
       const canvas = canvasRef.current
       if (canvas) {
         const ctx = canvas.getContext("2d")
@@ -446,9 +392,7 @@ export default function ImageUploader({
       handleCancel()
     }
   }
-
   const handleImageError = () => {
-    // Only show error if we've actually attempted to load an image
     if (hasAttemptedLoad && imageSrc) {
       setError("Failed to load image. Please check the URL or file and try again.")
       toast.error("Failed to load image. Please try again.")
@@ -459,7 +403,6 @@ export default function ImageUploader({
     setProcessedImageSrc("")
     setThumbnailSrc("")
   }
-
   const handleCancel = () => {
     if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl.current)
@@ -470,7 +413,6 @@ export default function ImageUploader({
     if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
       URL.revokeObjectURL(thumbnailUrl.current)
     }
-
     previewUrl.current = null
     processedUrl.current = null
     thumbnailUrl.current = null
@@ -484,18 +426,14 @@ export default function ImageUploader({
     setIsProcessing(false)
     setIsCreatingThumbnail(false)
     resetFilters()
-
     const img = hiddenImageRef.current
     if (img) {
       img.src = ""
     }
-
     const urlInput = document.getElementById("imageUrl") as HTMLInputElement
     if (urlInput) {
       urlInput.value = ""
     }
-    
-    // Clear canvas
     const canvas = canvasRef.current
     if (canvas) {
       const ctx = canvas.getContext("2d")
@@ -503,43 +441,29 @@ export default function ImageUploader({
         ctx.clearRect(0, 0, canvas.width, canvas.height)
       }
     }
-
-    // Clear undo/redo stacks
     setUndoStack([])
     setRedoStack([])
   }
-
   const handleRemoveBackground = async () => {
     if (!imageSrc) {
       toast.error("No image selected")
       return
     }
-
     setIsProcessing(true)
     setThumbnailSrc("") // Clear thumbnail
-
     try {
-      // Validate image source before processing
       const img = new Image()
       img.crossOrigin = "anonymous"
-      
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Image loading timed out"))
         }, 15000) // 15 second timeout
-
         img.onload = () => {
           clearTimeout(timeoutId)
-          // Verify the image loaded successfully
           if (!img.complete || img.naturalWidth === 0) {
             reject(new Error("Image failed to load properly"))
             return
           }
-          console.log("Image validation successful:", {
-            width: img.naturalWidth,
-            height: img.naturalHeight,
-            src: imageSrc.substring(0, 100) + "..." // Log first 100 chars of src
-          })
           resolve(true)
         }
         img.onerror = () => {
@@ -548,20 +472,14 @@ export default function ImageUploader({
         }
         img.src = imageSrc
       })
-
-      // Show toast once at the start
       toast.info("Removing background...", {
         duration: 2000,
         id: "removing-background"
       });
-
-      // Save current processed image to undo stack if it exists
       if (processedImageSrc) {
         setUndoStack((prev) => [...prev, processedImageSrc])
         setRedoStack([]) // Clear redo stack
       }
-
-      // Create a new worker with proper error handling
       let worker: Worker | null = null;
       try {
         worker = new Worker(new URL('./workers/background-removal.worker.ts', import.meta.url), {
@@ -571,15 +489,11 @@ export default function ImageUploader({
         console.error("Failed to create worker:", error);
         throw new Error("Failed to initialize background removal process");
       }
-
-      // Set up worker message handling with debounced progress updates
       let lastProgressUpdate = 0;
       worker.onmessage = (event) => {
         const { type, data } = event.data
-
         switch (type) {
           case 'progress':
-            // Debounce progress updates to reduce re-renders
             const now = Date.now();
             if (now - lastProgressUpdate > 200) { // Only update every 200ms for better performance
               setIsProcessing(true)
@@ -588,23 +502,16 @@ export default function ImageUploader({
             break
           case 'complete':
             if (data) {
-              // Validate the blob before creating URL
               if (!(data instanceof Blob)) {
                 throw new Error("Invalid image data received from worker")
               }
-              
-              // Verify the blob is not empty
               if (data.size === 0) {
                 throw new Error("Received empty image data from worker")
               }
-
-              // Verify the blob is a valid image
               if (!data.type.startsWith('image/')) {
                 throw new Error("Invalid image format received from worker")
               }
-              
               const url = URL.createObjectURL(data)
-              // Revoke old blob URL if it exists
               if (processedUrl.current && processedUrl.current.startsWith("blob:")) {
                 URL.revokeObjectURL(processedUrl.current)
               }
@@ -629,8 +536,6 @@ export default function ImageUploader({
             break
         }
       }
-
-      // Handle worker errors
       worker.onerror = (error) => {
         console.error("Worker error:", error)
         toast.error("Failed to remove background. Please try again.", {
@@ -640,8 +545,6 @@ export default function ImageUploader({
         worker?.terminate()
         setIsProcessing(false)
       }
-
-      // Start the background removal process
       worker.postMessage({ imageSrc })
     } catch (error) {
       console.error("Error removing background:", error)
@@ -652,76 +555,48 @@ export default function ImageUploader({
       setIsProcessing(false)
     }
   }
-
   const handleUndo = () => {
     if (undoStack.length === 0) {
       toast.info("Nothing to undo")
       return
     }
-
-    // Save current state to redo stack
     setRedoStack((prev) => [...prev, processedImageSrc])
-
-    // Get the last state from undo stack
     const lastState = undoStack[undoStack.length - 1]
     setProcessedImageSrc(lastState)
-
-    // Remove the last state from undo stack
     setUndoStack((prev) => prev.slice(0, -1))
-
     toast.info("Undo successful")
   }
-
   const handleRedo = () => {
     if (redoStack.length === 0) {
       toast.info("Nothing to redo")
       return
     }
-
-    // Save current state to undo stack
     setUndoStack((prev) => [...prev, processedImageSrc])
-
-    // Get the last state from redo stack
     const lastState = redoStack[redoStack.length - 1]
     setProcessedImageSrc(lastState)
-
-    // Remove the last state from redo stack
     setRedoStack((prev) => prev.slice(0, -1))
-
     toast.info("Redo successful")
   }
-
   const handleCreateThumbnail = async () => {
     if (!processedImageSrc) {
       toast.error("Please process the image first")
       return
     }
-
-    // Prevent multiple simultaneous thumbnail creation attempts
     if (isCreatingThumbnail) {
       return
     }
-
     setIsCreatingThumbnail(true)
-    
     try {
-      // Create a new image for the background
       const bgImg = new window.Image()
       bgImg.crossOrigin = "anonymous"
-      
-      // Create the foreground image with transparent background
       const fgImg = new window.Image()
       fgImg.crossOrigin = "anonymous"
-
-      // Load background image (original image)
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Background image loading timed out"))
         }, 15000) // 15 second timeout
-
         bgImg.onload = () => {
           clearTimeout(timeoutId)
-          // Verify the image loaded successfully
           if (!bgImg.complete || bgImg.naturalWidth === 0) {
             reject(new Error("Background image failed to load properly"))
             return
@@ -734,75 +609,42 @@ export default function ImageUploader({
         }
         bgImg.src = imageSrc // Use original image as background
       })
-
-      // Load foreground image (processed image with removed background)
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Foreground image loading timed out"))
         }, 15000) // 15 second timeout
-
-        // Log the processed image source for debugging
-        console.log("Processing foreground image:", {
-          sourceType: processedImageSrc.substring(0, 50) + "...",
-          length: processedImageSrc.length
-        })
-
         fgImg.onload = () => {
           clearTimeout(timeoutId)
-          // Verify the image loaded successfully
           if (!fgImg.complete || fgImg.naturalWidth === 0) {
             reject(new Error("Foreground image failed to load properly"))
             return
           }
-
-          // Log successful image load
-          console.log("Foreground image loaded successfully:", {
-            width: fgImg.naturalWidth,
-            height: fgImg.naturalHeight,
-            complete: fgImg.complete
-          })
-
           resolve(true)
         }
-
         fgImg.onerror = () => {
           clearTimeout(timeoutId)
-          
-          // Check if the processed image source is valid
           if (!processedImageSrc || processedImageSrc === '') {
             reject(new Error("No processed image available. Please remove background first."))
             return
           }
-
-          // Check if the image source is corrupted
           if (processedImageSrc.startsWith('data:image/') && !processedImageSrc.includes('base64,')) {
             reject(new Error("Invalid image data. Please try removing the background again."))
             return
           }
-
-          // Check if the image source is a valid URL
           try {
             new URL(processedImageSrc)
           } catch {
             reject(new Error("Invalid image URL. Please try removing the background again."))
             return
           }
-
-          // If we get here, it's a general loading error
           reject(new Error("Failed to load foreground image. Please try removing the background again."))
         }
-
-        // Ensure the processed image source is valid before loading
         if (!processedImageSrc || processedImageSrc === '') {
           reject(new Error("No processed image available. Please remove background first."))
           return
         }
-
-        // Add error handling for the image source
         try {
-          // Check if the image source is a blob URL
           if (processedImageSrc.startsWith('blob:')) {
-            // Verify the blob URL is still valid
             fetch(processedImageSrc)
               .then(response => {
                 if (!response.ok) {
@@ -822,70 +664,43 @@ export default function ImageUploader({
           reject(new Error("Failed to process image. Please try again."))
         }
       })
-
       const canvas = canvasRef.current
       if (!canvas) {
         throw new Error("Canvas not found")
       }
-      
       const ctx = canvas.getContext("2d")
       if (!ctx) {
         throw new Error("Could not get canvas context")
       }
-
-      // Set canvas dimensions based on the original image size
       canvas.width = bgImg.width
       canvas.height = bgImg.height
-
-      // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Draw background image with filters
       applyFilters(ctx)
       ctx.drawImage(bgImg, 0, 0)
       ctx.filter = "none" // Reset filters for text
-
-      // Draw text elements that should be behind the image
       const backElements = textElements.filter((element) => element.visible && element.layerOrder === "back")
       const frontElements = textElements.filter((element) => element.visible && element.layerOrder === "front")
-      // Use scaling approach for MASSIVE, extremely prominent text
       const scaleFactor = Math.min(canvas.width, canvas.height) / 250
-
-      // Draw back elements
       backElements.forEach((element) => {
         renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
       })
-
-      // Draw foreground image with transparency
       ctx.globalCompositeOperation = 'source-over'
       ctx.drawImage(fgImg, 0, 0)
-
-      // Draw front elements
       frontElements.forEach((element) => {
         renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
       })
-      
-      // Convert canvas to data URL and update thumbnail
       const finalImageUrl = canvas.toDataURL("image/png")
-      
-      // Revoke old thumbnail URL if it exists
       if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(thumbnailUrl.current)
       }
-      
-      // Update the thumbnail
       thumbnailUrl.current = finalImageUrl
       setThumbnailSrc(finalImageUrl)
       toast.success("Thumbnail updated")
-
-      // Clean up images
       bgImg.src = ""
       fgImg.src = ""
     } catch (error) {
       console.error("Error creating thumbnail:", error)
       toast.error(error instanceof Error ? error.message : "Failed to create thumbnail")
-      
-      // Reset state on error
       setThumbnailSrc("")
       if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(thumbnailUrl.current)
@@ -895,12 +710,9 @@ export default function ImageUploader({
       setIsCreatingThumbnail(false)
     }
   }
-
-  // Calculate position based on the position property
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     let x = canvasWidth * (element.x / 100)
     let y = canvasHeight * (element.y / 100)
-    
     switch (element.position) {
       case "left":
         x = 20
@@ -931,11 +743,8 @@ export default function ImageUploader({
         y = canvasHeight - 20
         break
     }
-    
     return { x, y }
   }
-
-  // Function to render text on canvas
   const renderTextOnCanvas = (
     ctx: CanvasRenderingContext2D,
     element: TextElement,
@@ -950,19 +759,15 @@ export default function ImageUploader({
       if (element.rotation !== 0) {
         ctx.rotate((element.rotation * Math.PI) / 180)
       }
-      // Use provided scaleFactor from caller for consistent sizing
       const scaledFontSize = Math.max(element.fontSize * scaleFactor * 0.8, element.fontSize * 0.3)
-
       let fontStyle = ""
       if (element.bold) fontStyle += "bold "
       if (element.italic) fontStyle += "italic "
       fontStyle += `${scaledFontSize}px ${element.fontFamily}`
       ctx.font = fontStyle
-
       ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
       ctx.textBaseline = "middle"
       ctx.globalAlpha = (element.opacity || 100) / 100
-
       if (element.backgroundEnabled && element.backgroundColor) {
         const metrics = ctx.measureText(element.text)
         const textHeight = scaledFontSize * 1.2
@@ -980,7 +785,6 @@ export default function ImageUploader({
         ctx.fillRect(rectX, rectY, rectWidth, textHeight)
         ctx.restore()
       }
-
       if (element.shadow) {
         ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
         ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
@@ -992,9 +796,7 @@ export default function ImageUploader({
         ctx.shadowOffsetX = 0
         ctx.shadowOffsetY = 0
       }
-
       ctx.fillStyle = element.color
-
       if (element.curve) {
         const text = element.text
         const radius = Math.max(80, scaledFontSize * 2)
@@ -1011,7 +813,6 @@ export default function ImageUploader({
       } else {
         const maxWidth = ((element.maxWidth ?? 80) / 100) * canvasWidth
         ctx.fillText(element.text, 0, 0, maxWidth)
-
         if (element.underline) {
           const textMetrics = ctx.measureText(element.text)
           const underlineY = element.fontSize * 0.15 * scaleFactor
@@ -1022,7 +823,6 @@ export default function ImageUploader({
           ctx.stroke()
         }
       }
-
       ctx.restore()
     } catch (error) {
       console.error("Error rendering text on canvas:", error)
@@ -1030,74 +830,60 @@ export default function ImageUploader({
       ctx.restore()
     }
   }
-
   const handleSaveBackgroundRemoved = () => {
     try {
       if (!processedImageSrc) return
-      
       const link = document.createElement("a")
       link.href = processedImageSrc
       link.download = `background-removed-${Date.now()}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
       toast.success("Image saved successfully")
     } catch (error) {
       console.error("Error saving background removed image:", error)
       toast.error("Failed to save image")
     }
   }
-
   const handleSaveThumbnail = () => {
     try {
       if (!thumbnailSrc) {
         toast.error("No thumbnail to save")
         return
       }
-      
       const link = document.createElement("a")
       link.href = thumbnailSrc
       link.download = `thumbnail-${Date.now()}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
       toast.success("Thumbnail saved successfully")
     } catch (error) {
       console.error("Error saving thumbnail:", error)
       toast.error("Failed to save thumbnail")
     }
   }
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     e.currentTarget.classList.remove("border-primary", "bg-primary/5")
-    
     try {
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0]
         if (file.type.startsWith("image/")) {
-          // Validate file size
           if (file.size > maxFileSize) {
             toast.error(`File size exceeds ${maxFileSize / (1024 * 1024)}MB limit`)
             return
           }
-          // Validate file type
           if (!allowedFileTypes.includes(file.type)) {
             toast.error(`File type not supported. Allowed types: ${allowedFileTypes.join(", ")}`)
             return
           }
-          // Create a synthetic change event
           const fileInput = document.getElementById("file-upload") as HTMLInputElement
           if (fileInput) {
-            // Create a DataTransfer object to set files
             const dataTransfer = new DataTransfer()
             dataTransfer.items.add(file)
             fileInput.files = dataTransfer.files
-            
-            // Trigger the change handler
             const event = new Event("change", { bubbles: true })
             fileInput.dispatchEvent(event)
           }
@@ -1110,21 +896,17 @@ export default function ImageUploader({
           setError("")
           setHasAttemptedLoad(true)
           setIsLoading(true)
-
           if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
             URL.revokeObjectURL(previewUrl.current)
           }
-
           previewUrl.current = data
           setImageSrc(data)
           setProcessedImageSrc("") // Clear processed image
           setThumbnailSrc("") // Clear thumbnail
-
           const img = hiddenImageRef.current
           if (img) {
             img.src = data
           }
-
           setImageLoaded(false)
         } else {
           toast.error("Please drop an image file or URL")
@@ -1138,20 +920,16 @@ export default function ImageUploader({
       handleCancel()
     }
   }
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     e.currentTarget.classList.add("border-primary", "bg-primary/5")
   }
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     e.currentTarget.classList.remove("border-primary", "bg-primary/5")
   }
-
-  // Add cleanup for drag and drop events
   useEffect(() => {
     const handleDragEnd = () => {
       const dropZone = document.querySelector(".drop-zone")
@@ -1159,15 +937,12 @@ export default function ImageUploader({
         dropZone.classList.remove("border-primary")
       }
     }
-
     document.addEventListener("dragend", handleDragEnd)
     return () => {
       document.removeEventListener("dragend", handleDragEnd)
     }
   }, [])
-
   const handleTabChange = (newTab: string) => {
-    // For edit tab, require an image to be loaded
     if (newTab === "edit") {
       if (!imageLoaded) {
         toast.error("Please upload an image first");
@@ -1176,22 +951,17 @@ export default function ImageUploader({
       setActiveTab(newTab);
       return;
     }
-
-    // Strictly prevent moving to text tab without background removal
     if (newTab === "text") {
-      // Check if we're coming from edit tab
       if (activeTab === "edit") {
         if (!processedImageSrc) {
           toast.error("You must remove the background before proceeding to text editing");
           return;
         }
-        // Double check that the background was actually removed
         if (!processedImageSrc.includes('data:image/png;base64')) {
           toast.error("Background removal is required before proceeding to text editing");
           return;
         }
       } else {
-        // For other tabs, still require background removal
         if (!processedImageSrc) {
           toast.error("Please remove background before adding text");
           return;
@@ -1200,8 +970,6 @@ export default function ImageUploader({
       setActiveTab(newTab);
       return;
     }
-
-    // For preview tab, require background removal
     if (newTab === "preview") {
       if (!processedImageSrc) {
         toast.error("Please remove background first to see the preview");
@@ -1210,29 +978,21 @@ export default function ImageUploader({
       setActiveTab(newTab);
       return;
     }
-
     setActiveTab(newTab);
   };
-
-  // Add useEffect to handle text editor state preservation
   useEffect(() => {
     if (activeTab === "text" && processedImageSrc) {
-      // Force a re-render of the text editor when switching to text tab
       const textEditorElement = document.querySelector('[data-text-editor]');
       if (textEditorElement) {
         textEditorElement.dispatchEvent(new Event('resize'));
       }
     }
   }, [activeTab, processedImageSrc]);
-
-  // Add this after the hiddenImageRef declaration
   useEffect(() => {
     if (hiddenImageRef.current) {
       hiddenImageRef.current.crossOrigin = "anonymous"
     }
   }, [])
-
-  // Wrap the main component with error boundary
   return (
     <ErrorBoundary>
       <div className="space-y-6 w-full">
@@ -1246,7 +1006,6 @@ export default function ImageUploader({
           className="hidden"
           crossOrigin="anonymous"
         />
-
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-auto p-1">
             <TabsTrigger value="file" className="text-xs sm:text-sm py-2 px-1 sm:px-2">
@@ -1256,7 +1015,6 @@ export default function ImageUploader({
               URL
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="file" className="space-y-4">
             <Card>
               <CardHeader className="p-4 md:p-6">
@@ -1306,7 +1064,6 @@ export default function ImageUploader({
               </CardContent>
             </Card>
           </TabsContent>
-          
           <TabsContent value="url" className="space-y-4">
             <Card>
               <CardHeader className="p-4 md:p-6">
@@ -1336,7 +1093,6 @@ export default function ImageUploader({
             </Card>
           </TabsContent>
         </Tabs>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="w-full">
             <CardHeader className="pb-2">
@@ -1347,7 +1103,6 @@ export default function ImageUploader({
               {imageInfo && imageLoaded && imageInfo.size > 0 && (
                 <p className="text-xs text-muted-foreground">File size: {(imageInfo.size / 1024).toFixed(2)} KB</p>
               )}
-
               <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
                 {imageSrc && imageLoaded ? (
                   <div className="relative w-full h-full">
@@ -1391,7 +1146,6 @@ export default function ImageUploader({
                   </>
                 )}
               </div>
-
               {imageLoaded && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
@@ -1459,7 +1213,6 @@ export default function ImageUploader({
               </Button>
             </CardFooter>
           </Card>
-
           <Card className="w-full">
             <CardHeader>
               <CardTitle className="text-base">Background Removed</CardTitle>
@@ -1502,7 +1255,6 @@ export default function ImageUploader({
                   )}
                 </div>
               </div>
-
               {processedImageSrc && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-2">
@@ -1533,7 +1285,6 @@ export default function ImageUploader({
             </CardFooter>
           </Card>
         </div>
-
         <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
           <TabsList className="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-3">
             <TabsTrigger value="text" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
@@ -1552,7 +1303,6 @@ export default function ImageUploader({
               <span className="xs:hidden">Final Thumbnail</span>
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="text" className="space-y-4">
             <Card className="w-full">
               <CardHeader className="p-4 md:p-6">
@@ -1574,7 +1324,6 @@ export default function ImageUploader({
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="filters" className="space-y-4">
             <Card className="w-full">
               <CardHeader className="p-4 md:p-6">
@@ -1604,7 +1353,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, brightness: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="contrast">Contrast ({imageFilters.contrast}%)</Label>
@@ -1626,7 +1374,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, contrast: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="saturation">Saturation ({imageFilters.saturation}%)</Label>
@@ -1648,7 +1395,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, saturation: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="blur">Blur ({imageFilters.blur}px)</Label>
@@ -1670,7 +1416,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, blur: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="hueRotate">Hue Rotate ({imageFilters.hueRotate}°)</Label>
@@ -1692,7 +1437,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, hueRotate: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="grayscale">Grayscale ({imageFilters.grayscale}%)</Label>
@@ -1714,7 +1458,6 @@ export default function ImageUploader({
                       onValueChange={(value) => setImageFilters({ ...imageFilters, grayscale: value[0] })}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="sepia">Sepia ({imageFilters.sepia}%)</Label>
@@ -1737,7 +1480,6 @@ export default function ImageUploader({
                     />
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <Label>Filter Presets</Label>
                   <div className="grid grid-cols-3 gap-2">
@@ -1794,7 +1536,6 @@ export default function ImageUploader({
               </CardFooter>
             </Card>
           </TabsContent>
-
           <TabsContent value="preview" className="space-y-4">
             <Card className="w-full">
               <CardHeader className="p-4 md:p-6">
@@ -1863,4 +1604,3 @@ export default function ImageUploader({
     </ErrorBoundary>
   )
 }
-

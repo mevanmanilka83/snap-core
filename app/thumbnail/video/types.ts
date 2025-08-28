@@ -4,7 +4,6 @@ export interface VideoInfo {
   duration: number
   currentTime: number
 }
-
 export interface ImageFilter {
   brightness: number
   contrast: number
@@ -14,7 +13,6 @@ export interface ImageFilter {
   grayscale: number
   sepia: number
 }
-
 export interface TextElement {
   id: string
   text: string

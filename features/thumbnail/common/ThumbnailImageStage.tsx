@@ -1,9 +1,7 @@
 "use client"
-
 import React from "react"
 import { cn } from "@/lib/utils"
 import { ImageIcon } from "lucide-react"
-
 interface ImageStageProps {
   src?: string | null
   alt: string
@@ -14,7 +12,6 @@ interface ImageStageProps {
   loading?: boolean
   overlay?: React.ReactNode
 }
-
 export default function ImageStage({
   src,
   alt,

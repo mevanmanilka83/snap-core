@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Layers, Download, Trash2, AlertCircle, RefreshCw } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-
 const SnapshotsSection = ({
   snapshots,
   selectedSnapshotIndex,
@@ -19,31 +18,24 @@ const SnapshotsSection = ({
   const [failedSnapshots, setFailedSnapshots] = useState<Set<number>>(new Set());
   const [retryCount, setRetryCount] = useState<Record<number, number>>({});
   const [loadingSnapshots, setLoadingSnapshots] = useState<Set<number>>(new Set());
-
-  // Reset states when snapshots change
   useEffect(() => {
     setFailedSnapshots(new Set());
     setRetryCount({});
     setLoadingSnapshots(new Set());
   }, [snapshots]);
-
   const verifyImage = useCallback(async (src: string): Promise<boolean> => {
     return new Promise((resolve) => {
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
-      
       img.onload = () => {
-        // Create a canvas to verify the image
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        
         if (!ctx) {
           resolve(false);
           return;
         }
-
         try {
           ctx.drawImage(img, 0, 0);
           ctx.getImageData(0, 0, 1, 1);
@@ -52,19 +44,15 @@ const SnapshotsSection = ({
           resolve(false);
         }
       };
-
       img.onerror = () => {
         resolve(false);
       };
-
       img.src = src;
     });
   }, []);
-
   const handleImageLoad = async (index: number, e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
     const isValid = await verifyImage(img.src);
-    
     if (isValid) {
       setFailedSnapshots(prev => {
         const newSet = new Set(prev);
@@ -80,22 +68,17 @@ const SnapshotsSection = ({
       handleImageError(index, e);
     }
   };
-
   const handleImageError = async (index: number, e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.error(`Error loading snapshot ${index}:`, e);
     
-    // Increment retry count for this snapshot
     const currentRetries = retryCount[index] || 0;
     setRetryCount(prev => ({ ...prev, [index]: currentRetries + 1 }));
-
-    // If we haven't retried too many times, try reloading
+    
     if (currentRetries < 3) {
       const img = e.currentTarget;
       const src = img.src;
-      
       setLoadingSnapshots(prev => new Set([...prev, index]));
       
-      // Clear the src and set it again to trigger a reload
       img.src = '';
       setTimeout(async () => {
         try {
@@ -109,8 +92,7 @@ const SnapshotsSection = ({
         } catch (error) {
           handleImageError(index, e);
         }
-      }, 1000 * (currentRetries + 1)); // Exponential backoff
-      
+      }, 1000 * (currentRetries + 1)); 
       toast.error(`Retrying to load snapshot ${index + 1}...`);
     } else {
       setFailedSnapshots(prev => new Set([...prev, index]));
@@ -123,7 +105,6 @@ const SnapshotsSection = ({
       toast.error(`Failed to load snapshot ${index + 1} after multiple attempts`);
     }
   };
-
   const handleRetryLoad = async (index: number) => {
     setRetryCount(prev => ({ ...prev, [index]: 0 }));
     setFailedSnapshots(prev => {
@@ -132,7 +113,6 @@ const SnapshotsSection = ({
       return newSet;
     });
     setLoadingSnapshots(prev => new Set([...prev, index]));
-    
     const snapshot = snapshots[index];
     if (snapshot) {
       const isValid = await verifyImage(snapshot);
@@ -147,7 +127,6 @@ const SnapshotsSection = ({
       }
     }
   };
-
   return (
   <Card>
     <CardHeader className="pb-2">
@@ -269,5 +248,4 @@ const SnapshotsSection = ({
   </Card>
 );
 };
-
 export default SnapshotsSection; 

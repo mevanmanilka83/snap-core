@@ -1,9 +1,7 @@
 "use client";
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import ThumbnailImageStage from "@/features/thumbnail/common/ThumbnailImageStage";
 import { ReactNode } from "react";
-
 interface SharedBackgroundRemovalSectionProps {
   title?: string;
   description?: string;
@@ -13,7 +11,6 @@ interface SharedBackgroundRemovalSectionProps {
   emptyState?: ReactNode;
   footer?: ReactNode;
 }
-
 export default function BackgroundRemovalSection({
   title = "Background Removal",
   description = "Remove the background to proceed with text editing",

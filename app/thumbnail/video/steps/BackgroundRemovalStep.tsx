@@ -1,7 +1,6 @@
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SharedBackgroundRemovalSection from "@/features/thumbnail/common/BackgroundRemovalSection";
-
 const BackgroundRemovedSection = ({
   processedImageSrc,
   zoomLevel,
@@ -43,5 +42,4 @@ const BackgroundRemovedSection = ({
     />
   );
 };
-
 export default BackgroundRemovedSection; 

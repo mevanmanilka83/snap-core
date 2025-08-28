@@ -1,7 +1,5 @@
 "use client";
-
 import React from "react";
-
 interface SimpleVideoTabsProps {
   VideoSection: React.ComponentType<any>;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -60,7 +58,6 @@ interface SimpleVideoTabsProps {
   handleSaveFinalThumbnail?: () => void;
   processedImageSrc?: string | null;
 }
-
 export default function SimpleVideoTabs({
   VideoSection,
   videoRef,

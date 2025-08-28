@@ -1,5 +1,4 @@
 import SharedFinalPreviewSection from "@/features/thumbnail/common/FinalPreviewSection";
-
 const FinalPreviewStep = ({
   finalThumbnail,
   videoInfo,
@@ -19,5 +18,4 @@ const FinalPreviewStep = ({
     />
   );
 };
-
 export default FinalPreviewStep; 

@@ -1,9 +1,7 @@
 import Link from "next/link"
 import { Github } from "lucide-react"
-
 export default function Footer() {
   const currentYear = new Date().getFullYear()
-
   return (
     <footer className="bg-background/80 border-t py-4 mt-4" role="contentinfo">
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">

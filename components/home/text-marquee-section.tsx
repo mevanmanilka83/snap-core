@@ -1,8 +1,6 @@
 'use client';
-
 import React from 'react';
 import ScrollBaseAnimation from '../text-marquee';
-
 export default function TextMarqueeSection() {
   return (
     <div className='h-[300px] grid place-content-center'>

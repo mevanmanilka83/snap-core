@@ -1,10 +1,8 @@
 "use client";
-
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react";
 import { ReactNode } from "react";
-
 interface ImagePreviewCardProps {
   title?: string;
   description?: string;
@@ -16,7 +14,6 @@ interface ImagePreviewCardProps {
   emptyContent?: ReactNode;
   footer?: ReactNode;
 }
-
 export default function ImagePreviewCard({
   title = "Image Preview",
   description,
@@ -32,7 +29,6 @@ export default function ImagePreviewCard({
   const handleZoomIn = () => onZoomChange(Math.min(200, zoom + 10));
   const handleZoomReset = () => onZoomChange(100);
   const handleZoomMin = () => onZoomChange(50);
-
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="pb-2 px-4 sm:px-6">

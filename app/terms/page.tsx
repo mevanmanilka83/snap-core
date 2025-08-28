@@ -1,6 +1,5 @@
 import { Separator } from "@/components/ui/separator"
 import type { Metadata } from "next"
-
 export const metadata: Metadata = {
   title: "Terms of Service | Snap Core",
   description: "Terms of service for Snap Core - a browser-based thumbnail generator that processes everything locally in your browser.",
@@ -9,19 +8,16 @@ export const metadata: Metadata = {
     follow: true,
   },
 }
-
 export default function Terms() {
   return (
     <article className="max-w-7xl mx-auto py-8 px-4 bg-background">
       <header>
         <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
         <Separator className="mb-6" />
-        
         <p className="mb-6 text-base">
           By using Snap Core's browser-based thumbnail generator, you agree to these terms. Please read them carefully.
         </p>
       </header>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section>
           <h2 className="text-xl font-semibold mb-4">Thumbnail Generation</h2>
@@ -31,7 +27,6 @@ export default function Terms() {
               <p className="text-base">Snap Core processes all videos, images, and text overlays entirely in your browser. Your content is never uploaded to our servers or shared with third parties. You maintain complete control over your thumbnails and their components at all times.</p>
             </div>
           </div>
-
           <h2 className="text-xl font-semibold mt-8 mb-4">Content & Rights</h2>
           <div className="space-y-4">
             <div>
@@ -44,7 +39,6 @@ export default function Terms() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">Features & Results</h2>
           <div className="space-y-4">
@@ -57,7 +51,6 @@ export default function Terms() {
               <p className="text-base">Text customization and overlay features are processed entirely in your browser. You are responsible for the content, styling, and placement of any text you add to your thumbnails.</p>
             </div>
           </div>
-
           <h2 className="text-xl font-semibold mt-8 mb-4">Data & Privacy</h2>
           <div className="space-y-4">
             <div>
@@ -70,7 +63,6 @@ export default function Terms() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">Limitations & Liability</h2>
           <div className="space-y-4">
@@ -84,7 +76,6 @@ export default function Terms() {
             </div>
           </div>
         </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4">Changes to Terms</h2>
           <p className="mb-4 text-base">
@@ -92,7 +83,6 @@ export default function Terms() {
           </p>
         </section>
       </div>
-
       <footer className="mt-8 text-sm text-center">
         <p>Last updated May 15, 2024</p>
       </footer>

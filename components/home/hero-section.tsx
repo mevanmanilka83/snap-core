@@ -1,9 +1,6 @@
 "use client"
-
 import { useCallback, memo } from "react"
-import { ChevronsRight, ArrowUpRight } from "lucide-react"
-
-
+import { ChevronsRight } from "lucide-react"
 const HeroSection = memo(function HeroSection() {
   const scrollToHowItWorks = useCallback(() => {
     const element = document.getElementById("how-it-works")
@@ -11,17 +8,14 @@ const HeroSection = memo(function HeroSection() {
       element.scrollIntoView({ behavior: "smooth", block: "start" })
     }
   }, [])
-
   const scrollToMainSection = useCallback(() => {
     const element = document.getElementById("transform-content")
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" })
     }
   }, [])
-
     return (
     <div className="min-h-[90vh] relative overflow-hidden rounded-3xl mb-8">
-      {/* Background Image */}
       <div 
         className="absolute inset-0 z-0 rounded-3xl"
         style={{
@@ -31,23 +25,16 @@ const HeroSection = memo(function HeroSection() {
           backgroundRepeat: 'no-repeat'
         }}
       />
-      
-      {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 z-0 bg-black/40 rounded-3xl" />
-      
-      {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center min-h-[90vh] px-4">
-          {/* Left Content */}
           <div className="lg:col-span-7 space-y-10">
-            {/* Main Heading */}
             <div className="space-y-8">
               <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight tracking-tight">
                 <span className="block text-green-400 font-instrument italic">Transform</span>
                 <span className="block font-black text-white font-inter">ANYTHING</span>
                 <span className="block text-green-400 font-instrument italic">Into Magic</span>
               </h1>
-
               <div className="max-w-2xl">
                 <p className="text-lg lg:text-xl text-white/80 leading-relaxed font-light font-inter">
                   Transform your content into eye-catching thumbnails that drive engagement. 
@@ -55,8 +42,6 @@ const HeroSection = memo(function HeroSection() {
                 </p>
               </div>
             </div>
-
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4 max-w-md sm:max-w-none">
               <button
                 onClick={scrollToMainSection}
@@ -97,7 +82,6 @@ const HeroSection = memo(function HeroSection() {
                   </div>
                 </div>
               </button>
-
               <button
                 onClick={scrollToHowItWorks}
                 aria-label="Learn more about how it works"
@@ -112,12 +96,9 @@ const HeroSection = memo(function HeroSection() {
               </button>
             </div>
           </div>
-
-
         </div>
       </div>
     </div>
   )
 })
-
 export default HeroSection

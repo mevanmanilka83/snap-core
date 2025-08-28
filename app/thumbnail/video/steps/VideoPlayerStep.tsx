@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VideoPlayer as ThumbnailVideoPlayer } from "@/features/thumbnail/video/ThumbnailVideoPlayer";
-
 interface VideoSectionProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   videoLoaded: boolean;
@@ -36,7 +35,6 @@ interface VideoSectionProps {
   setAutoSnapInterval: (interval: number | null) => void;
   toggleAutoSnap: (enabled: boolean) => void;
 }
-
 const VideoSection = ({
   videoRef,
   videoLoaded,
@@ -133,5 +131,4 @@ const VideoSection = ({
     </Card>
   </div>
 );
-
 export default VideoSection;

@@ -1,11 +1,7 @@
-// no-op import removed
-
 import { ImageIcon } from "lucide-react";
 import FiltersSection from "./FiltersStep";
 import BackgroundRemovedSection from "./BackgroundRemovalStep";
 import { ImagePreviewCard } from "@/features/thumbnail/common";
-
-
 const EditStep = ({
   zoomLevel,
   setZoomLevel,
@@ -25,19 +21,14 @@ const EditStep = ({
   onNext,
   setCanGoToTextAndPreview
 }: any) => {
-  // Wrap the original handleRemoveBackground to add automatic tab switching
   const handleRemoveBackground = async () => {
     await originalHandleRemoveBackground();
-    // After successful background removal, automatically switch to text tab
     if (processedImageSrc) {
       setCanGoToTextAndPreview(true);
       onNext();
     }
   };
-
-  // Get the selected snapshot
   const selectedSnapshot = selectedSnapshotIndex >= 0 && snapshots[selectedSnapshotIndex] ? snapshots[selectedSnapshotIndex] : null;
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       <ImagePreviewCard
@@ -85,5 +76,4 @@ const EditStep = ({
     </div>
   );
 };
-
 export default EditStep; 

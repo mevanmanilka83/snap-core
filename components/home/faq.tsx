@@ -1,15 +1,12 @@
 "use client"
-
 import React, { useState, useRef, memo, useCallback } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-
 interface FAQ {
   question: string;
   answer: string;
 }
-
 const faqs: FAQ[] = [
   {
     question: "What is Snap Core and how does it work?",
@@ -52,15 +49,12 @@ const faqs: FAQ[] = [
     answer: "Works on mobile but best on desktop. Advanced editing features need larger screens for optimal use."
   }
 ]
-
 const FAQSection = memo(function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
-
   const handleAccordionClick = useCallback((index: number) => {
     setOpenIndex(openIndex === index ? null : index)
   }, [openIndex])
-
   return (
     <section 
       ref={sectionRef} 
@@ -91,7 +85,6 @@ const FAQSection = memo(function FAQSection() {
           Find answers to common questions about creating thumbnails from videos and images with Snap Core.
         </p>
       </div>
-
       <div className="space-y-4">
         {faqs.map((faq, index) => (
           <div key={index}>
@@ -122,5 +115,4 @@ const FAQSection = memo(function FAQSection() {
     </section>
   )
 })
-
 export default FAQSection

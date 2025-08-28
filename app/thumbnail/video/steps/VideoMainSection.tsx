@@ -1,6 +1,5 @@
 import VideoPlayerStep from "./VideoPlayerStep";
 import VideoPlayerContainer from "./VideoPlayerContainer";
-
 const MainSection = ({
   videoRef,
   videoLoaded,
@@ -113,5 +112,4 @@ const MainSection = ({
     </div>
   );
 };
-
 export default MainSection;

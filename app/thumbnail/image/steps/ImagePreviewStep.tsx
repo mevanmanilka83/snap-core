@@ -1,25 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info, UploadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
 const ImagePreviewSection = (props: any) => {
   const { imageInfo, imageLoaded, imageSrc, zoomLevel, isLoading, error, hasAttemptedLoad, processedImageSrc } = props;
   const [localImageSrc, setLocalImageSrc] = useState<string | null>(null);
-
-  // Maintain local state of image
   useEffect(() => {
     if (imageSrc) {
       setLocalImageSrc(imageSrc);
     }
   }, [imageSrc]);
-
-  // Update local state when processed image is available
   useEffect(() => {
     if (processedImageSrc) {
       setLocalImageSrc(processedImageSrc);
     }
   }, [processedImageSrc]);
-
   return (
     <Card className="w-full">
       <CardHeader className="p-4 md:p-6 pb-2">
@@ -35,7 +29,6 @@ const ImagePreviewSection = (props: any) => {
             </div>
           </div>
         )}
-
         <div className="relative aspect-video bg-black/5 dark:bg-black/20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
           {localImageSrc && imageLoaded ? (
             <div className="relative w-full h-full">
@@ -74,5 +67,4 @@ const ImagePreviewSection = (props: any) => {
     </Card>
   );
 };
-
 export default ImagePreviewSection; 

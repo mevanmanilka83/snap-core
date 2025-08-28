@@ -1,10 +1,8 @@
 "use client"
-
 import React from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ImageIcon, Download, AlertCircle } from "lucide-react"
-
 interface FinalPreviewCardProps {
   title?: string
   descriptionWhenReady?: string
@@ -15,7 +13,6 @@ interface FinalPreviewCardProps {
   onDownload: () => void
   downloadDisabled?: boolean
 }
-
 export default function FinalPreviewCard({
   title = "Final Preview",
   descriptionWhenReady = "Preview your thumbnail with all effects applied",

@@ -1,8 +1,6 @@
 "use client";
-
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReactNode } from "react";
-
 export interface StepTab {
   value: string;
   label: string;
@@ -10,12 +8,10 @@ export interface StepTab {
   disabled?: boolean;
   className?: string;
 }
-
 interface StepTabsProps {
   steps: StepTab[];
   listClassName?: string;
 }
-
 export default function StepTabs({ steps, listClassName }: StepTabsProps) {
   return (
     <TabsList className={listClassName || "bg-muted text-muted-foreground h-auto items-center justify-center rounded-lg p-[3px] grid min-w-fit w-full gap-1 sm:gap-2"}>

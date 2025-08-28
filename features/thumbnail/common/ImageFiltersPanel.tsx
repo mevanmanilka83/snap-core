@@ -1,11 +1,9 @@
 "use client"
-
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { RotateCw } from "lucide-react"
-
 export interface ImageFilters {
   brightness: number
   contrast: number
@@ -15,7 +13,6 @@ export interface ImageFilters {
   grayscale: number
   sepia: number
 }
-
 interface FiltersPanelProps {
   filters: ImageFilters
   setFilters: (filters: ImageFilters) => void
@@ -26,7 +23,6 @@ interface FiltersPanelProps {
   applyLabel?: string
   compactButtons?: boolean
 }
-
 export default function FiltersPanel({
   filters,
   setFilters,
@@ -62,7 +58,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, brightness: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="contrast" className="text-xs md:text-sm">Contrast ({filters.contrast}%)</Label>
@@ -85,7 +80,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, contrast: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="saturation" className="text-xs md:text-sm">Saturation ({filters.saturation}%)</Label>
@@ -108,7 +102,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, saturation: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="blur" className="text-xs md:text-sm">Blur ({filters.blur}px)</Label>
@@ -131,7 +124,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, blur: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="hueRotate" className="text-xs md:text-sm">Hue Rotate ({filters.hueRotate}°)</Label>
@@ -154,7 +146,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, hueRotate: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="grayscale" className="text-xs md:text-sm">Grayscale ({filters.grayscale}%)</Label>
@@ -177,7 +168,6 @@ export default function FiltersPanel({
             onValueChange={(value) => setFilters({ ...filters, grayscale: value[0] })}
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="sepia" className="text-xs md:text-sm">Sepia ({filters.sepia}%)</Label>
@@ -201,7 +191,6 @@ export default function FiltersPanel({
           />
         </div>
       </div>
-
       <div className="space-y-2">
         <Label className="text-xs md:text-sm">Filter Presets</Label>
         <div className="grid grid-cols-3 gap-2">
@@ -226,7 +215,6 @@ export default function FiltersPanel({
           </Button>
         </div>
       </div>
-
       {onApply && (
         <div className="flex justify-end">
           <Button onClick={onApply} disabled={applyDisabled} className={compactButtons ? "flex-1 text-xs md:text-sm h-8 md:h-9" : undefined}>

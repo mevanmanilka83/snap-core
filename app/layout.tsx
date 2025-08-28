@@ -6,28 +6,24 @@ import { Toaster } from "@/components/ui/sonner"
 import Footer from "@/footer/footer"
 import { cn } from "@/lib/utils"
 import ClientWrapper from "@/components/client-wrapper"
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: 'swap',
   preload: true,
 })
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: 'swap',
   preload: true,
 })
-
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: 'swap',
   preload: true,
 })
-
 const poppins = Poppins({
   variable: "--font-poppins",
   weight: ["400", "500", "600", "700"],
@@ -35,7 +31,6 @@ const poppins = Poppins({
   display: 'swap',
   preload: true,
 })
-
 const roboto = Roboto({
   variable: "--font-roboto",
   weight: ["400", "500", "700"],
@@ -43,21 +38,18 @@ const roboto = Roboto({
   display: 'swap',
   preload: true,
 })
-
 const openSans = Open_Sans({
   variable: "--font-open-sans",
   subsets: ["latin"],
   display: 'swap',
   preload: true,
 })
-
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
   display: 'swap',
   preload: true,
 })
-
 const lato = Lato({
   variable: "--font-lato",
   weight: ["400", "700"],
@@ -65,7 +57,6 @@ const lato = Lato({
   display: 'swap',
   preload: true,
 })
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -75,7 +66,6 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "black" },
   ],
 }
-
 export const metadata: Metadata = {
   title: {
     default: "Snap Core | Create thumbnails and snapshots",
@@ -122,7 +112,6 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json', // We'll create this file next
 }
-
 export default function RootLayout({
   children,
 }: Readonly<{

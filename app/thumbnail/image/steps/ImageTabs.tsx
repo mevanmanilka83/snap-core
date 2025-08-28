@@ -1,8 +1,6 @@
 "use client";
-
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 const ImageTabSelection = ({
   handleTabChange,
 }: {
@@ -21,5 +19,4 @@ const ImageTabSelection = ({
     </Tabs>
   );
 };
-
 export default ImageTabSelection;

@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -35,7 +34,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['critters'],
   webpack: (config, { dev, isServer }) => {
-    // Optimize bundle size
+
     if (!dev && !isServer) {
       config.optimization = {
         ...config.optimization,
@@ -62,7 +61,6 @@ const nextConfig: NextConfig = {
       };
     }
 
-    // Add CORS headers for image loading
     if (!isServer) {
       config.module.rules.push({
         test: /\.(png|jpe?g|gif|svg|webp)$/i,
@@ -80,7 +78,6 @@ const nextConfig: NextConfig = {
         ],
       });
     }
-
     return config;
   },
   async headers() {
@@ -105,5 +102,4 @@ const nextConfig: NextConfig = {
     ];
   },
 };
-
 export default nextConfig;

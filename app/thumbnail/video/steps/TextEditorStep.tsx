@@ -1,6 +1,5 @@
 import SharedTextEditorSection from "@/features/thumbnail/common/ThumbnailTextEditorSection";
 import { useEffect } from "react";
-
 const TextSection = ({
   isCreatingThumbnail,
   processedImageSrc,
@@ -8,7 +7,6 @@ const TextSection = ({
   setTextElements,
   handleCreateThumbnail
 }: any) => {
-  // Normalize text elements to always have layerOrder (fix legacy data)
   useEffect(() => {
     if (textElements && textElements.some((el: any) => !el.layerOrder)) {
       setTextElements(
@@ -18,10 +16,7 @@ const TextSection = ({
         }))
       );
     }
-    // Only run when textElements changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textElements]);
-
   const handleTextElementsChange = (updatedElements: any[]) => {
     setTextElements(
       updatedElements.map(el => ({
@@ -30,7 +25,6 @@ const TextSection = ({
       }))
     );
   };
-
   return (
     <SharedTextEditorSection
       title="Text Editor"
@@ -45,5 +39,4 @@ const TextSection = ({
     />
   );
 };
-
 export default TextSection; 

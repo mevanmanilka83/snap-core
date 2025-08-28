@@ -1,10 +1,8 @@
 "use client"
-
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import TextEditor from "@/features/thumbnail/common/ThumbnailTextEditor"
 import { AlertCircle } from "lucide-react"
-
 interface SharedTextEditorSectionProps {
   title?: string
   ready: boolean
@@ -16,7 +14,6 @@ interface SharedTextEditorSectionProps {
   textElements: any[]
   onTextElementsChange: (elements: any[]) => void
 }
-
 export default function SharedTextEditorSection({
   title = "Text Editor",
   ready,

@@ -1,6 +1,5 @@
 import ImageDropZone from "@/features/thumbnail/common/ImageDropZone";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-
 const ImageSection = () => {
   return (
     <Card className="overflow-hidden">
@@ -14,5 +13,4 @@ const ImageSection = () => {
     </Card>
   );
 };
-
 export default ImageSection; 

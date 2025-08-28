@@ -2,7 +2,6 @@ import UploadFromFile from "./UploadFromFile";
 import UploadFromURL from "./UploadFromURL";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadIcon, ImageIcon } from "lucide-react";
-
 const FileUploadSection = (props: any) => {
   const {
     activeTab,
@@ -21,7 +20,6 @@ const FileUploadSection = (props: any) => {
     setProcessingProgress,
     setImageLoaded,
   } = props;
-
   const handlePickDataUrl = (dataUrl: string) => {
     setError("");
     setHasAttemptedLoad(true);
@@ -38,7 +36,6 @@ const FileUploadSection = (props: any) => {
     if (img) img.src = dataUrl;
     setImageLoaded(false);
   };
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -51,16 +48,13 @@ const FileUploadSection = (props: any) => {
           <span>Image from URL</span>
         </TabsTrigger>
       </TabsList>
-
       <TabsContent value="file" className="space-y-4">
         <UploadFromFile onFileChange={handleFileChange} onPickDataUrl={handlePickDataUrl} />
       </TabsContent>
-
       <TabsContent value="url" className="space-y-4">
         <UploadFromURL onLoadUrl={() => handleURLLoad()} isLoading={isLoading} />
       </TabsContent>
     </Tabs>
   );
 };
-
 export default FileUploadSection;
