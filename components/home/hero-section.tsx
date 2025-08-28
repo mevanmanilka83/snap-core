@@ -43,9 +43,9 @@ const HeroSection = memo(function HeroSection() {
             {/* Main Heading */}
             <div className="space-y-8">
               <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight tracking-tight">
-                <span className="block text-green-400 font-instrument">Transform</span>
+                <span className="block text-green-400 font-instrument italic">Transform</span>
                 <span className="block font-black text-white font-inter">ANYTHING</span>
-                <span className="block text-green-400 font-instrument">Into Magic</span>
+                <span className="block text-green-400 font-instrument italic">Into Magic</span>
               </h1>
 
               <div className="max-w-2xl">
