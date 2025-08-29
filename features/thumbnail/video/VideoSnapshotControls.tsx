@@ -138,7 +138,6 @@ export function BackgroundRemovalProcessor({
       
       toast.success("Background removed successfully");
     } catch (err) {
-      console.error("Error removing background:", err);
       toast.error("Failed to remove background");
       setError("Failed to remove background. Please try again.");
     } finally {

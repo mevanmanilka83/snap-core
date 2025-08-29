@@ -44,7 +44,6 @@ export default function ImageStage({
             }}
             crossOrigin="anonymous"
             onError={(e) => {
-              console.error("Error loading image: ", alt)
               ;(e.currentTarget as HTMLImageElement).src = "/placeholder.svg"
             }}
           />

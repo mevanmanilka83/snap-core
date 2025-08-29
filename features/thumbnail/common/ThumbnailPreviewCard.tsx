@@ -52,7 +52,6 @@ export default function FinalPreviewCard({
                 className="w-full h-full object-contain"
                 crossOrigin="anonymous"
                 onError={(e) => {
-                  console.error("Error loading final thumbnail")
                   ;(e.currentTarget as HTMLImageElement).src = "/placeholder.svg"
                 }}
               />

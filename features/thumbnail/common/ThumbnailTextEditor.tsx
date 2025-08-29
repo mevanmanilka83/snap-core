@@ -94,18 +94,18 @@ const POPULAR_FONTS = [
 ]
 
 const PRESET_COLORS = [
-  "#ffffff", // White
-  "#000000", // Black
-  "#ff0000", // Red
-  "#00ff00", // Green
-  "#0000ff", // Blue
-  "#ffff00", // Yellow
-  "#ff00ff", // Magenta
-  "#00ffff", // Cyan
-  "#ff8000", // Orange
-  "#8000ff", // Purple
-  "#ff0080", // Pink
-  "#00ff80", // Mint
+  "#ffffff",
+  "#000000",
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#ffff00",
+  "#ff00ff",
+  "#00ffff",
+  "#ff8000",
+  "#8000ff",
+  "#ff0080",
+  "#00ff80",
 ]
 
 export default function TextEditor({
@@ -123,7 +123,6 @@ export default function TextEditor({
   const isInitialMount = useRef(true)
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  // Initialize text elements when initialTextElements changes
   useEffect(() => {
     if (initialTextElements && initialTextElements.length > 0) {
       setTextElements(initialTextElements)
@@ -131,19 +130,16 @@ export default function TextEditor({
         setActiveTextElementId(initialTextElements[0].id)
       }
     } else if (textElements.length === 0) {
-      // Add a default text element if none exist
       handleAddTextElement()
     }
   }, [initialTextElements, activeTextElementId, textElements.length])
 
-  // Memoize the text element change handler
   const handleTextElementChange = useCallback((id: string, updates: Partial<TextElement>) => {
     setTextElements(prev => {
       const newElements = prev.map(element =>
         element.id === id ? { ...element, ...updates } : element
       )
       
-      // Debounce the parent notification
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current)
       }
@@ -158,7 +154,6 @@ export default function TextEditor({
     })
   }, [onTextElementsChange])
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (updateTimeoutRef.current) {
@@ -167,7 +162,6 @@ export default function TextEditor({
     }
   }, [])
 
-  // Remove the separate debounced effect since we're handling it in handleTextElementChange
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false
@@ -182,7 +176,7 @@ export default function TextEditor({
       text: "New Text",
       x: 50,
       y: 50,
-      fontSize: 120, // Bigger default font size
+      fontSize: 120,
       color: "#ffffff",
       rotation: 0,
       fontFamily: "Arial",
@@ -190,12 +184,12 @@ export default function TextEditor({
       maxWidth: 80,
       curve: false,
       backgroundColor: "#000000",
-      backgroundEnabled: true, // Enable background by default for better visibility
+      backgroundEnabled: true,
       shadow: true,
       shadowBlur: 10,
       shadowColor: "#000000",
       textAlign: "center",
-      bold: true, // Make it bold by default
+      bold: true,
       italic: false,
       underline: false,
       letterSpacing: 0,
@@ -217,19 +211,16 @@ export default function TextEditor({
 
   const activeTextElement = textElements.find(element => element.id === activeTextElementId)
 
-  // Add a function to handle text element selection
   const handleTextElementSelect = (id: string) => {
     setActiveTextElementId(id)
   }
 
-  // Calculate position based on the position property
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     const x = canvasWidth * (element.x / 100)
     const y = canvasHeight * (element.y / 100)
     return { x, y }
   }
 
-  // Function to render text on canvas
   const renderTextOnCanvas = (
     ctx: CanvasRenderingContext2D,
     element: TextElement,
@@ -244,7 +235,6 @@ export default function TextEditor({
       if (element.rotation !== 0) {
         ctx.rotate((element.rotation * Math.PI) / 180)
       }
-      // Use provided scaleFactor from caller for consistent sizing
       const scaledFontSize = Math.max(element.fontSize * scaleFactor * 0.8, element.fontSize * 0.3)
 
       let fontStyle = ""
@@ -319,13 +309,11 @@ export default function TextEditor({
 
       ctx.restore()
     } catch (error) {
-      console.error("Error rendering text on canvas:", error)
       toast.error("Failed to render text on canvas")
       ctx.restore()
     }
   }
 
-  // Draw preview on canvas
   useEffect(() => {
     if (!canvasRef.current || !processedImageSrc) return
 
@@ -333,22 +321,15 @@ export default function TextEditor({
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas dimensions - larger for better text preview
     canvas.width = 480
     canvas.height = 270
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw background image if available
     if (previewImageRef.current) {
-      // Check if the image is actually loaded and not broken
       if (previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
         try {
           ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
         } catch (error) {
-          console.error("Error drawing image to canvas:", error)
-          // Draw a placeholder or error state
           ctx.fillStyle = "#f0f0f0"
           ctx.fillRect(0, 0, canvas.width, canvas.height)
           ctx.fillStyle = "#666"
@@ -357,7 +338,6 @@ export default function TextEditor({
           ctx.fillText("Image failed to load", canvas.width / 2, canvas.height / 2)
         }
       } else {
-        // Image is not loaded yet or is broken
         ctx.fillStyle = "#f0f0f0"
         ctx.fillRect(0, 0, canvas.width, canvas.height)
         ctx.fillStyle = "#666"
@@ -367,22 +347,16 @@ export default function TextEditor({
       }
     }
 
-    // Draw text elements with proper scaling for preview
     const elements = textElements.filter(element => element.visible)
-    console.log("Preview rendering:", { textElementsCount: textElements.length, visibleElementsCount: elements.length, elements })
     if (elements.length > 0) {
       elements.forEach((element) => {
         try {
-          // Use the same scaling approach as the final thumbnail for consistency
           const scaleFactor = Math.min(canvas.width, canvas.height) / 250
-          console.log("Rendering element:", element.id, "with scaleFactor:", scaleFactor, "fontSize:", element.fontSize)
           renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
         } catch (error) {
-          console.error("Error rendering text element:", error)
         }
       })
     } else {
-      // Show placeholder text if no text elements exist
       ctx.fillStyle = "#666"
       ctx.font = "16px Arial"
       ctx.textAlign = "center"
@@ -390,7 +364,6 @@ export default function TextEditor({
     }
   }, [processedImageSrc, textElements])
 
-  // Add error handling for the preview image
   const handlePreviewImageError = () => {
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d")
@@ -405,53 +378,46 @@ export default function TextEditor({
     }
   }
 
-  // Handle apply button click
   const handleApply = () => {
-    // Ensure all text elements are properly formatted
     const formattedElements = textElements.map(element => ({
       ...element,
-      text: element.text.trim(), // Remove extra whitespace
-      lineHeight: element.lineHeight || 1.2, // Ensure line height is set
-      opacity: element.opacity || 100, // Ensure opacity is set
-      visible: element.visible ?? true, // Ensure visibility is set
-      textAlign: element.textAlign || "center", // Ensure text alignment is set
-      layerOrder: element.layerOrder || "front", // Ensure layer order is set
-      fontSize: element.fontSize || 72, // Ensure font size is set
-      color: element.color || "#ffffff", // Ensure color is set
-      fontFamily: element.fontFamily || "Arial", // Ensure font family is set
-      bold: element.bold || false, // Ensure bold is set
-      italic: element.italic || false, // Ensure italic is set
-      backgroundEnabled: element.backgroundEnabled || false, // Ensure background is set
-      backgroundColor: element.backgroundColor || "#000000", // Ensure background color is set
-      shadow: element.shadow || false, // Ensure shadow is set
-      shadowBlur: element.shadowBlur || 10, // Ensure shadow blur is set
-      shadowColor: element.shadowColor || "#000000", // Ensure shadow color is set
-      x: element.x || 50, // Ensure x position is set
-      y: element.y || 50, // Ensure y position is set
-      rotation: element.rotation || 0, // Ensure rotation is set
-      maxWidth: element.maxWidth || 80, // Ensure max width is set
+      text: element.text.trim(),
+      lineHeight: element.lineHeight || 1.2,
+      opacity: element.opacity || 100,
+      visible: element.visible ?? true,
+      textAlign: element.textAlign || "center",
+      layerOrder: element.layerOrder || "front",
+      fontSize: element.fontSize || 72,
+      color: element.color || "#ffffff",
+      fontFamily: element.fontFamily || "Arial",
+      bold: element.bold || false,
+      italic: element.italic || false,
+      backgroundEnabled: element.backgroundEnabled || false,
+      backgroundColor: element.backgroundColor || "#000000",
+      shadow: element.shadow || false,
+      shadowBlur: element.shadowBlur || 10,
+      shadowColor: element.shadowColor || "#000000",
+      x: element.x || 50,
+      y: element.y || 50,
+      rotation: element.rotation || 0,
+      maxWidth: element.maxWidth || 80,
     }))
 
-    // Update the text elements with formatted values
     setTextElements(formattedElements)
     
-    // Notify parent component of the final state
     if (onTextElementsChange) {
       onTextElementsChange(formattedElements)
     }
 
-    // Use setTimeout to ensure state updates are processed before calling onApply
     setTimeout(() => {
       onApply()
     }, 0)
   }
 
-  // Generate unique ID for new text elements
   const generateUniqueId = () => {
     return `text-${Date.now()}-${Math.floor(Math.random() * 1000)}`
   }
 
-  // Duplicate text element
   const duplicateTextElement = (index: number) => {
     const elementToDuplicate = textElements[index]
     if (!elementToDuplicate) return
@@ -466,7 +432,6 @@ export default function TextEditor({
 
     setTextElements((prev) => {
       const updated = [...prev, duplicatedElement]
-      // Notify parent component if callback is provided
       if (onTextElementsChange) {
         onTextElementsChange(updated)
       }
@@ -477,7 +442,6 @@ export default function TextEditor({
     toast.success("Text element duplicated")
   }
 
-  // Clear text properties to default values
   const clearTextProperties = () => {
     const defaultElement: Partial<TextElement> = {
       text: "TTV",
@@ -510,7 +474,6 @@ export default function TextEditor({
     toast.success("Text properties reset to default")
   }
 
-  // Move text element up in the layer order
   const moveTextElementUp = (index: number) => {
     if (index === textElements.length - 1) {
       toast.info("Element is already at the top")
@@ -521,7 +484,6 @@ export default function TextEditor({
       const newElements = [...prev]
       ;[newElements[index], newElements[index + 1]] = [newElements[index + 1], newElements[index]]
 
-      // Notify parent component if callback is provided
       if (onTextElementsChange) {
         onTextElementsChange(newElements)
       }
@@ -531,7 +493,6 @@ export default function TextEditor({
     setActiveTextElementId(textElements[index + 1].id)
   }
 
-  // Move text element down in the layer order
   const moveTextElementDown = (index: number) => {
     if (index === 0) {
       toast.info("Element is already at the bottom")
@@ -542,7 +503,6 @@ export default function TextEditor({
       const newElements = [...prev]
       ;[newElements[index], newElements[index - 1]] = [newElements[index - 1], newElements[index]]
 
-      // Notify parent component if callback is provided
       if (onTextElementsChange) {
         onTextElementsChange(newElements)
       }
@@ -552,17 +512,14 @@ export default function TextEditor({
     setActiveTextElementId(textElements[index - 1].id)
   }
 
-  // Toggle text element visibility
   const toggleTextElementVisibility = (index: number) => {
     handleTextElementChange(textElements[index].id, { visible: !textElements[index].visible })
   }
 
-  // Export canvas as image
   const exportCanvasAsImage = () => {
     if (!canvasRef.current) return
 
     try {
-      // First try to get the canvas data as a blob
       canvasRef.current.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob)
@@ -577,7 +534,6 @@ export default function TextEditor({
         }
       }, "image/png", 1.0)
     } catch (error) {
-      console.error("Export error:", error)
       if (error instanceof DOMException && error.name === 'SecurityError') {
         toast.error("Cannot export image due to CORS restrictions. Please ensure all images are from trusted sources.")
       } else {
@@ -586,12 +542,10 @@ export default function TextEditor({
     }
   }
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value)
   }
 
-  // Add useEffect to handle resize events
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current && previewImageRef.current) {
@@ -599,24 +553,18 @@ export default function TextEditor({
         const ctx = canvas.getContext("2d")
         if (ctx) {
           try {
-            // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             
-            // Check if the image is actually loaded and not broken
             if (previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
-              // Draw the background image
               ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
               
-              // Draw all text elements with proper scaling for preview
               textElements.forEach(element => {
                 if (element.visible) {
-                  // Use the same scaling approach as the final thumbnail for consistency
                   const scaleFactor = Math.min(canvas.width, canvas.height) / 250
                   renderTextOnCanvas(ctx, element, canvas.width, canvas.height, scaleFactor)
                 }
               })
             } else {
-              // Image is not loaded yet or is broken
               ctx.fillStyle = "#f0f0f0"
               ctx.fillRect(0, 0, canvas.width, canvas.height)
               ctx.fillStyle = "#666"
@@ -625,8 +573,6 @@ export default function TextEditor({
               ctx.fillText("Loading image...", canvas.width / 2, canvas.height / 2)
             }
           } catch (error) {
-            console.error("Error in handleResize:", error)
-            // Draw error state
             ctx.fillStyle = "#f0f0f0"
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             ctx.fillStyle = "#666"
@@ -638,10 +584,8 @@ export default function TextEditor({
       }
     }
 
-    // Add resize event listener
     window.addEventListener('resize', handleResize)
     
-    // Initial render
     handleResize()
 
     return () => {
@@ -665,12 +609,10 @@ export default function TextEditor({
                 const ctx = canvas.getContext("2d")
                 if (ctx && previewImageRef.current.complete && previewImageRef.current.naturalWidth !== 0) {
                   try {
-                    // Set canvas dimensions
                     canvas.width = previewImageRef.current.naturalWidth
                     canvas.height = previewImageRef.current.naturalHeight
                     ctx.drawImage(previewImageRef.current, 0, 0, canvas.width, canvas.height)
                   } catch (error) {
-                    console.error("Error drawing image to canvas:", error)
                     if (error instanceof DOMException && error.name === 'SecurityError') {
                       toast.error("Cannot load image due to CORS restrictions")
                     }
@@ -680,7 +622,6 @@ export default function TextEditor({
               }
             }}
             onError={(e) => {
-              console.error("Image load error:", e)
               if (e instanceof ErrorEvent && e.error instanceof DOMException && e.error.name === 'SecurityError') {
                 toast.error("Cannot load image due to CORS restrictions")
               }
@@ -901,7 +842,6 @@ export default function TextEditor({
                         </Button>
                       </div>
                       
-                      {/* Quick style controls for each text element */}
                       <div className="flex flex-wrap gap-2">
                         <Select
                           value={element.fontFamily}

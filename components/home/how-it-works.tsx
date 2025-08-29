@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge"
 import { StaticStep } from "./staticstepper"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
-import { HoverVideoPlayer } from "@/components/ui/hover-video-player"
 interface Step {
   title: string;
   description: string;
@@ -90,9 +89,9 @@ const HowItWorks = () => {
                    "data-[dark]:bg-stone-800 data-[dark]:ring-white/15"
                  )}
                >
-               <HoverVideoPlayer
-                 videoSrc="/dummy.mp4"
-                 enableControls
+               <video
+                 src="/video.mp4"
+                 controls
                  style={{
                    width: "100%",
                    maxWidth: "100%",
@@ -117,15 +116,15 @@ const HowItWorks = () => {
                    "data-[dark]:bg-stone-800 data-[dark]:ring-white/15"
                  )}
                >
-                 <HoverVideoPlayer
-                   videoSrc="/dummy.mp4"
-                   enableControls
+                 <video
+                   src="/image.mp4"
+                   controls
                    style={{
                      width: "100%",
                      maxWidth: "100%",
                      aspectRatio: "16/9",
-                 }}
-               />
+                   }}
+                 />
                </motion.div>
              </div>
            </div>

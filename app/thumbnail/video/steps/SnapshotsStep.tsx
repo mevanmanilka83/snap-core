@@ -69,7 +69,6 @@ const SnapshotsSection = ({
     }
   };
   const handleImageError = async (index: number, e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error(`Error loading snapshot ${index}:`, e);
     
     const currentRetries = retryCount[index] || 0;
     setRetryCount(prev => ({ ...prev, [index]: currentRetries + 1 }));

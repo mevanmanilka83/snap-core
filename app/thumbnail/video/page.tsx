@@ -170,10 +170,8 @@ export default function VideoThumbnailGenerator() {
         }
       } catch (error) {
         
-        console.debug("Frame update skipped");
       }
     } catch (error) {
-      console.debug("Time update skipped");
     }
   };
   const handleSnapshot = () => {
@@ -218,10 +216,8 @@ export default function VideoThumbnailGenerator() {
         } else {
           toast.error("Failed to capture frame. Please try again.");
         }
-        console.error("Error capturing frame:", error);
       }
     } catch (error) {
-      console.error("Error in handleSnapshot:", error);
       toast.error("Failed to capture frame. Please try again.");
     }
   };
@@ -315,13 +311,11 @@ export default function VideoThumbnailGenerator() {
           setProcessedImageSrc(verifiedImageData);
           setActiveTab("edit");
         } catch (error) {
-          console.error("Error verifying snapshot:", error);
           toast.error("Failed to load snapshot. The image data may be invalid.");
         }
       }
     };
     img.onerror = () => {
-      console.error("Error loading snapshot image");
       toast.error("Failed to load snapshot image");
     };
     img.src = selectedSnapshot;
@@ -391,7 +385,6 @@ export default function VideoThumbnailGenerator() {
     try {
       setIsProcessing(true);
       const blob = await removeBackgroundViaWorker(processedFrame, {
-        onProgress: (p) => console.debug("Background removal:", p, "%"),
       });
       const processedImageUrl = URL.createObjectURL(blob);
       if (processedImageSrc && processedImageSrc.startsWith("blob:")) {
@@ -402,7 +395,6 @@ export default function VideoThumbnailGenerator() {
       updateFinalPreview();
       toast.success("Background removed successfully");
     } catch (error) {
-      console.error("Error removing background:", error);
       toast.error("Failed to remove background. Please try again.");
     } finally {
       setIsProcessing(false);
@@ -577,7 +569,6 @@ export default function VideoThumbnailGenerator() {
   
   const updateFinalPreview = () => {
     if (!processedFrame || !snapshots[selectedSnapshotIndex]) {
-      console.debug("No processed frame or snapshot available for preview");
       return;
     }
     
@@ -596,7 +587,6 @@ export default function VideoThumbnailGenerator() {
         previewCanvas.height = originalImg.height;
         const ctx = previewCanvas.getContext("2d");
         if (!ctx) {
-          console.error("Failed to get canvas context");
           toast.error("Failed to create thumbnail");
           return;
         }
@@ -631,16 +621,13 @@ export default function VideoThumbnailGenerator() {
         
         previewCanvas.toBlob((blob) => {
           if (!blob) {
-            console.error("Failed to create blob from canvas");
             toast.error("Failed to create thumbnail");
             return;
           }
           const finalImageUrl = URL.createObjectURL(blob);
           setFinalThumbnail(finalImageUrl);
-          console.debug("Thumbnail updated");
         }, 'image/png', 1.0);
       } catch (error) {
-        console.error("Error creating thumbnail:", error);
         toast.error("Failed to create thumbnail");
       }
     };
@@ -653,11 +640,9 @@ export default function VideoThumbnailGenerator() {
       tryCreatePreview();
     };
     originalImg.onerror = () => {
-      console.error("Error loading original image");
       toast.error("Failed to load original image");
     };
     processedImg.onerror = () => {
-      console.error("Error loading processed image");
       toast.error("Failed to load processed image");
     };
     

@@ -68,7 +68,6 @@ export function VideoPlayer({
         currentTime: video.currentTime,
       });
     } catch (err) {
-      console.error("Error loading video metadata:", err);
       setError("Failed to load video metadata");
       toast.error("Failed to load video metadata");
     }
@@ -114,7 +113,6 @@ export function VideoPlayer({
       });
 
     } catch (err) {
-      console.error("Error loading video file:", err);
       setError("Failed to load video file");
       toast.error("Failed to load video file");
     } finally {
@@ -158,7 +156,6 @@ export function VideoPlayer({
       });
 
     } catch (err) {
-      console.error("Error loading video URL:", err);
       setError("Failed to load video URL");
       toast.error("Failed to load video URL");
     } finally {
@@ -175,7 +172,6 @@ export function VideoPlayer({
       video.currentTime = newTime;
       onTimeUpdate(newTime);
     } catch (err) {
-      console.error("Error seeking video:", err);
       toast.error("Failed to seek video");
     }
   };
@@ -193,7 +189,6 @@ export function VideoPlayer({
         setIsPlaying(false);
       }
     } catch (err) {
-      console.error("Error toggling play/pause:", err);
       toast.error("Failed to play/pause video");
     }
   };
@@ -206,7 +201,6 @@ export function VideoPlayer({
       const newTime = Math.max(0, videoInfo.currentTime - 5); // Rewind 5 seconds
       await goToTime(newTime);
     } catch (err) {
-      console.error("Error rewinding video:", err);
       toast.error("Failed to rewind video");
     }
   };
@@ -219,7 +213,6 @@ export function VideoPlayer({
       const newTime = Math.min(videoInfo.duration, videoInfo.currentTime + 5); // Forward 5 seconds
       await goToTime(newTime);
     } catch (err) {
-      console.error("Error fast forwarding video:", err);
       toast.error("Failed to fast forward video");
     }
   };
@@ -247,7 +240,6 @@ export function VideoPlayer({
       const newTime = Math.min(videoInfo.duration, Math.max(0, value[0]));
       await goToTime(newTime);
     } catch (err) {
-      console.error("Error seeking video:", err);
       toast.error("Failed to seek video");
     }
   };
@@ -301,7 +293,6 @@ export function VideoPlayer({
         setIsFullscreen(false);
       }
     } catch (err) {
-      console.error("Error toggling fullscreen:", err);
       toast.error("Failed to toggle fullscreen");
     }
   };
@@ -569,7 +560,3 @@ export function VideoPlayer({
     </div>
   );
 }
-
-
-
-

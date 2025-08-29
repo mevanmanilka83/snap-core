@@ -79,7 +79,7 @@ interface ImageFilter {
   sepia: number
 }
 interface ImageUploaderProps {
-  maxFileSize?: number // in bytes
+  maxFileSize?: number
   allowedFileTypes?: string[]
   initialFilters?: Partial<ImageFilter>
 }
@@ -94,8 +94,7 @@ class ErrorBoundary extends React.Component<
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Error caught by boundary:", error, errorInfo)
+  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
   }
   render() {
     if (this.state.hasError) {
@@ -118,7 +117,7 @@ class ErrorBoundary extends React.Component<
   }
 }
 export default function ImageUploader({
-  maxFileSize = 10 * 1024 * 1024, // 10MB default
+  maxFileSize = 10 * 1024 * 1024,
   allowedFileTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   initialFilters,
 }: ImageUploaderProps) {
@@ -197,8 +196,7 @@ export default function ImageUploader({
       }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)
-    const handleError = (event: ErrorEvent) => {
-      console.error("Global error caught:", event.error)
+    const handleError = (_event: ErrorEvent) => {
       toast.error("An unexpected error occurred")
     }
     window.addEventListener("error", handleError)
@@ -232,7 +230,6 @@ export default function ImageUploader({
         .filter(Boolean)
       ctx.filter = filters.length > 0 ? filters.join(" ") : "none"
     } catch (error) {
-      console.error("Error applying filters:", error)
       toast.error("Failed to apply filters")
       ctx.filter = "none"
     }
@@ -268,7 +265,7 @@ export default function ImageUploader({
     const reader = new FileReader()
     reader.onload = (e) => {
       const img = new Image()
-      img.crossOrigin = "anonymous"  // Add CORS attribute
+      img.crossOrigin = "anonymous"
       img.onload = () => {
         setImageInfo({
           width: img.width,
@@ -298,7 +295,7 @@ export default function ImageUploader({
   const handleUrlLoad = async (url: string) => {
     try {
       const img = new Image()
-      img.crossOrigin = "anonymous"  // Add CORS attribute
+      img.crossOrigin = "anonymous"
       await new Promise((resolve, reject) => {
         img.onload = resolve
         img.onerror = () => reject(new Error("Failed to load image from URL"))
@@ -307,15 +304,14 @@ export default function ImageUploader({
       setImageInfo({
         width: img.width,
         height: img.height,
-        size: 0, // We don't know the file size for URLs
-        type: "image/png" // Default type for URLs
+        size: 0,
+        type: "image/png"
       })
       setImageLoaded(true)
       setError("")
       setHasAttemptedLoad(true)
         setImageSrc(url)
     } catch (error) {
-      console.error("Error loading image from URL:", error)
       setError("Failed to load image from URL. Please ensure the URL is accessible and the image is from a trusted source.")
         setImageLoaded(false)
       setHasAttemptedLoad(true)
@@ -348,14 +344,14 @@ export default function ImageUploader({
         }
         throw error
       }
-      const maxDimension = 4096 // Maximum dimension in pixels
+      const maxDimension = 4096
       if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
         setError(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
         toast.error(`Image dimensions too large. Maximum dimension is ${maxDimension}px`)
         handleCancel()
         return
       }
-      const minDimension = 100 // Minimum dimension in pixels
+      const minDimension = 100
       if (img.naturalWidth < minDimension || img.naturalHeight < minDimension) {
         setError(`Image dimensions too small. Minimum dimension is ${minDimension}px`)
         toast.error(`Image dimensions too small. Minimum dimension is ${minDimension}px`)
@@ -380,14 +376,12 @@ export default function ImageUploader({
           try {
             ctx.drawImage(img, 0, 0)
           } catch (error) {
-            console.error("Error drawing image to canvas:", error)
             setError("Failed to process image")
             handleCancel()
           }
         }
       }
     } catch (error) {
-      console.error("Error in image loading:", error)
       setError("Failed to process image. Please try again.")
       handleCancel()
     }
@@ -450,14 +444,14 @@ export default function ImageUploader({
       return
     }
     setIsProcessing(true)
-    setThumbnailSrc("") // Clear thumbnail
+    setThumbnailSrc("")
     try {
       const img = new Image()
       img.crossOrigin = "anonymous"
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Image loading timed out"))
-        }, 15000) // 15 second timeout
+        }, 15000)
         img.onload = () => {
           clearTimeout(timeoutId)
           if (!img.complete || img.naturalWidth === 0) {
@@ -478,7 +472,7 @@ export default function ImageUploader({
       });
       if (processedImageSrc) {
         setUndoStack((prev) => [...prev, processedImageSrc])
-        setRedoStack([]) // Clear redo stack
+        setRedoStack([])
       }
       let worker: Worker | null = null;
       try {
@@ -486,7 +480,6 @@ export default function ImageUploader({
           type: 'module'
         });
       } catch (error) {
-        console.error("Failed to create worker:", error);
         throw new Error("Failed to initialize background removal process");
       }
       let lastProgressUpdate = 0;
@@ -495,7 +488,7 @@ export default function ImageUploader({
         switch (type) {
           case 'progress':
             const now = Date.now();
-            if (now - lastProgressUpdate > 200) { // Only update every 200ms for better performance
+            if (now - lastProgressUpdate > 200) {
               setIsProcessing(true)
               lastProgressUpdate = now;
             }
@@ -526,7 +519,6 @@ export default function ImageUploader({
             setIsProcessing(false)
             break
           case 'error':
-            console.error("Worker error:", data)
             toast.error(data || "Failed to remove background. Check console for details.", {
               duration: 3000,
               id: "background-removed-error"
@@ -536,8 +528,7 @@ export default function ImageUploader({
             break
         }
       }
-      worker.onerror = (error) => {
-        console.error("Worker error:", error)
+      worker.onerror = (_error) => {
         toast.error("Failed to remove background. Please try again.", {
           duration: 2000,
           id: "background-removed-error"
@@ -547,7 +538,6 @@ export default function ImageUploader({
       }
       worker.postMessage({ imageSrc })
     } catch (error) {
-      console.error("Error removing background:", error)
       toast.error(error instanceof Error ? error.message : "Failed to remove background", {
         duration: 2000,
         id: "background-removed-error"
@@ -594,7 +584,7 @@ export default function ImageUploader({
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Background image loading timed out"))
-        }, 15000) // 15 second timeout
+        }, 15000)
         bgImg.onload = () => {
           clearTimeout(timeoutId)
           if (!bgImg.complete || bgImg.naturalWidth === 0) {
@@ -607,12 +597,12 @@ export default function ImageUploader({
           clearTimeout(timeoutId)
           reject(new Error("Failed to load background image. Please try again."))
         }
-        bgImg.src = imageSrc // Use original image as background
+        bgImg.src = imageSrc
       })
       await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error("Foreground image loading timed out"))
-        }, 15000) // 15 second timeout
+        }, 15000)
         fgImg.onload = () => {
           clearTimeout(timeoutId)
           if (!fgImg.complete || fgImg.naturalWidth === 0) {
@@ -660,7 +650,6 @@ export default function ImageUploader({
             fgImg.src = processedImageSrc
           }
         } catch (error) {
-          console.error("Error setting image source:", error)
           reject(new Error("Failed to process image. Please try again."))
         }
       })
@@ -677,7 +666,7 @@ export default function ImageUploader({
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       applyFilters(ctx)
       ctx.drawImage(bgImg, 0, 0)
-      ctx.filter = "none" // Reset filters for text
+      ctx.filter = "none"
       const backElements = textElements.filter((element) => element.visible && element.layerOrder === "back")
       const frontElements = textElements.filter((element) => element.visible && element.layerOrder === "front")
       const scaleFactor = Math.min(canvas.width, canvas.height) / 250
@@ -699,7 +688,6 @@ export default function ImageUploader({
       bgImg.src = ""
       fgImg.src = ""
     } catch (error) {
-      console.error("Error creating thumbnail:", error)
       toast.error(error instanceof Error ? error.message : "Failed to create thumbnail")
       setThumbnailSrc("")
       if (thumbnailUrl.current && thumbnailUrl.current.startsWith("blob:")) {
@@ -825,7 +813,6 @@ export default function ImageUploader({
       }
       ctx.restore()
     } catch (error) {
-      console.error("Error rendering text on canvas:", error)
       toast.error("Failed to render text on canvas")
       ctx.restore()
     }
@@ -841,7 +828,6 @@ export default function ImageUploader({
       document.body.removeChild(link)
       toast.success("Image saved successfully")
     } catch (error) {
-      console.error("Error saving background removed image:", error)
       toast.error("Failed to save image")
     }
   }
@@ -859,7 +845,6 @@ export default function ImageUploader({
       document.body.removeChild(link)
       toast.success("Thumbnail saved successfully")
     } catch (error) {
-      console.error("Error saving thumbnail:", error)
       toast.error("Failed to save thumbnail")
     }
   }
@@ -901,8 +886,8 @@ export default function ImageUploader({
           }
           previewUrl.current = data
           setImageSrc(data)
-          setProcessedImageSrc("") // Clear processed image
-          setThumbnailSrc("") // Clear thumbnail
+          setProcessedImageSrc("")
+          setThumbnailSrc("")
           const img = hiddenImageRef.current
           if (img) {
             img.src = data
@@ -915,7 +900,6 @@ export default function ImageUploader({
         toast.error("Please drop an image file or URL")
       }
     } catch (error) {
-      console.error("Error handling drop:", error)
       toast.error("Failed to process dropped file")
       handleCancel()
     }

@@ -10,11 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UploadIcon, Type, Layers, Palette } from "lucide-react"
 import { removeBackgroundViaWorker } from "@/features/thumbnail/common"
-// Removed Slider/Label; filters now in a dedicated component
 import { BackgroundRemovalStep, FiltersStep, TextEditorStep, ImagePreviewStep, FinalPreviewStep } from "@/app/thumbnail/image/steps"
 import { StepTabs } from "@/features/thumbnail/common"
-
-
 interface ImageInfo {
   width: number
   height: number
@@ -48,7 +45,6 @@ export default function ImageUploader() {
   const [activeTab, setActiveTab] = useState("file")
   const [activeEditorTab, setActiveEditorTab] = useState("text")
   const [zoomLevel] = useState(100)
-  // Deprecated with new steps; retained logic removed
   const [imageFilters, setImageFilters] = useState<ImageFilter>({
     brightness: 100,
     contrast: 100,
@@ -67,7 +63,6 @@ export default function ImageUploader() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pendingThumbnailUpdate = useRef<NodeJS.Timeout | null>(null)
 
-  // Default text element
   const defaultTextElement = {
     id: "default-text",
     text: "TTV",
@@ -96,12 +91,10 @@ export default function ImageUploader() {
     layerOrder: "back",
   }
 
-  // Text editing states
   const [textElements, setTextElements] = useState<any[]>([{ ...defaultTextElement }])
 
   useEffect(() => {
     return () => {
-      // Clean up blob URLs on unmount
       if (previewUrl.current && previewUrl.current.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl.current)
       }
@@ -112,14 +105,12 @@ export default function ImageUploader() {
         URL.revokeObjectURL(thumbnailUrl.current)
       }
 
-      // Clear any pending thumbnail updates
       if (pendingThumbnailUpdate.current) {
         clearTimeout(pendingThumbnailUpdate.current)
       }
     }
   }, [])
 
-  // Apply filters to the image
   const applyFilters = (ctx: CanvasRenderingContext2D) => {
     const filters = []
 
@@ -138,7 +129,6 @@ export default function ImageUploader() {
     }
   }
 
-  // Reset filters to default values
   const resetFilters = () => {
     setImageFilters({
       brightness: 100,
@@ -152,7 +142,6 @@ export default function ImageUploader() {
     toast.success("Image filters reset to default")
   }
 
-  // Apply a preset filter
   const applyPresetFilter = (preset: string) => {
     switch (preset) {
       case "grayscale":
@@ -214,9 +203,9 @@ export default function ImageUploader() {
     previewUrl.current = URL.createObjectURL(file)
 
     setImageSrc(previewUrl.current)
-    setProcessedImageSrc("") // Clear processed image
-    setThumbnailSrc("") // Clear thumbnail
-    resetFilters() // Reset filters for new image
+    setProcessedImageSrc("")
+    setThumbnailSrc("")
+    resetFilters()
 
     const img = hiddenImageRef.current
     if (img) {
@@ -231,8 +220,6 @@ export default function ImageUploader() {
       type: file.type,
       size: file.size,
     })
-
-    // Reset any previous state related to editing
   }
 
   const handleURLLoad = () => {
@@ -256,9 +243,9 @@ export default function ImageUploader() {
 
     previewUrl.current = url
     setImageSrc(url)
-    setProcessedImageSrc("") // Clear processed image
-    setThumbnailSrc("") // Clear thumbnail
-    resetFilters() // Reset filters for new image
+    setProcessedImageSrc("")
+    setThumbnailSrc("")
+    resetFilters()
 
     const img = hiddenImageRef.current
     if (img) {
@@ -266,8 +253,6 @@ export default function ImageUploader() {
     }
 
     setImageLoaded(false)
-
-    // Reset any previous state related to editing
   }
 
   const handleImageLoaded = () => {
@@ -284,7 +269,6 @@ export default function ImageUploader() {
     setImageLoaded(true)
     setIsLoading(false)
 
-    // Draw the image to canvas after loading
     const canvas = canvasRef.current
     if (canvas) {
       const ctx = canvas.getContext("2d")
@@ -340,7 +324,6 @@ export default function ImageUploader() {
       urlInput.value = ""
     }
 
-    // Clear canvas
     const canvas = canvasRef.current
     if (canvas) {
       const ctx = canvas.getContext("2d")
@@ -348,12 +331,9 @@ export default function ImageUploader() {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
       }
     }
-
-    // Reset any previous state related to editing
   }
 
   const handleTabChange = (newTab: string) => {
-    // For edit tab, require an image to be loaded
     if (newTab === "edit") {
       if (!imageLoaded) {
         toast.error("Please upload an image first");
@@ -363,21 +343,17 @@ export default function ImageUploader() {
       return;
     }
 
-    // Strictly prevent moving to text tab without background removal
     if (newTab === "text") {
-      // Check if we're coming from edit tab
       if (activeTab === "edit") {
         if (!processedImageSrc) {
           toast.error("You must remove the background before proceeding to text editing");
           return;
         }
-        // Double check that the background was actually removed
         if (!processedImageSrc.includes('data:image/png;base64')) {
           toast.error("Background removal is required before proceeding to text editing");
           return;
         }
       } else {
-        // For other tabs, still require background removal
         if (!processedImageSrc) {
           toast.error("Please remove background before adding text");
           return;
@@ -387,7 +363,6 @@ export default function ImageUploader() {
       return;
     }
 
-    // For preview tab, require background removal
     if (newTab === "preview") {
       if (!processedImageSrc) {
         toast.error("Please remove background first to see the preview");
@@ -411,8 +386,6 @@ export default function ImageUploader() {
       setIsProcessing(true)
       setThumbnailSrc("")
 
-      // Prepare state for new processed image
-
       const blob = await removeBackgroundViaWorker(previewUrl.current, {})
 
       const processedImageUrl = URL.createObjectURL(blob)
@@ -425,15 +398,12 @@ export default function ImageUploader() {
       handleCreateThumbnail()
       toast.success("Background removed successfully", { id: "background-removed-success" })
     } catch (err) {
-      console.error("Error removing background:", err)
       toast.error("Failed to remove background", { id: "background-removed-error" })
       setError("Failed to remove background. Please try again.")
     } finally {
       setIsProcessing(false)
     }
   }
-
-  // Undo/Redo are currently not used in the new steps UI
 
   const handleCreateThumbnail = () => {
     if (!processedImageSrc) {
@@ -478,12 +448,10 @@ export default function ImageUploader() {
     toast.success("Thumbnail saved successfully")
   }
 
-  // Calculate position based on the position property
   const calculatePosition = (element: TextElement, canvasWidth: number, canvasHeight: number) => {
     let x = canvasWidth * (element.x / 100)
     let y = canvasHeight * (element.y / 100)
 
-    // Adjust position based on the position property
     switch (element.position) {
       case "left":
         x = 20
@@ -513,13 +481,11 @@ export default function ImageUploader() {
         x = canvasWidth - 20
         y = canvasHeight - 20
         break
-      // center is the default, already calculated
     }
 
     return { x, y }
   }
 
-  // Separate function to create thumbnail with background and text
   const createThumbnail = (transparentImageUrl: string) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -529,15 +495,12 @@ export default function ImageUploader() {
 
     setIsCreatingThumbnail(true)
 
-    // Create a new image for the background (use original image)
     const bgImg = new window.Image()
     bgImg.crossOrigin = "anonymous"
 
-    // Create the foreground image with transparent background
     const fgImg = new window.Image()
     fgImg.crossOrigin = "anonymous"
 
-    // Set up error handling for both images
     const handleImageError = () => {
       setIsCreatingThumbnail(false)
       toast.error("Failed to load image for thumbnail")
@@ -547,16 +510,13 @@ export default function ImageUploader() {
     fgImg.onerror = handleImageError
 
     bgImg.onload = () => {
-      // Set canvas dimensions based on the original image size
       canvas.width = bgImg.width
       canvas.height = bgImg.height
 
-      // Draw background image with filters
       applyFilters(ctx)
       ctx.drawImage(bgImg, 0, 0)
-      ctx.filter = "none" // Reset filters for text
+      ctx.filter = "none"
 
-      // Draw text elements that should be behind the image
       textElements
         .filter((element) => element.visible && element.layerOrder === "back")
         .forEach((element) => {
@@ -566,26 +526,18 @@ export default function ImageUploader() {
           if (element.rotation !== 0) {
             ctx.rotate((element.rotation * Math.PI) / 180)
           }
-          // Use scaling approach for MASSIVE, extremely prominent text
           const scaleFactor = Math.min(canvas.width, canvas.height) / 250
-          // Allow text to be absolutely huge for maximum impact
           const scaledFontSize = Math.max(element.fontSize * scaleFactor * 4.0, element.fontSize * 1.2)
-
-          // Set font style
           let fontStyle = ""
           if (element.bold) fontStyle += "bold "
           if (element.italic) fontStyle += "italic "
           fontStyle += `${scaledFontSize}px ${element.fontFamily}`
           ctx.font = fontStyle
 
-          // Set text alignment
           ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
           ctx.textBaseline = "middle"
 
-          // Set opacity
           ctx.globalAlpha = (element.opacity || 100) / 100
-
-          // Draw background rectangle if enabled
           if (element.backgroundEnabled && element.backgroundColor) {
             const metrics = ctx.measureText(element.text)
             const textHeight = scaledFontSize * 1.2
@@ -604,7 +556,6 @@ export default function ImageUploader() {
             ctx.restore()
           }
 
-          // Set shadow if enabled
           if (element.shadow) {
             ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
             ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
@@ -617,10 +568,7 @@ export default function ImageUploader() {
             ctx.shadowOffsetY = 0
           }
 
-          // Set text color
           ctx.fillStyle = element.color
-
-          // Draw curved text if enabled
           if (element.curve) {
             const text = element.text
             const radius = Math.max(80, scaledFontSize * 2)
@@ -635,11 +583,9 @@ export default function ImageUploader() {
               ctx.restore()
             }
           } else {
-            // Draw regular text
             const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
             ctx.fillText(element.text, 0, 0, maxWidth)
 
-            // Draw underline if enabled
             if (element.underline) {
               const textMetrics = ctx.measureText(element.text)
               const underlineY = element.fontSize * 0.15 * scaleFactor
@@ -654,17 +600,13 @@ export default function ImageUploader() {
           ctx.restore()
         })
 
-      // Draw foreground image
       fgImg.onload = () => {
-        // Clear canvas first
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-        // Draw background image with filters
         applyFilters(ctx)
         ctx.drawImage(bgImg, 0, 0)
-        ctx.filter = "none" // Reset filters for text
+        ctx.filter = "none"
 
-        // Draw text elements that should be behind the image
         textElements
           .filter((element) => element.visible && element.layerOrder === "back")
           .forEach((element) => {
@@ -674,25 +616,23 @@ export default function ImageUploader() {
             if (element.rotation !== 0) {
               ctx.rotate((element.rotation * Math.PI) / 180)
             }
-            // Use balanced scaling approach for readable text sizes
             const scaleFactor = Math.min(canvas.width, canvas.height) / 800
             const scaledFontSize = Math.min(element.fontSize * scaleFactor, element.fontSize * 1.2)
 
-            // Set font style
             let fontStyle = ""
             if (element.bold) fontStyle += "bold "
             if (element.italic) fontStyle += "italic "
             fontStyle += `${scaledFontSize}px ${element.fontFamily}`
             ctx.font = fontStyle
 
-            // Set text alignment
+
             ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
             ctx.textBaseline = "middle"
 
-            // Set opacity
+
             ctx.globalAlpha = (element.opacity || 100) / 100
 
-            // Draw background rectangle if enabled
+
             if (element.backgroundEnabled && element.backgroundColor) {
               const metrics = ctx.measureText(element.text)
               const textHeight = scaledFontSize * 1.2
@@ -711,7 +651,7 @@ export default function ImageUploader() {
               ctx.restore()
             }
 
-            // Set shadow if enabled
+
             if (element.shadow) {
               ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
               ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
@@ -724,10 +664,10 @@ export default function ImageUploader() {
               ctx.shadowOffsetY = 0
             }
 
-            // Set text color
+
             ctx.fillStyle = element.color
 
-            // Draw curved text if enabled
+
             if (element.curve) {
               const text = element.text
               const radius = Math.max(80, scaledFontSize * 2)
@@ -742,11 +682,11 @@ export default function ImageUploader() {
                 ctx.restore()
               }
             } else {
-              // Draw regular text
+
               const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
               ctx.fillText(element.text, 0, 0, maxWidth)
 
-              // Draw underline if enabled
+
               if (element.underline) {
                 const textMetrics = ctx.measureText(element.text)
                 const underlineY = element.fontSize * 0.15 * scaleFactor
@@ -761,7 +701,7 @@ export default function ImageUploader() {
             ctx.restore()
           })
 
-        // Draw foreground image
+
         ctx.drawImage(fgImg, 0, 0)
 
         // Draw text elements that should be in front of the image
@@ -786,14 +726,14 @@ export default function ImageUploader() {
             fontStyle += `${scaledFontSize}px ${element.fontFamily}`
             ctx.font = fontStyle
 
-            // Set text alignment
+
             ctx.textAlign = (element.textAlign as CanvasTextAlign) || "center"
             ctx.textBaseline = "middle"
 
-            // Set opacity
+
             ctx.globalAlpha = (element.opacity || 100) / 100
 
-            // Draw background rectangle if enabled
+
             if (element.backgroundEnabled && element.backgroundColor) {
               const metrics = ctx.measureText(element.text)
               const textHeight = scaledFontSize * 1.2
@@ -812,7 +752,7 @@ export default function ImageUploader() {
               ctx.restore()
             }
 
-            // Set shadow if enabled
+
             if (element.shadow) {
               ctx.shadowColor = element.shadowColor || "rgba(0,0,0,0.5)"
               ctx.shadowBlur = (element.shadowBlur ?? 10) * scaleFactor
@@ -825,10 +765,10 @@ export default function ImageUploader() {
               ctx.shadowOffsetY = 0
             }
 
-            // Set text color
+
             ctx.fillStyle = element.color
 
-            // Draw curved text if enabled
+
             if (element.curve) {
               const text = element.text
               const radius = Math.max(80, scaledFontSize * 2)
@@ -843,11 +783,11 @@ export default function ImageUploader() {
                 ctx.restore()
               }
             } else {
-              // Draw regular text
+
               const maxWidth = ((element.maxWidth ?? 80) / 100) * canvas.width
               ctx.fillText(element.text, 0, 0, maxWidth)
 
-              // Draw underline if enabled
+
               if (element.underline) {
                 const textMetrics = ctx.measureText(element.text)
                 const underlineY = element.fontSize * 0.15 * scaleFactor
